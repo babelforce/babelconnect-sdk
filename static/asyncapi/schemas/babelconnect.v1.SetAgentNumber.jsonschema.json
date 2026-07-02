@@ -1,0 +1,14 @@
+{
+  "$id": "babelconnect.v1.SetAgentNumber.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SetAgentNumber sets the external phone number the agent's calls bridge to.",
+  "properties": {
+    "number": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Set Agent Number",
+  "type": "object"
+}

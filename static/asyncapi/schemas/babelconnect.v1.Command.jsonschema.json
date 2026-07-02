@@ -1,0 +1,164 @@
+{
+  "$id": "babelconnect.v1.Command.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^(add_conference_member)$": {
+      "$ref": "babelconnect.v1.AddConferenceMember.jsonschema.json"
+    },
+    "^(end_conference)$": {
+      "$ref": "babelconnect.v1.EndConference.jsonschema.json"
+    },
+    "^(flag_recording)$": {
+      "$ref": "babelconnect.v1.FlagRecording.jsonschema.json"
+    },
+    "^(hold_conference_member)$": {
+      "$ref": "babelconnect.v1.HoldConferenceMember.jsonschema.json"
+    },
+    "^(kick_conference_member)$": {
+      "$ref": "babelconnect.v1.KickConferenceMember.jsonschema.json"
+    },
+    "^(leave_conference)$": {
+      "$ref": "babelconnect.v1.LeaveConference.jsonschema.json"
+    },
+    "^(mark_conversation_read)$": {
+      "$ref": "babelconnect.v1.MarkConversationRead.jsonschema.json"
+    },
+    "^(mute_conference_member)$": {
+      "$ref": "babelconnect.v1.MuteConferenceMember.jsonschema.json"
+    },
+    "^(place_call)$": {
+      "$ref": "babelconnect.v1.PlaceCall.jsonschema.json"
+    },
+    "^(reset_line_status)$": {
+      "$ref": "babelconnect.v1.ResetLineStatus.jsonschema.json"
+    },
+    "^(send_sms)$": {
+      "$ref": "babelconnect.v1.SendSmsRequest.jsonschema.json"
+    },
+    "^(set_agent_number)$": {
+      "$ref": "babelconnect.v1.SetAgentNumber.jsonschema.json"
+    },
+    "^(set_conversation_open)$": {
+      "$ref": "babelconnect.v1.SetConversationOpen.jsonschema.json"
+    },
+    "^(set_display_as)$": {
+      "$ref": "babelconnect.v1.SetDisplayAs.jsonschema.json"
+    },
+    "^(set_presence)$": {
+      "$ref": "babelconnect.v1.SetPresence.jsonschema.json"
+    },
+    "^(set_recording_tags)$": {
+      "$ref": "babelconnect.v1.SetRecordingTags.jsonschema.json"
+    },
+    "^(set_webrtc)$": {
+      "$ref": "babelconnect.v1.SetWebrtc.jsonschema.json"
+    },
+    "^(start_conference)$": {
+      "$ref": "babelconnect.v1.StartConference.jsonschema.json"
+    },
+    "^(start_recording)$": {
+      "$ref": "babelconnect.v1.StartRecording.jsonschema.json"
+    },
+    "^(stop_recording)$": {
+      "$ref": "babelconnect.v1.StopRecording.jsonschema.json"
+    },
+    "^(wrap_up_cancel)$": {
+      "$ref": "babelconnect.v1.WrapUpCancel.jsonschema.json"
+    },
+    "^(wrap_up_extend)$": {
+      "$ref": "babelconnect.v1.WrapUpExtend.jsonschema.json"
+    }
+  },
+  "properties": {
+    "addConferenceMember": {
+      "$ref": "babelconnect.v1.AddConferenceMember.jsonschema.json"
+    },
+    "answer": {
+      "$ref": "babelconnect.v1.AnswerCall.jsonschema.json"
+    },
+    "dtmf": {
+      "$ref": "babelconnect.v1.SendDigits.jsonschema.json"
+    },
+    "endConference": {
+      "$ref": "babelconnect.v1.EndConference.jsonschema.json"
+    },
+    "flagRecording": {
+      "$ref": "babelconnect.v1.FlagRecording.jsonschema.json"
+    },
+    "hangup": {
+      "$ref": "babelconnect.v1.Hangup.jsonschema.json"
+    },
+    "hold": {
+      "$ref": "babelconnect.v1.Hold.jsonschema.json"
+    },
+    "holdConferenceMember": {
+      "$ref": "babelconnect.v1.HoldConferenceMember.jsonschema.json"
+    },
+    "kickConferenceMember": {
+      "$ref": "babelconnect.v1.KickConferenceMember.jsonschema.json"
+    },
+    "leaveConference": {
+      "$ref": "babelconnect.v1.LeaveConference.jsonschema.json"
+    },
+    "markConversationRead": {
+      "$ref": "babelconnect.v1.MarkConversationRead.jsonschema.json"
+    },
+    "mute": {
+      "$ref": "babelconnect.v1.Mute.jsonschema.json"
+    },
+    "muteConferenceMember": {
+      "$ref": "babelconnect.v1.MuteConferenceMember.jsonschema.json"
+    },
+    "placeCall": {
+      "$ref": "babelconnect.v1.PlaceCall.jsonschema.json"
+    },
+    "register": {
+      "$ref": "babelconnect.v1.Register.jsonschema.json"
+    },
+    "resetLineStatus": {
+      "$ref": "babelconnect.v1.ResetLineStatus.jsonschema.json"
+    },
+    "sendSms": {
+      "$ref": "babelconnect.v1.SendSmsRequest.jsonschema.json"
+    },
+    "setAgentNumber": {
+      "$ref": "babelconnect.v1.SetAgentNumber.jsonschema.json"
+    },
+    "setConversationOpen": {
+      "$ref": "babelconnect.v1.SetConversationOpen.jsonschema.json"
+    },
+    "setDisplayAs": {
+      "$ref": "babelconnect.v1.SetDisplayAs.jsonschema.json"
+    },
+    "setPresence": {
+      "$ref": "babelconnect.v1.SetPresence.jsonschema.json"
+    },
+    "setRecordingTags": {
+      "$ref": "babelconnect.v1.SetRecordingTags.jsonschema.json"
+    },
+    "setWebrtc": {
+      "$ref": "babelconnect.v1.SetWebrtc.jsonschema.json"
+    },
+    "startConference": {
+      "$ref": "babelconnect.v1.StartConference.jsonschema.json"
+    },
+    "startRecording": {
+      "$ref": "babelconnect.v1.StartRecording.jsonschema.json"
+    },
+    "stopRecording": {
+      "$ref": "babelconnect.v1.StopRecording.jsonschema.json"
+    },
+    "transfer": {
+      "$ref": "babelconnect.v1.Transfer.jsonschema.json"
+    },
+    "wrapUpCancel": {
+      "$ref": "babelconnect.v1.WrapUpCancel.jsonschema.json"
+    },
+    "wrapUpExtend": {
+      "$ref": "babelconnect.v1.WrapUpExtend.jsonschema.json"
+    }
+  },
+  "title": "Command",
+  "type": "object"
+}

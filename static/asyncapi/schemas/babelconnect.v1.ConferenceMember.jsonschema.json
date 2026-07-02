@@ -1,0 +1,64 @@
+{
+  "$id": "babelconnect.v1.ConferenceMember.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "ConferenceMember is one participant. `display` is the resolved label (agent\n name, else the caller/dialed number, else \"Anonymous\"). `state` drives the UI:\n pending = ringing, added = live, removing/removed/failed = gone (clients filter\n removed/failed out of the participant list).",
+  "patternProperties": {
+    "^(agent_id)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(call_id)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(is_me)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(on_hold)$": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "properties": {
+    "agentId": {
+      "default": "",
+      "type": "string"
+    },
+    "callId": {
+      "default": "",
+      "type": "string"
+    },
+    "display": {
+      "default": "",
+      "type": "string"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "isMe": {
+      "default": false,
+      "type": "boolean"
+    },
+    "moderator": {
+      "default": false,
+      "type": "boolean"
+    },
+    "number": {
+      "default": "",
+      "type": "string"
+    },
+    "onHold": {
+      "default": false,
+      "type": "boolean"
+    },
+    "state": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Conference Member",
+  "type": "object"
+}

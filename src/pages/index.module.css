@@ -1,0 +1,63 @@
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 2rem;
+  }
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/*
+ * The hero is always brand navy (--ifm-hero-background-color: #181e32) in both
+ * light and dark mode. Infima's outline secondary buttons resolve their resting
+ * text colour to --ifm-font-color-base (near-black in light mode), which collides
+ * with the navy background and is unreadable. Scope an explicit white text/border
+ * to the hero's outline buttons, with a hover/focus that fills white and flips the
+ * text to navy for clear contrast. Scoped to .heroBanner so other outline buttons
+ * across the site keep their defaults.
+ */
+.heroBanner :global(.button.button--secondary.button--outline) {
+  --ifm-button-border-color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+/*
+ * Match Infima's resting selector
+ * (.button.button--secondary.button--outline:not(.button--active):not(:hover))
+ * with an extra .heroBanner scope so we win on specificity and recolour the
+ * resting text to white instead of the near-black --ifm-font-color-base.
+ */
+.heroBanner
+  :global(.button.button--secondary.button--outline:not(.button--active):not(:hover)) {
+  color: #ffffff;
+}
+
+.heroBanner :global(.button.button--secondary.button--outline:hover),
+.heroBanner :global(.button.button--secondary.button--outline:focus-visible),
+.heroBanner :global(.button.button--secondary.button--outline:active) {
+  background-color: #ffffff;
+  border-color: #ffffff;
+  color: #181e32;
+}
+
+.heroBanner :global(.button.button--secondary.button--outline:focus-visible) {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}

@@ -1,0 +1,64 @@
+{
+  "$id": "babelconnect.v1.SmsMessage.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SmsMessage is one message inside a conversation thread, fetched on demand via\n GetSmsThread (the AgentView only carries the lightweight SmsConversation\n summary, not the full history). Oldest-first; the client bubbles it by\n direction. `state` is the message status (received/sent/delivered/failed/\n scheduled) for display only.",
+  "properties": {
+    "direction": {
+      "anyOf": [
+        {
+          "pattern": "^CALL_DIRECTION_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "CALL_DIRECTION_INBOUND",
+            "CALL_DIRECTION_OUTBOUND"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Call Direction"
+    },
+    "from": {
+      "default": "",
+      "type": "string"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "state": {
+      "default": "",
+      "type": "string"
+    },
+    "text": {
+      "default": "",
+      "type": "string"
+    },
+    "to": {
+      "default": "",
+      "type": "string"
+    },
+    "ts": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    }
+  },
+  "title": "Sms Message",
+  "type": "object"
+}

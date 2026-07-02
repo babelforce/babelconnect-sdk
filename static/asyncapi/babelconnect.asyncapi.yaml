@@ -1,0 +1,126 @@
+# AsyncAPI 3.0 — the babelconnect EVENT plane (the server→client StateUpdate push stream).
+#
+# This is the async counterpart to the OpenAPI v3 request/response contract
+# (docs/openapi/babelconnect.openapi.json). The Agent service's streaming RPCs
+# (Session — bidi; Subscribe — server-stream) deliver a single message type to the
+# client: StateUpdate. Its PAYLOAD SHAPE is generated from the proto source of truth
+# (schemas/ is emitted by `buf generate proto`, the protoc-gen-jsonschema plugin); only
+# this channel/operation/security ENVELOPE is hand-authored — proto can't express it.
+# Keep it in sync with babelconnect.proto's StateUpdate/Patch and the server's state reducers.
+# Version is 3.0.0 — required by the browser renderer that displays the Events reference
+# (@asyncapi/react-component@2.6.5, pinned in babelconnect-sdk/static/reference/events/index.html):
+# its parser supports up to 3.0.0 and REJECTS 3.1.0. CI's validator accepts 3.0.0 too (it only emits
+# a non-blocking "update to latest" info). 3.0.1 is not a real @asyncapi/specs version — don't use it.
+# This SOURCE keeps external schema $refs (CI resolves them in Node); the SDK's served copy is a
+# self-contained BUNDLE of this file (refs inlined) because the browser can't readFile external $refs.
+# Verified end-to-end with a headless render test of the Events page.
+asyncapi: 3.0.0
+info:
+  title: Babelconnect Agent — Event Plane
+  version: 1.0.0
+  description: |
+    The **server-authoritative push stream** every Babelconnect SDK consumes. On the
+    `Agent.Session` (bidirectional) and `Agent.Subscribe` (server-streaming) RPCs the
+    server emits a single message type — **`StateUpdate`** — carrying, in order:
+
+    1. a **snapshot** (`AgentView`) when the stream opens, then
+    2. entity-level **patches** (`Patch`) as backend events arrive, and
+    3. out-of-band **errors** (`Error`) for command rejections / warnings.
+
+    `seq` is monotonic across snapshot+patch; a gap means the client should resubscribe
+    for a fresh snapshot. An `error` does **not** advance `seq`. The client applies each
+    `Patch` mechanically to its local cache (the three SDK `StateCache` reducers are kept
+    identical).
+
+    **`Patch` is a oneof of 10 entity deltas** (replace-by-key): `agent` (AgentInfo),
+    `callUpsert` (CallState), `callRemove` (call id), `wrapUp` (WrapUpStatus),
+    `notification` (transient CTI screen-pop — fires once, not stored), `smsUpsert`
+    (SmsConversation), `smsRemove` (conversation id), `conferenceUpsert` (Conference),
+    `conferenceRemove` (conference id), and `config` (AppConfig, emitted once on register).
+
+    **Event categories:** these patches consolidate backend activity across seven areas —
+    calls, status, recordings, conferences, CTI notifications, SMS, and outbound dialer —
+    that the server merges into the single `StateUpdate` stream. Clients consume only that
+    unified stream.
+
+    **Transport note:** AsyncAPI has no native gRPC binding; the `grpc`/`https` protocols
+    below denote native HTTP/2 gRPC (`Session`) and gRPC-web (`Subscribe`) respectively.
+    The same `StateUpdate` payload flows on both.
+  contact:
+    name: Babelconnect
+  tags:
+    - name: events
+    - name: server-authoritative-state
+
+servers:
+  grpc:
+    host: localhost:7090
+    protocol: grpc
+    description: >
+      Native HTTP/2 gRPC endpoint (dev default `:7090`; the deployed host differs). Serves
+      the bidirectional `Agent.Session` stream used by native SDK clients (Go, Dart, …).
+  grpcweb:
+    host: localhost:7091
+    protocol: https
+    description: >
+      gRPC-web endpoint (dev default `:7091`; the deployed host differs). Serves the
+      `Agent.Subscribe` server-stream used by browser clients (the TypeScript SDK).
+
+channels:
+  agentState:
+    address: babelconnect.v1.Agent/Subscribe
+    title: Agent state stream
+    description: >
+      The server→client `StateUpdate` stream for one authenticated agent, delivered by
+      `Agent.Subscribe` (gRPC-web, server-stream) or the receive half of `Agent.Session`
+      (native gRPC, bidi). One subscription per agent; the bearer token identifies the
+      agent (no channel parameters).
+    servers:
+      - $ref: '#/servers/grpc'
+      - $ref: '#/servers/grpcweb'
+    messages:
+      stateUpdate:
+        $ref: '#/components/messages/StateUpdate'
+
+operations:
+  receiveStateUpdate:
+    action: receive
+    channel:
+      $ref: '#/channels/agentState'
+    title: Receive agent state updates
+    summary: The SDK client receives the snapshot-then-patches StateUpdate stream.
+    description: >
+      From the SDK (application) perspective this is a `receive`: after authenticating
+      with a bearer token, the client receives a snapshot followed by patches until it
+      disconnects. The client→server half (intents) is the `Command` request/response
+      surface documented in the OpenAPI spec (`Agent.Send` / `Agent.Session` send half),
+      not here.
+    security:
+      - $ref: '#/components/securitySchemes/bearerAuth'
+    messages:
+      - $ref: '#/channels/agentState/messages/stateUpdate'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        OAuth2 bearer access token (from `POST /oauth/token` or the SSO flow — see the
+        OpenAPI spec), sent as `authorization: Bearer <token>` gRPC/gRPC-web metadata when
+        opening the stream.
+  messages:
+    StateUpdate:
+      name: StateUpdate
+      title: State update (snapshot | patch | error)
+      summary: One server→client frame on the agent state stream.
+      description: >
+        The single message type on the stream. `update` is a oneof: `snapshot` (full
+        `AgentView`, sent on open), `patch` (one of 10 entity deltas), or `error`
+        (out-of-band notice). See the payload schema for the exact shape.
+      contentType: application/json
+      tags:
+        - name: events
+      payload:
+        $ref: './schemas/babelconnect.v1.StateUpdate.jsonschema.json'

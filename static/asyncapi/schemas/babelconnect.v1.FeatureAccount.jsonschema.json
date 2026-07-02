@@ -1,0 +1,32 @@
+{
+  "$id": "babelconnect.v1.FeatureAccount.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "FeatureAccount gates the Account tab and its sections.",
+  "patternProperties": {
+    "^(allow_device_switch)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(show_status)$": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "properties": {
+    "allowDeviceSwitch": {
+      "default": false,
+      "type": "boolean"
+    },
+    "enabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "showStatus": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Feature Account",
+  "type": "object"
+}

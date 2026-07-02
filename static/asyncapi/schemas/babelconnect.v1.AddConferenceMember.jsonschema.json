@@ -1,0 +1,24 @@
+{
+  "$id": "babelconnect.v1.AddConferenceMember.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "AddConferenceMember invites a participant — exactly one of agent_id / number.\n Starts a conference first if none is active.",
+  "patternProperties": {
+    "^(agent_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "agentId": {
+      "default": "",
+      "type": "string"
+    },
+    "number": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Add Conference Member",
+  "type": "object"
+}

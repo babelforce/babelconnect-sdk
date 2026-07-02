@@ -1,0 +1,122 @@
+{
+  "$id": "babelconnect.v1.SmsConversation.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SmsConversation is one SMS thread summary carried in the AgentView (the full\n thread history is fetched on demand, not held in the snapshot). Upsert-by-id;\n the reducer keeps the list sorted by last_ts descending.",
+  "patternProperties": {
+    "^(contact_label)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(last_direction)$": {
+      "anyOf": [
+        {
+          "pattern": "^CALL_DIRECTION_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "CALL_DIRECTION_INBOUND",
+            "CALL_DIRECTION_OUTBOUND"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Call Direction"
+    },
+    "^(last_text)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(last_ts)$": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    }
+  },
+  "properties": {
+    "contactLabel": {
+      "default": "",
+      "type": "string"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "lastDirection": {
+      "anyOf": [
+        {
+          "pattern": "^CALL_DIRECTION_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "CALL_DIRECTION_INBOUND",
+            "CALL_DIRECTION_OUTBOUND"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Call Direction"
+    },
+    "lastText": {
+      "default": "",
+      "type": "string"
+    },
+    "lastTs": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "open": {
+      "default": false,
+      "type": "boolean"
+    },
+    "peer": {
+      "default": "",
+      "type": "string"
+    },
+    "unread": {
+      "anyOf": [
+        {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "pattern": "^[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    }
+  },
+  "title": "Sms Conversation",
+  "type": "object"
+}

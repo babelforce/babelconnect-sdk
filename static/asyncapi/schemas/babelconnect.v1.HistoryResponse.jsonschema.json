@@ -1,0 +1,16 @@
+{
+  "$id": "babelconnect.v1.HistoryResponse.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "HistoryResponse is one page of past calls.",
+  "properties": {
+    "calls": {
+      "items": {
+        "$ref": "babelconnect.v1.CallRecord.jsonschema.json"
+      },
+      "type": "array"
+    }
+  },
+  "title": "History Response",
+  "type": "object"
+}

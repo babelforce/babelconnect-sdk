@@ -1,0 +1,58 @@
+{
+  "$id": "babelconnect.v1.Identity.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^(agent_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "account": {
+      "default": "",
+      "type": "string"
+    },
+    "agentId": {
+      "default": "",
+      "type": "string"
+    },
+    "number": {
+      "default": "",
+      "type": "string"
+    },
+    "state": {
+      "anyOf": [
+        {
+          "pattern": "^AGENT_STATE_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "AGENT_STATE_OFFLINE",
+            "AGENT_STATE_AVAILABLE",
+            "AGENT_STATE_IN_CALL",
+            "AGENT_STATE_WRAP_UP",
+            "AGENT_STATE_PAUSED",
+            "AGENT_STATE_RINGING",
+            "AGENT_STATE_BUSY"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Agent State"
+    },
+    "username": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Identity",
+  "type": "object"
+}

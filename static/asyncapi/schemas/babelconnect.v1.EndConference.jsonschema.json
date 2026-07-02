@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.EndConference.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "EndConference tears down the whole conference (moderator only).",
+  "properties": {},
+  "title": "End Conference",
+  "type": "object"
+}

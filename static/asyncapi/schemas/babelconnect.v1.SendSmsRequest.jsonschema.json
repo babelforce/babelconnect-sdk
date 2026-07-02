@@ -1,0 +1,31 @@
+{
+  "$id": "babelconnect.v1.SendSmsRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SendSmsRequest sends an SMS. `from` defaults to the agent's SMS-capable number\n when empty. `session` carries opaque\n CTI/embedding correlation keys (e.g. from session.set), like PlaceCall.",
+  "properties": {
+    "from": {
+      "default": "",
+      "type": "string"
+    },
+    "session": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "propertyNames": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "text": {
+      "default": "",
+      "type": "string"
+    },
+    "to": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Send Sms Request",
+  "type": "object"
+}

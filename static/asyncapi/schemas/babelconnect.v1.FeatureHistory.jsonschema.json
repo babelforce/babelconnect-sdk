@@ -1,0 +1,13 @@
+{
+  "$id": "babelconnect.v1.FeatureHistory.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "enabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Feature History",
+  "type": "object"
+}

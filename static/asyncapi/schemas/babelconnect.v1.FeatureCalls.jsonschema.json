@@ -1,0 +1,32 @@
+{
+  "$id": "babelconnect.v1.FeatureCalls.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "FeatureCalls gates the call surface (Phone tab) and its in-call actions.\n Recording stays gated by AgentInfo.can_record (not duplicated here); device\n (browser/telephone) by AgentInfo.webrtc_enabled.",
+  "patternProperties": {
+    "^(allow_conference)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(allow_transfer)$": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "properties": {
+    "allowConference": {
+      "default": false,
+      "type": "boolean"
+    },
+    "allowTransfer": {
+      "default": false,
+      "type": "boolean"
+    },
+    "enabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Feature Calls",
+  "type": "object"
+}

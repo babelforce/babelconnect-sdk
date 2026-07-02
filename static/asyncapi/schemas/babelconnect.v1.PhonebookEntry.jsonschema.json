@@ -1,0 +1,18 @@
+{
+  "$id": "babelconnect.v1.PhonebookEntry.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "PhonebookEntry is one dialable contact (or a recent number) for the dialer's\n autocomplete.",
+  "properties": {
+    "label": {
+      "default": "",
+      "type": "string"
+    },
+    "number": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Phonebook Entry",
+  "type": "object"
+}
