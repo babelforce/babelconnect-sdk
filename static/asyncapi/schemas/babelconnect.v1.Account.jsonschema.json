@@ -1,0 +1,22 @@
+{
+  "$id": "babelconnect.v1.Account.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Account is one tenant the signed-in agent can operate in — the switchable set\n (agent-role only) surfaced for the account picker.",
+  "properties": {
+    "current": {
+      "default": false,
+      "type": "boolean"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "name": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Account",
+  "type": "object"
+}

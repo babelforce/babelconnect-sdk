@@ -1,0 +1,13 @@
+{
+  "$id": "babelconnect.v1.SetDisplayAs.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "number": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Set Display As",
+  "type": "object"
+}

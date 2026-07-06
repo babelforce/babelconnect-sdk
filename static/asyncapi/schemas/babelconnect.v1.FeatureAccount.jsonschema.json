@@ -1,0 +1,50 @@
+{
+  "$id": "babelconnect.v1.FeatureAccount.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "FeatureAccount gates the Account tab and its sections.",
+  "patternProperties": {
+    "^(allow_account_switch)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(allow_device_switch)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(allow_status_change)$": {
+      "default": false,
+      "description": "Agents may change their own presence via the status picker. When false\n the picker is locked: still visible, shows the current status, but not\n interactive. Defaults to allowed.",
+      "type": "boolean"
+    },
+    "^(show_status)$": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "properties": {
+    "allowAccountSwitch": {
+      "default": false,
+      "type": "boolean"
+    },
+    "allowDeviceSwitch": {
+      "default": false,
+      "type": "boolean"
+    },
+    "allowStatusChange": {
+      "default": false,
+      "description": "Agents may change their own presence via the status picker. When false\n the picker is locked: still visible, shows the current status, but not\n interactive. Defaults to allowed.",
+      "type": "boolean"
+    },
+    "enabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "showStatus": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Feature Account",
+  "type": "object"
+}

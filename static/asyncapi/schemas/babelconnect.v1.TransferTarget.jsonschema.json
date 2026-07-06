@@ -1,0 +1,53 @@
+{
+  "$id": "babelconnect.v1.TransferTarget.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "TransferTarget is one autocomplete result for a blind transfer / add-member\n pick. `id` is the backend id to pass back on Transfer/AddConferenceMember\n (an agent or application UUID; for a synthetic NUMBER result it is the raw\n query, not a stable id — clients should send `number`, not `id`, for that\n kind). `category` is the IVR module name (APPLICATION only, e.g.\n \"simpleMenu\"); `browser` marks an agent reachable only via browser phone\n (no PSTN number) — AGENT only.",
+  "properties": {
+    "browser": {
+      "default": false,
+      "type": "boolean"
+    },
+    "category": {
+      "default": "",
+      "type": "string"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "kind": {
+      "anyOf": [
+        {
+          "pattern": "^TRANSFER_TARGET_KIND_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "TRANSFER_TARGET_KIND_AGENT",
+            "TRANSFER_TARGET_KIND_NUMBER",
+            "TRANSFER_TARGET_KIND_APPLICATION"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Transfer Target Kind"
+    },
+    "label": {
+      "default": "",
+      "type": "string"
+    },
+    "number": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Transfer Target",
+  "type": "object"
+}

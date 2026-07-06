@@ -1,0 +1,20 @@
+{
+  "$id": "babelconnect.v1.MarkConversationRead.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "MarkConversationRead clears the unread count on an SMS conversation (the agent\n opened its thread).",
+  "patternProperties": {
+    "^(conversation_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "conversationId": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Mark Conversation Read",
+  "type": "object"
+}

@@ -1,0 +1,68 @@
+{
+  "$id": "babelconnect.v1.WrapUpStatus.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "WrapUpStatus is the after-call-work countdown.",
+  "patternProperties": {
+    "^(can_cancel)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(can_extend)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(last_call_type)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(remaining_seconds)$": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    }
+  },
+  "properties": {
+    "active": {
+      "default": false,
+      "type": "boolean"
+    },
+    "canCancel": {
+      "default": false,
+      "type": "boolean"
+    },
+    "canExtend": {
+      "default": false,
+      "type": "boolean"
+    },
+    "lastCallType": {
+      "default": "",
+      "type": "string"
+    },
+    "remainingSeconds": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    }
+  },
+  "title": "Wrap Up Status",
+  "type": "object"
+}

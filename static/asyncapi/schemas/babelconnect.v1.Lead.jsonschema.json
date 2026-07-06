@@ -1,0 +1,45 @@
+{
+  "$id": "babelconnect.v1.Lead.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Lead is the customer the outbound dialer connected the agent to. `id`/`rank`\n are only present on the richer (list-enriched) form some reads return. `id`\n is the internal lead-list-item id — DISTINCT from `uid`, the\n customer-provided identifier shown as the lead's id in the UI.",
+  "properties": {
+    "data": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "propertyNames": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "number": {
+      "default": "",
+      "type": "string"
+    },
+    "rank": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "uid": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Lead",
+  "type": "object"
+}

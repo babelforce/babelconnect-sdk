@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.ListDispositionsRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "ListDispositionsRequest / ListDispositionsResponse back the disposition\n picker (OBDC1). Empty request: the list is a static global on the backend,\n not campaign- or agent-scoped.",
+  "properties": {},
+  "title": "List Dispositions Request",
+  "type": "object"
+}

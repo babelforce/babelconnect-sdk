@@ -1,0 +1,24 @@
+{
+  "$id": "babelconnect.v1.DisposeCall.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "DisposeCall records the outcome of a campaign call. `code` is one of\n ListDispositionsResponse's codes (e.g. \"no_answer\", \"callback\").\n `callback_date` is ISO `YYYY-MM-DDTHH:mmZZ` and is set ONLY for the\n \"callback\" disposition — omitted (empty) otherwise.",
+  "patternProperties": {
+    "^(callback_date)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "callbackDate": {
+      "default": "",
+      "type": "string"
+    },
+    "code": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Dispose Call",
+  "type": "object"
+}

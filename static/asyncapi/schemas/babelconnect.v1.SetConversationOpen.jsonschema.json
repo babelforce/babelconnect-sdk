@@ -1,0 +1,24 @@
+{
+  "$id": "babelconnect.v1.SetConversationOpen.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SetConversationOpen opens (reopens) or closes (resolves) an SMS conversation.\n The server flips SmsConversation.open optimistically and re-confirms.",
+  "patternProperties": {
+    "^(conversation_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "conversationId": {
+      "default": "",
+      "type": "string"
+    },
+    "open": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Set Conversation Open",
+  "type": "object"
+}

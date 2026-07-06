@@ -1,0 +1,15 @@
+{
+  "$id": "babelconnect.v1.SmsThreadResponse.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "messages": {
+      "items": {
+        "$ref": "babelconnect.v1.SmsMessage.jsonschema.json"
+      },
+      "type": "array"
+    }
+  },
+  "title": "Sms Thread Response",
+  "type": "object"
+}

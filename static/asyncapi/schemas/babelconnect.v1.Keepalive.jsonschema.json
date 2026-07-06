@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.Keepalive.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Keepalive is an empty heartbeat frame sent on the Subscribe stream so\n idle connections through proxies/LBs are not closed as idle. Notably the AWS\n Classic ELB in front of ingress-nginx (dev/prod EKS) has a 300s connection\n idle timeout; without these frames a quiet agent's gRPC-web server-stream is\n killed after 5 min. The server sends one every ~15s. It carries no state and\n does NOT advance `seq`; client caches treat a keepalive StateUpdate as a no-op.",
+  "properties": {},
+  "title": "Keepalive",
+  "type": "object"
+}

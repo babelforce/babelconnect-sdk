@@ -1,0 +1,44 @@
+{
+  "$id": "babelconnect.v1.PlaceCall.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^(display_as_from)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(display_as_to)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "displayAsFrom": {
+      "default": "",
+      "type": "string"
+    },
+    "displayAsTo": {
+      "default": "",
+      "type": "string"
+    },
+    "record": {
+      "default": false,
+      "type": "boolean"
+    },
+    "session": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "propertyNames": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "to": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Place Call",
+  "type": "object"
+}

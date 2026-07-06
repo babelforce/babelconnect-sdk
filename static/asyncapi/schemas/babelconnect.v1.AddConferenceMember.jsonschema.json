@@ -1,0 +1,32 @@
+{
+  "$id": "babelconnect.v1.AddConferenceMember.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "AddConferenceMember invites a participant — exactly one of agent_id / number.\n Starts a conference first if none is active. `hold_others` parks every other\n live, non-held member of the CURRENT conference before the invite goes out\n (default off) so they don't overhear the new invitee ringing; the server\n unholds them again once the invitee reaches a terminal state (added =\n joined, or failed/removed = rejected/timed out). No effect when starting a\n brand-new conference: StartConference(hold=true) already parks the original\n party unconditionally in that case.",
+  "patternProperties": {
+    "^(agent_id)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(hold_others)$": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "properties": {
+    "agentId": {
+      "default": "",
+      "type": "string"
+    },
+    "holdOthers": {
+      "default": false,
+      "type": "boolean"
+    },
+    "number": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Add Conference Member",
+  "type": "object"
+}

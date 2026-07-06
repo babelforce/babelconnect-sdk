@@ -1,0 +1,86 @@
+{
+  "$id": "babelconnect.v1.CampaignStatus.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "CampaignStatus is the agent's outbound-dialer campaign membership envelope,\n kept live by the server. `last_reason` is the platform's last dial-outcome\n as a lowercase string (e.g. \"unreachable\", \"no_answer\", \"busy\", \"answer\",\n \"hungup\", \"none\") — a string rather than a wire enum on purpose. `paused`\n is a convenience mirror of `state == CAMPAIGN_MEMBER_STATE_IDLE`. The lead\n the agent is currently dialing, disposition reasons, and live campaign\n metrics are additive fields below, layered on top of this envelope.",
+  "patternProperties": {
+    "^(campaign_id)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(campaign_name)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(last_reason)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "campaignId": {
+      "default": "",
+      "type": "string"
+    },
+    "campaignName": {
+      "default": "",
+      "type": "string"
+    },
+    "lastReason": {
+      "default": "",
+      "type": "string"
+    },
+    "lead": {
+      "$ref": "babelconnect.v1.Lead.jsonschema.json",
+      "description": "lead is the customer the dialer connected the agent to — set while a lead\n is being worked (IN_PROGRESS/DISPOSITION), unset otherwise. Updated the\n moment the dialer connects a lead."
+    },
+    "metrics": {
+      "$ref": "babelconnect.v1.CampaignMetrics.jsonschema.json",
+      "description": "metrics is the campaign's live pacing snapshot (OBDD1), refreshed\n alongside the enrichment read while `state == IDLE` (paused) — the only\n state the Outbound tab shows it in; unset otherwise (and left unset if the\n GET /agent/outbound/metrics read 404s, e.g. between polls)."
+    },
+    "paused": {
+      "default": false,
+      "type": "boolean"
+    },
+    "since": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "state": {
+      "anyOf": [
+        {
+          "pattern": "^CAMPAIGN_MEMBER_STATE_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "CAMPAIGN_MEMBER_STATE_OFFLINE",
+            "CAMPAIGN_MEMBER_STATE_LOGGING_IN",
+            "CAMPAIGN_MEMBER_STATE_WAITING",
+            "CAMPAIGN_MEMBER_STATE_IDLE",
+            "CAMPAIGN_MEMBER_STATE_IN_PROGRESS",
+            "CAMPAIGN_MEMBER_STATE_DISPOSITION"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Campaign Member State"
+    }
+  },
+  "title": "Campaign Status",
+  "type": "object"
+}

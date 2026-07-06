@@ -1,0 +1,209 @@
+{
+  "$id": "babelconnect.v1.CallState.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "CallState is one call as the server sees it. Replace-by-id on upsert.",
+  "patternProperties": {
+    "^(can_transfer_to_application)$": {
+      "default": false,
+      "description": "can_transfer_to_application is server-computed: true for inbound calls and\n taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain\n outbound calls must not be offered application (IVR module) transfer\n targets — forwarding them into a queue module strands the agent\n (DEV-549/B2-526). Clients gate the \"App\" transfer-target segment on this\n flag instead of re-deriving the rule from direction/source themselves.",
+      "type": "boolean"
+    },
+    "^(established_at)$": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "^(ice_servers)$": {
+      "items": {
+        "$ref": "babelconnect.v1.IceServer.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "^(on_hold)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(queue_name)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(recording_flagged)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(recording_id)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(recording_tags)$": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "^(webrtc_offer)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "anonymous": {
+      "default": false,
+      "type": "boolean"
+    },
+    "canTransferToApplication": {
+      "default": false,
+      "description": "can_transfer_to_application is server-computed: true for inbound calls and\n taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain\n outbound calls must not be offered application (IVR module) transfer\n targets — forwarding them into a queue module strands the agent\n (DEV-549/B2-526). Clients gate the \"App\" transfer-target segment on this\n flag instead of re-deriving the rule from direction/source themselves.",
+      "type": "boolean"
+    },
+    "direction": {
+      "anyOf": [
+        {
+          "pattern": "^CALL_DIRECTION_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "CALL_DIRECTION_INBOUND",
+            "CALL_DIRECTION_OUTBOUND"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Call Direction"
+    },
+    "establishedAt": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "from": {
+      "default": "",
+      "type": "string"
+    },
+    "iceServers": {
+      "items": {
+        "$ref": "babelconnect.v1.IceServer.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "muted": {
+      "default": false,
+      "type": "boolean"
+    },
+    "onHold": {
+      "default": false,
+      "type": "boolean"
+    },
+    "queueName": {
+      "default": "",
+      "type": "string"
+    },
+    "recording": {
+      "default": false,
+      "type": "boolean"
+    },
+    "recordingFlagged": {
+      "default": false,
+      "type": "boolean"
+    },
+    "recordingId": {
+      "default": "",
+      "type": "string"
+    },
+    "recordingTags": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "source": {
+      "anyOf": [
+        {
+          "pattern": "^CALL_SOURCE_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "CALL_SOURCE_API",
+            "CALL_SOURCE_WEBRTC",
+            "CALL_SOURCE_QUEUE",
+            "CALL_SOURCE_TRANSFER",
+            "CALL_SOURCE_DIALER",
+            "CALL_SOURCE_CONFERENCE",
+            "CALL_SOURCE_CALLBACK"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Call Source"
+    },
+    "state": {
+      "anyOf": [
+        {
+          "pattern": "^CALL_LIFECYCLE_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "CALL_LIFECYCLE_INIT",
+            "CALL_LIFECYCLE_RINGING",
+            "CALL_LIFECYCLE_IN_PROGRESS",
+            "CALL_LIFECYCLE_BRIDGED",
+            "CALL_LIFECYCLE_COMPLETED",
+            "CALL_LIFECYCLE_FAILED"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Call Lifecycle"
+    },
+    "to": {
+      "default": "",
+      "type": "string"
+    },
+    "webrtcOffer": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Call State",
+  "type": "object"
+}

@@ -1,0 +1,32 @@
+{
+  "$id": "babelconnect.v1.FeatureCti.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "FeatureCti gates CTI/integration behavior (screen-pop + app→host call events).",
+  "patternProperties": {
+    "^(emit_call_events)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(screen_pop)$": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "properties": {
+    "emitCallEvents": {
+      "default": false,
+      "type": "boolean"
+    },
+    "enabled": {
+      "default": false,
+      "type": "boolean"
+    },
+    "screenPop": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Feature Cti",
+  "type": "object"
+}

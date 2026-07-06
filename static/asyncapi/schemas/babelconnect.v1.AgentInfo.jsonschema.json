@@ -1,0 +1,208 @@
+{
+  "$id": "babelconnect.v1.AgentInfo.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "AgentInfo is the agent block of the view (identity + live presence + caps).",
+  "patternProperties": {
+    "^(account_id)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(account_name)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(always_record_outbound)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(available_numbers)$": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "^(available_tags)$": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "^(campaign_status)$": {
+      "$ref": "babelconnect.v1.CampaignStatus.jsonschema.json",
+      "description": "Outbound-dialer (predictive campaign) membership state, kept live by the\n server. Unset/UNSPECIFIED means the agent has never touched a campaign\n this session; explicit OFFLINE means they left/aren't in one."
+    },
+    "^(can_record)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(display_as)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(line_blocked)$": {
+      "default": false,
+      "description": "Involuntary line block: the ACD/platform marked the agent busy / unreachable /\n declined (a recoverable state cleared via ResetLineStatus) — distinct from a\n chosen \"busy\" presence the agent (or sign-out-as-busy) selected. Drives the\n line-blocked banner + Reset; a voluntary busy presence leaves this false.",
+      "type": "boolean"
+    },
+    "^(presence_label)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(presence_name)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(presence_options)$": {
+      "description": "Presence selector: the options the agent may switch to (AVAILABLE plus any\n configured pause reasons), and the current presence's exact name+label. The\n `presence` enum above stays the coarse bucket for icons/colors; these carry\n the precise presence name+label the client renders + selects.",
+      "items": {
+        "$ref": "babelconnect.v1.PresenceOption.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "^(sms_capable_numbers)$": {
+      "description": "Subset of `available_numbers` the platform marks SMS-capable. Drives the\n SMS composer's From picker; empty/unknown ⇒ client falls back to\n `available_numbers`.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "^(webrtc_enabled)$": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "properties": {
+    "accountId": {
+      "default": "",
+      "type": "string"
+    },
+    "accountName": {
+      "default": "",
+      "type": "string"
+    },
+    "accounts": {
+      "description": "Accounts this agent may switch to without re-logging-in (agent-role only,\n resolved at auth). One is marked `current`. Drives the Account tab's\n switcher; empty/single ⇒ no picker.",
+      "items": {
+        "$ref": "babelconnect.v1.Account.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "alwaysRecordOutbound": {
+      "default": false,
+      "type": "boolean"
+    },
+    "availableNumbers": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "availableTags": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "campaignStatus": {
+      "$ref": "babelconnect.v1.CampaignStatus.jsonschema.json",
+      "description": "Outbound-dialer (predictive campaign) membership state, kept live by the\n server. Unset/UNSPECIFIED means the agent has never touched a campaign\n this session; explicit OFFLINE means they left/aren't in one."
+    },
+    "canRecord": {
+      "default": false,
+      "type": "boolean"
+    },
+    "displayAs": {
+      "default": "",
+      "type": "string"
+    },
+    "email": {
+      "default": "",
+      "description": "The agent's own email — distinct from `username`, which is the *login*\n identity and may differ. Populated for the embedding bridge's legacy-shaped\n `agent.loaded` payload so host pages can match/route on it.",
+      "type": "string"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "lineBlocked": {
+      "default": false,
+      "description": "Involuntary line block: the ACD/platform marked the agent busy / unreachable /\n declined (a recoverable state cleared via ResetLineStatus) — distinct from a\n chosen \"busy\" presence the agent (or sign-out-as-busy) selected. Drives the\n line-blocked banner + Reset; a voluntary busy presence leaves this false.",
+      "type": "boolean"
+    },
+    "name": {
+      "default": "",
+      "type": "string"
+    },
+    "number": {
+      "default": "",
+      "type": "string"
+    },
+    "phonebook": {
+      "items": {
+        "$ref": "babelconnect.v1.PhonebookEntry.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "presence": {
+      "anyOf": [
+        {
+          "pattern": "^AGENT_STATE_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "AGENT_STATE_OFFLINE",
+            "AGENT_STATE_AVAILABLE",
+            "AGENT_STATE_IN_CALL",
+            "AGENT_STATE_WRAP_UP",
+            "AGENT_STATE_PAUSED",
+            "AGENT_STATE_RINGING",
+            "AGENT_STATE_BUSY"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Agent State"
+    },
+    "presenceLabel": {
+      "default": "",
+      "type": "string"
+    },
+    "presenceName": {
+      "default": "",
+      "type": "string"
+    },
+    "presenceOptions": {
+      "description": "Presence selector: the options the agent may switch to (AVAILABLE plus any\n configured pause reasons), and the current presence's exact name+label. The\n `presence` enum above stays the coarse bucket for icons/colors; these carry\n the precise presence name+label the client renders + selects.",
+      "items": {
+        "$ref": "babelconnect.v1.PresenceOption.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "smsCapableNumbers": {
+      "description": "Subset of `available_numbers` the platform marks SMS-capable. Drives the\n SMS composer's From picker; empty/unknown ⇒ client falls back to\n `available_numbers`.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "username": {
+      "default": "",
+      "description": "Identity for the shell/Status surface (resolved at auth, no extra fetch).",
+      "type": "string"
+    },
+    "webrtcEnabled": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Agent Info",
+  "type": "object"
+}

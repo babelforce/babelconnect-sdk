@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.ResetLineStatus.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "ResetLineStatus clears a blocked line state (busy/unreachable/declined) so the\n agent can receive calls again.",
+  "properties": {},
+  "title": "Reset Line Status",
+  "type": "object"
+}

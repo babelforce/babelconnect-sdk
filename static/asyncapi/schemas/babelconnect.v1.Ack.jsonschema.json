@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.Ack.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Ack is the empty reply to Send. It only confirms the server accepted the\n command for processing — the resulting state (or an Error) is delivered on the\n Subscribe stream, never in this reply.",
+  "properties": {},
+  "title": "Ack",
+  "type": "object"
+}
