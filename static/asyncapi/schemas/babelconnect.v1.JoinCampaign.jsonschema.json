@@ -1,0 +1,24 @@
+{
+  "$id": "babelconnect.v1.JoinCampaign.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "JoinCampaign enters a campaign. The client normally sends `paused` false so\n the agent starts `waiting` for a lead right away.",
+  "patternProperties": {
+    "^(campaign_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "campaignId": {
+      "default": "",
+      "type": "string"
+    },
+    "paused": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Join Campaign",
+  "type": "object"
+}

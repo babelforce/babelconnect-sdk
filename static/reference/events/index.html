@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>babelconnect Events API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="babelconnect event-plane (StateUpdate stream) reference (AsyncAPI)." />
+    <link rel="icon" href="/babelconnect-sdk/img/favicon.ico" />
+    <!-- AsyncAPI React component standalone bundle (renders its own UI, like the Redoc
+         page next door). Pinned to an EXACT version, not `@2`: the floating major shifts its
+         bundled parser's supported AsyncAPI version, which silently breaks the spec-version match.
+         2.6.5's parser supports up to AsyncAPI 3.0.0 and REJECTS 3.1.0, and it resolves external
+         $refs via Node readFile (absent in browsers) — so the spec it loads must be 3.0.0 AND
+         self-contained (the served babelconnect.asyncapi.yaml is a BUNDLE with refs inlined).
+         If you change this pin, re-test the rendered page (e.g. headless) before shipping. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@asyncapi/react-component@2.6.5/styles/default.min.css" />
+    <style>
+      body { margin: 0; padding: 0; }
+    </style>
+  </head>
+  <body>
+    <!-- Spec + its $ref'd JSON Schemas are served from the site's static assets
+         (baseUrl /babelconnect-sdk/); schemas/ sits alongside the spec so its relative
+         $refs resolve. -->
+    <!-- Fallback shown until the renderer replaces it (or if JS is off / the CDN bundle is
+         blocked): a direct link to the raw spec so the reference is never a blank page. -->
+    <div id="asyncapi">
+      <p style="font-family: system-ui, sans-serif; padding: 1.5rem; max-width: 40rem;">
+        Loading the interactive Events reference… If it doesn't appear, your browser may be
+        blocking the renderer — you can read the raw
+        <a href="/babelconnect-sdk/asyncapi/babelconnect.asyncapi.yaml">AsyncAPI&nbsp;spec</a> directly.
+      </p>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@asyncapi/react-component@2.6.5/browser/standalone/index.js"></script>
+    <script>
+      // Guard the CDN dependency: if the bundle didn't load, leave the fallback link in place
+      // rather than throwing a ReferenceError and leaving a blank page.
+      if (typeof AsyncApiStandalone !== 'undefined') {
+        AsyncApiStandalone.render(
+          {
+            schema: { url: '/babelconnect-sdk/asyncapi/babelconnect.asyncapi.yaml' },
+            config: { show: { sidebar: true, errors: true } },
+          },
+          document.getElementById('asyncapi'),
+        );
+      }
+    </script>
+  </body>
+</html>

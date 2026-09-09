@@ -1,0 +1,42 @@
+{
+  "$id": "babelconnect.v1.Conference.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Conference is one multi-party call the agent is in. The server folds multi-party\n call updates into this entity and emits conference_upsert/remove patches. The\n client is a dumb renderer that shows the participant panel and sends conference\n intents. Usually 0 or 1 per agent. Upsert-by-id; removed when the conference\n finishes or the agent's own member leaves.",
+  "patternProperties": {
+    "^(i_am_moderator)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(my_member_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "iAmModerator": {
+      "default": false,
+      "type": "boolean"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "members": {
+      "items": {
+        "$ref": "babelconnect.v1.ConferenceMember.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "myMemberId": {
+      "default": "",
+      "type": "string"
+    },
+    "state": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Conference",
+  "type": "object"
+}

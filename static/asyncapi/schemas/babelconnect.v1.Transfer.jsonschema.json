@@ -1,0 +1,44 @@
+{
+  "$id": "babelconnect.v1.Transfer.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Transfer hands the current call to a target. Exactly one target is set:\n `to` (external number), `agent_id` (another agent), or `application_id` (a\n queue/voice application). `warm` selects attended (consult-then-drop) vs\n blind/cold (single action).",
+  "patternProperties": {
+    "^(agent_id)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(application_id)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(call_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "agentId": {
+      "default": "",
+      "type": "string"
+    },
+    "applicationId": {
+      "default": "",
+      "type": "string"
+    },
+    "callId": {
+      "default": "",
+      "type": "string"
+    },
+    "to": {
+      "default": "",
+      "type": "string"
+    },
+    "warm": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Transfer",
+  "type": "object"
+}

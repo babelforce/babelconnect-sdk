@@ -1,0 +1,63 @@
+{
+  "$id": "babelconnect.v1.Patch.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Patch is an entity-level delta applied mechanically by the client cache:\n replace the agent block, upsert/remove a call by id, or set wrap-up.",
+  "patternProperties": {
+    "^(call_remove)$": {
+      "type": "string"
+    },
+    "^(call_upsert)$": {
+      "$ref": "babelconnect.v1.CallState.jsonschema.json"
+    },
+    "^(conference_remove)$": {
+      "type": "string"
+    },
+    "^(conference_upsert)$": {
+      "$ref": "babelconnect.v1.Conference.jsonschema.json"
+    },
+    "^(sms_remove)$": {
+      "type": "string"
+    },
+    "^(sms_upsert)$": {
+      "$ref": "babelconnect.v1.SmsConversation.jsonschema.json"
+    },
+    "^(wrap_up)$": {
+      "$ref": "babelconnect.v1.WrapUpStatus.jsonschema.json"
+    }
+  },
+  "properties": {
+    "agent": {
+      "$ref": "babelconnect.v1.AgentInfo.jsonschema.json"
+    },
+    "callRemove": {
+      "type": "string"
+    },
+    "callUpsert": {
+      "$ref": "babelconnect.v1.CallState.jsonschema.json"
+    },
+    "conferenceRemove": {
+      "type": "string"
+    },
+    "conferenceUpsert": {
+      "$ref": "babelconnect.v1.Conference.jsonschema.json"
+    },
+    "config": {
+      "$ref": "babelconnect.v1.AppConfig.jsonschema.json"
+    },
+    "notification": {
+      "$ref": "babelconnect.v1.Notification.jsonschema.json"
+    },
+    "smsRemove": {
+      "type": "string"
+    },
+    "smsUpsert": {
+      "$ref": "babelconnect.v1.SmsConversation.jsonschema.json"
+    },
+    "wrapUp": {
+      "$ref": "babelconnect.v1.WrapUpStatus.jsonschema.json"
+    }
+  },
+  "title": "Patch",
+  "type": "object"
+}

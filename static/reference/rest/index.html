@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>babelconnect REST API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="babelconnect REST/JSON API reference (OpenAPI)." />
+    <link rel="icon" href="/babelconnect-sdk/img/favicon.ico" />
+    <style>
+      body { margin: 0; padding: 0; }
+    </style>
+  </head>
+  <body>
+    <!-- Spec is served from the site's static assets (baseUrl /babelconnect-sdk/).
+         The child <p> is a fallback: Redoc replaces it on render, but it stays visible if JS is
+         off or the CDN bundle is blocked, so the reference is never a blank page. -->
+    <redoc spec-url="/babelconnect-sdk/openapi/babelconnect.openapi.json">
+      <p style="font-family: system-ui, sans-serif; padding: 1.5rem; max-width: 40rem;">
+        Loading the interactive REST reference… If it doesn't appear, your browser may be
+        blocking the renderer — you can read the raw
+        <a href="/babelconnect-sdk/openapi/babelconnect.openapi.json">OpenAPI&nbsp;spec</a> directly.
+      </p>
+    </redoc>
+    <!-- Redoc standalone bundles its own renderer (independent of the site's React). Pinned. -->
+    <script src="https://cdn.jsdelivr.net/npm/redoc@2.2.0/bundles/redoc.standalone.js"></script>
+  </body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "$id": "babelconnect.v1.StartRecording.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "StartRecording begins recording the given call.",
+  "patternProperties": {
+    "^(call_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "callId": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Start Recording",
+  "type": "object"
+}

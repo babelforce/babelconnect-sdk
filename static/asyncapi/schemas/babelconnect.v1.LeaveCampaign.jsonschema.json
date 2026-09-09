@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.LeaveCampaign.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "LeaveCampaign exits the current campaign (the server resolves which one).\n Available both from the campaign selector row and from within an active\n call.",
+  "properties": {},
+  "title": "Leave Campaign",
+  "type": "object"
+}

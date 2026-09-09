@@ -1,0 +1,44 @@
+{
+  "$id": "babelconnect.v1.Notification.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Notification is a transient one-shot the client surfaces (a CTI screen-pop /\n pushed agent data). It is NOT stored in the AgentView snapshot — it fires once.",
+  "patternProperties": {
+    "^(data_json)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "body": {
+      "default": "",
+      "type": "string"
+    },
+    "dataJson": {
+      "default": "",
+      "type": "string"
+    },
+    "kind": {
+      "default": "",
+      "type": "string"
+    },
+    "title": {
+      "default": "",
+      "type": "string"
+    },
+    "ts": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    }
+  },
+  "title": "Notification",
+  "type": "object"
+}

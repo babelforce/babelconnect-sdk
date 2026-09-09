@@ -1,0 +1,23 @@
+{
+  "$id": "babelconnect.v1.Pong.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Pong replies to a server Ping (StateUpdate.ping), echoing its `seq` so the server\n can match it to the outstanding ping and compute RTT. Sent automatically by the\n SDK from its stream-receive loop — not a user intent. (APP-A5/CALL-M6.)",
+  "properties": {
+    "seq": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "pattern": "^[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    }
+  },
+  "title": "Pong",
+  "type": "object"
+}

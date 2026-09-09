@@ -1,0 +1,15 @@
+{
+  "$id": "babelconnect.v1.PhonebookResponse.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "entries": {
+      "items": {
+        "$ref": "babelconnect.v1.PhonebookEntry.jsonschema.json"
+      },
+      "type": "array"
+    }
+  },
+  "title": "Phonebook Response",
+  "type": "object"
+}

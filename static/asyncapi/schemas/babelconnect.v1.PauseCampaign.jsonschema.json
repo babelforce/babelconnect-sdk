@@ -1,0 +1,14 @@
+{
+  "$id": "babelconnect.v1.PauseCampaign.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "PauseCampaign pauses (`on=true`, POST .../pause) or resumes (`on=false`,\n POST .../unpause) the campaign — no request body either way (OBDA2), same\n on/off shape as Mute/Hold.",
+  "properties": {
+    "on": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Pause Campaign",
+  "type": "object"
+}

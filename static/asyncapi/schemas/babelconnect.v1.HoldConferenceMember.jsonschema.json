@@ -1,0 +1,24 @@
+{
+  "$id": "babelconnect.v1.HoldConferenceMember.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "HoldConferenceMember holds or unholds an individual member (moderator only).",
+  "patternProperties": {
+    "^(member_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "memberId": {
+      "default": "",
+      "type": "string"
+    },
+    "on": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Hold Conference Member",
+  "type": "object"
+}

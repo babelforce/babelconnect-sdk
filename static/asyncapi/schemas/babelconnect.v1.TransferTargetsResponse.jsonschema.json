@@ -1,0 +1,15 @@
+{
+  "$id": "babelconnect.v1.TransferTargetsResponse.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "targets": {
+      "items": {
+        "$ref": "babelconnect.v1.TransferTarget.jsonschema.json"
+      },
+      "type": "array"
+    }
+  },
+  "title": "Transfer Targets Response",
+  "type": "object"
+}

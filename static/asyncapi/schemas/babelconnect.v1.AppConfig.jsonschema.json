@@ -1,0 +1,41 @@
+{
+  "$id": "babelconnect.v1.AppConfig.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "AppConfig is the server-resolved, per-agent feature configuration the client\n renders against (UI = f(view)): which surfaces are shown and their per-feature\n settings. Resolved server-side per deployment + account, so the client is a\n pure renderer. Carried on the snapshot (no patch) — config applies on next connect.",
+  "patternProperties": {
+    "^(server_version)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "account": {
+      "$ref": "babelconnect.v1.FeatureAccount.jsonschema.json"
+    },
+    "calls": {
+      "$ref": "babelconnect.v1.FeatureCalls.jsonschema.json"
+    },
+    "cti": {
+      "$ref": "babelconnect.v1.FeatureCti.jsonschema.json"
+    },
+    "history": {
+      "$ref": "babelconnect.v1.FeatureHistory.jsonschema.json"
+    },
+    "messaging": {
+      "$ref": "babelconnect.v1.FeatureMessaging.jsonschema.json"
+    },
+    "outbound": {
+      "$ref": "babelconnect.v1.FeatureOutbound.jsonschema.json"
+    },
+    "phonebook": {
+      "$ref": "babelconnect.v1.FeaturePhonebook.jsonschema.json"
+    },
+    "serverVersion": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "App Config",
+  "type": "object"
+}

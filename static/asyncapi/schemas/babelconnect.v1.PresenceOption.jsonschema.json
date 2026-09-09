@@ -1,0 +1,22 @@
+{
+  "$id": "babelconnect.v1.PresenceOption.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "PresenceOption is one selectable agent presence — \"Available\" or a configured\n pause reason. `available` is whether the agent can receive calls in it.",
+  "properties": {
+    "available": {
+      "default": false,
+      "type": "boolean"
+    },
+    "label": {
+      "default": "",
+      "type": "string"
+    },
+    "name": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Presence Option",
+  "type": "object"
+}

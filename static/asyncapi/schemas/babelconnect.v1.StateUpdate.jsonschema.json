@@ -1,0 +1,38 @@
+{
+  "$id": "babelconnect.v1.StateUpdate.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "StateUpdate is the single server → client message on the Subscribe stream. On\n open the client receives a snapshot; thereafter partial patches. `seq` is\n monotonic across snapshot+patch — a gap means the client should resubscribe\n for a fresh snapshot. `error` is an out-of-band notice (command rejection /\n server warning) and does NOT advance `seq`. `keepalive` is an empty transport\n heartbeat (see Keepalive) that likewise does NOT advance `seq` and carries no\n state — client caches must ignore it.",
+  "properties": {
+    "error": {
+      "$ref": "babelconnect.v1.Error.jsonschema.json"
+    },
+    "keepalive": {
+      "$ref": "babelconnect.v1.Keepalive.jsonschema.json"
+    },
+    "patch": {
+      "$ref": "babelconnect.v1.Patch.jsonschema.json"
+    },
+    "ping": {
+      "$ref": "babelconnect.v1.Ping.jsonschema.json"
+    },
+    "seq": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "pattern": "^[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "snapshot": {
+      "$ref": "babelconnect.v1.AgentView.jsonschema.json"
+    }
+  },
+  "title": "State Update",
+  "type": "object"
+}

@@ -1,0 +1,20 @@
+{
+  "$id": "babelconnect.v1.KickConferenceMember.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "KickConferenceMember removes a member from the conference (moderator only).",
+  "patternProperties": {
+    "^(member_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "memberId": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Kick Conference Member",
+  "type": "object"
+}

@@ -1,0 +1,14 @@
+{
+  "$id": "babelconnect.v1.StartConference.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "StartConference opens a conference around the agent's current call. `hold` puts\n the existing party on hold while the first new member is dialed.",
+  "properties": {
+    "hold": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Start Conference",
+  "type": "object"
+}

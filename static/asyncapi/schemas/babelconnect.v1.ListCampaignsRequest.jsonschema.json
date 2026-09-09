@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.ListCampaignsRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "ListCampaignsRequest / ListCampaignsResponse back the campaign picker\n (OBDA1). Empty request: the server always asks the backend for active\n campaigns only (`?active=true`) — there is no agent-facing use for\n inactive ones.",
+  "properties": {},
+  "title": "List Campaigns Request",
+  "type": "object"
+}

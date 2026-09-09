@@ -1,0 +1,23 @@
+{
+  "$id": "babelconnect.v1.Ping.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Ping is a liveness probe the server sends on the heartbeat tick (replacing the\n bare Keepalive frame). The client echoes `seq` back in a Pong command; the server\n measures round-trip time (RTT) from the reply and tracks per-session liveness.\n Like Keepalive it keeps the connection warm, carries no state, and does NOT\n advance `seq` — caches ignore it, and the reply is handled in the client's stream\n loop, not the state reducer. (APP-A5/CALL-M6.)",
+  "properties": {
+    "seq": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "pattern": "^[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    }
+  },
+  "title": "Ping",
+  "type": "object"
+}

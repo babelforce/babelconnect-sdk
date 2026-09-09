@@ -1,0 +1,48 @@
+{
+  "$id": "babelconnect.v1.SmsThreadRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SmsThreadRequest / SmsThreadResponse page the messages of one SMS conversation.",
+  "patternProperties": {
+    "^(conversation_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "conversationId": {
+      "default": "",
+      "type": "string"
+    },
+    "max": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "page": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    }
+  },
+  "title": "Sms Thread Request",
+  "type": "object"
+}

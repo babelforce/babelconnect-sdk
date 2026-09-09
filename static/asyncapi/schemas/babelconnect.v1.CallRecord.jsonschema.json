@@ -1,0 +1,106 @@
+{
+  "$id": "babelconnect.v1.CallRecord.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "CallRecord is one past call for the history list (a flattened conversation).",
+  "patternProperties": {
+    "^(duration_ms)$": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "^(has_recording)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(recording_url)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "contact": {
+      "default": "",
+      "type": "string"
+    },
+    "direction": {
+      "anyOf": [
+        {
+          "pattern": "^CALL_DIRECTION_UNSPECIFIED$",
+          "type": "string"
+        },
+        {
+          "enum": [
+            "CALL_DIRECTION_INBOUND",
+            "CALL_DIRECTION_OUTBOUND"
+          ],
+          "type": "string"
+        },
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        }
+      ],
+      "default": 0,
+      "title": "Call Direction"
+    },
+    "durationMs": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "from": {
+      "default": "",
+      "type": "string"
+    },
+    "hasRecording": {
+      "default": false,
+      "type": "boolean"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "recordingUrl": {
+      "default": "",
+      "type": "string"
+    },
+    "time": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "to": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Call Record",
+  "type": "object"
+}

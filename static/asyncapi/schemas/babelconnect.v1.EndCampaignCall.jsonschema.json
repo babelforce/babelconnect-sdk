@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.EndCampaignCall.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "EndCampaignCall ends the agent's live campaign call. Deliberately distinct\n from the generic Hangup: it also releases the dialer's channel and drives\n the campaign member-state transition to DISPOSITION, neither of which a\n plain media-plane hangup would trigger.",
+  "properties": {},
+  "title": "End Campaign Call",
+  "type": "object"
+}

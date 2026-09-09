@@ -1,0 +1,24 @@
+{
+  "$id": "babelconnect.v1.IceServer.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "IceServer is a STUN/TURN server the client applies to its WebRTC peer\n connection (RTCIceServer shape). Carried on CallState so an off-host client\n (e.g. a phone) can relay media through TURN when it can't reach the server's\n host ICE candidates. Empty in the in-cluster/LAN case.",
+  "properties": {
+    "credential": {
+      "default": "",
+      "type": "string"
+    },
+    "urls": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "username": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Ice Server",
+  "type": "object"
+}

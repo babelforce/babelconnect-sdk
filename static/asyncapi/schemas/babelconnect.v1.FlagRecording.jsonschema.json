@@ -1,0 +1,20 @@
+{
+  "$id": "babelconnect.v1.FlagRecording.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "FlagRecording toggles the \"flagged\" mark on the call's active recording.",
+  "patternProperties": {
+    "^(call_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "callId": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Flag Recording",
+  "type": "object"
+}

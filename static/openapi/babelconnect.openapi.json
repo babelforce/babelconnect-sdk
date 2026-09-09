@@ -1,0 +1,3809 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Babelconnect Agent API",
+    "version": "1.0.0",
+    "description": "Control-plane contract for **babelconnect-server** — the single API surface every\nBabelconnect SDK (Go, TypeScript, Dart; later Python) targets.\n\nThis document is generated from the protobuf source of truth\n(`babelconnect-proto/proto/babelconnect/v1/babelconnect.proto`) and describes the\n**request/response plane**: the `Agent` gRPC service (native HTTP/2 + gRPC-web) and\nthe REST/JSON endpoints mapped from it. The server→client **event plane** — the\n`StateUpdate` push stream delivered over `Session`/`Subscribe` — is documented\nseparately in the AsyncAPI spec (`docs/asyncapi/babelconnect.asyncapi.yaml`).\n\n**Auth:** clients obtain an OAuth2 bearer token (password grant via `POST /oauth/token`,\nor the `/auth/sso/*` SSO flow) and send it as `authorization: Bearer \u003ctoken\u003e` gRPC\nmetadata on every call — or as the `Authorization` header on the REST/JSON endpoints.\n"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Same origin as the babelconnect-server gRPC-web / REST / auth surface."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Same-origin OAuth2 / SSO endpoints proxied to the babelforce backend."
+    },
+    {
+      "name": "babelconnect.v1.Agent"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "OAuth2 bearer access token (obtained from `POST /oauth/token` or the SSO flow). Sent as `authorization: Bearer \u003ctoken\u003e` gRPC/gRPC-web metadata on every call, and as the `Authorization` header on the REST/JSON endpoints.\n"
+      },
+      "oauth2Password": {
+        "type": "oauth2",
+        "description": "Resource-owner password grant, proxied to the babelforce backend via `POST /oauth/token`. The `/auth/sso/*` endpoints are the SSO alternative.\n",
+        "flows": {
+          "password": {
+            "tokenUrl": "/oauth/token",
+            "scopes": {}
+          }
+        }
+      }
+    },
+    "schemas": {
+      "babelconnect.v1.Account": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "customer / account id (proto string)"
+          },
+          "name": {
+            "type": "string",
+            "title": "name",
+            "description": "company / display name (proto string)"
+          },
+          "current": {
+            "type": "boolean",
+            "title": "current",
+            "description": "the account this session is currently scoped to (proto bool)"
+          }
+        },
+        "title": "Account",
+        "additionalProperties": false,
+        "description": "Account is one tenant the signed-in agent can operate in — the switchable set\n (agent-role only) surfaced for the account picker."
+      },
+      "babelconnect.v1.Ack": {
+        "type": "object",
+        "title": "Ack",
+        "additionalProperties": false,
+        "description": "Ack is the empty reply to Send. It only confirms the server accepted the\n command for processing — the resulting state (or an Error) is delivered on the\n Subscribe stream, never in this reply."
+      },
+      "babelconnect.v1.AddConferenceMember": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "title": "agent_id",
+            "description": "(proto string)"
+          },
+          "number": {
+            "type": "string",
+            "title": "number",
+            "description": "(proto string)"
+          },
+          "holdOthers": {
+            "type": "boolean",
+            "title": "hold_others",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "AddConferenceMember",
+        "additionalProperties": false,
+        "description": "AddConferenceMember invites a participant — exactly one of agent_id / number.\n Starts a conference first if none is active. `hold_others` parks every other\n live, non-held member of the CURRENT conference before the invite goes out\n (default off) so they don't overhear the new invitee ringing; the server\n unholds them again once the invitee reaches a terminal state (added =\n joined, or failed/removed = rejected/timed out). No effect when starting a\n brand-new conference: StartConference(hold=true) already parks the original\n party unconditionally in that case."
+      },
+      "babelconnect.v1.AgentInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "Agent UUID (hyphen-normalized) (proto string)"
+          },
+          "name": {
+            "type": "string",
+            "title": "name",
+            "description": "(proto string)"
+          },
+          "number": {
+            "type": "string",
+            "title": "number",
+            "description": "(proto string)"
+          },
+          "presence": {
+            "title": "presence",
+            "description": "(proto babelconnect.v1.AgentState)",
+            "$ref": "#/components/schemas/babelconnect.v1.AgentState"
+          },
+          "webrtcEnabled": {
+            "type": "boolean",
+            "title": "webrtc_enabled",
+            "description": "(proto bool)"
+          },
+          "displayAs": {
+            "type": "string",
+            "title": "display_as",
+            "description": "currently selected outbound number (proto string)"
+          },
+          "availableNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "available_numbers",
+            "description": "(proto string)"
+          },
+          "canRecord": {
+            "type": "boolean",
+            "title": "can_record",
+            "description": "(proto bool)"
+          },
+          "presenceOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.PresenceOption"
+            },
+            "title": "presence_options",
+            "description": "Presence selector: the options the agent may switch to (AVAILABLE plus any\n configured pause reasons), and the current presence's exact name+label. The\n `presence` enum above stays the coarse bucket for icons/colors; these carry\n the precise presence name+label the client renders + selects. (proto babelconnect.v1.PresenceOption)"
+          },
+          "presenceName": {
+            "type": "string",
+            "title": "presence_name",
+            "description": "current presence name, e.g. \"available\", \"break\" (proto string)"
+          },
+          "presenceLabel": {
+            "type": "string",
+            "title": "presence_label",
+            "description": "current presence label, e.g. \"Available\", \"Break\" (proto string)"
+          },
+          "availableTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "available_tags",
+            "description": "recording tags the agent may apply (proto string)"
+          },
+          "phonebook": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.PhonebookEntry"
+            },
+            "title": "phonebook",
+            "description": "dial-from contacts + recent numbers (proto babelconnect.v1.PhonebookEntry)"
+          },
+          "alwaysRecordOutbound": {
+            "type": "boolean",
+            "title": "always_record_outbound",
+            "description": "account records every outbound automatically (proto bool)"
+          },
+          "username": {
+            "type": "string",
+            "title": "username",
+            "description": "Identity for the shell/Status surface (resolved at auth, no extra fetch). login / email (proto string)"
+          },
+          "accountId": {
+            "type": "string",
+            "title": "account_id",
+            "description": "customer / account id (proto string)"
+          },
+          "accountName": {
+            "type": "string",
+            "title": "account_name",
+            "description": "account / company display name, when known (proto string)"
+          },
+          "lineBlocked": {
+            "type": "boolean",
+            "title": "line_blocked",
+            "description": "Involuntary line block: the ACD/platform marked the agent busy / unreachable /\n declined (a recoverable state cleared via ResetLineStatus) — distinct from a\n chosen \"busy\" presence the agent (or sign-out-as-busy) selected. Drives the\n line-blocked banner + Reset; a voluntary busy presence leaves this false. (proto bool)"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.Account"
+            },
+            "title": "accounts",
+            "description": "Accounts this agent may switch to without re-logging-in (agent-role only,\n resolved at auth). One is marked `current`. Drives the Account tab's\n switcher; empty/single ⇒ no picker. (proto babelconnect.v1.Account)"
+          },
+          "email": {
+            "type": "string",
+            "title": "email",
+            "description": "The agent's own email — distinct from `username`, which is the *login*\n identity and may differ. Populated for the embedding bridge's legacy-shaped\n `agent.loaded` payload so host pages can match/route on it. (proto string)"
+          },
+          "smsCapableNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "sms_capable_numbers",
+            "description": "Subset of `available_numbers` the platform marks SMS-capable. Drives the\n SMS composer's From picker; empty/unknown ⇒ client falls back to\n `available_numbers`. (proto string)"
+          },
+          "campaignStatus": {
+            "title": "campaign_status",
+            "description": "Outbound-dialer (predictive campaign) membership state, kept live by the\n server. Unset/UNSPECIFIED means the agent has never touched a campaign\n this session; explicit OFFLINE means they left/aren't in one. (proto babelconnect.v1.CampaignStatus)",
+            "$ref": "#/components/schemas/babelconnect.v1.CampaignStatus"
+          }
+        },
+        "title": "AgentInfo",
+        "additionalProperties": false,
+        "description": "AgentInfo is the agent block of the view (identity + live presence + caps)."
+      },
+      "babelconnect.v1.AgentState": {
+        "type": "string",
+        "title": "AgentState",
+        "enum": [
+          "AGENT_STATE_UNSPECIFIED",
+          "AGENT_STATE_OFFLINE",
+          "AGENT_STATE_AVAILABLE",
+          "AGENT_STATE_IN_CALL",
+          "AGENT_STATE_WRAP_UP",
+          "AGENT_STATE_PAUSED",
+          "AGENT_STATE_RINGING",
+          "AGENT_STATE_BUSY"
+        ]
+      },
+      "babelconnect.v1.AgentView": {
+        "type": "object",
+        "properties": {
+          "agent": {
+            "title": "agent",
+            "description": "(proto babelconnect.v1.AgentInfo)",
+            "$ref": "#/components/schemas/babelconnect.v1.AgentInfo"
+          },
+          "activeCalls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.CallState"
+            },
+            "title": "active_calls",
+            "description": "calls currently in flight for this agent (proto babelconnect.v1.CallState)"
+          },
+          "wrapUp": {
+            "title": "wrap_up",
+            "description": "(proto babelconnect.v1.WrapUpStatus)",
+            "$ref": "#/components/schemas/babelconnect.v1.WrapUpStatus"
+          },
+          "sms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.SmsConversation"
+            },
+            "title": "sms",
+            "description": "SMS thread summaries (full history on demand) (proto babelconnect.v1.SmsConversation)"
+          },
+          "conferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.Conference"
+            },
+            "title": "conferences",
+            "description": "active multi-party conferences (usually 0 or 1) (proto babelconnect.v1.Conference)"
+          },
+          "config": {
+            "title": "config",
+            "description": "which surfaces this deployment/account shows (proto babelconnect.v1.AppConfig)",
+            "$ref": "#/components/schemas/babelconnect.v1.AppConfig"
+          }
+        },
+        "title": "AgentView",
+        "additionalProperties": false,
+        "description": "AgentView is the complete per-agent state the server owns and renders to. A\n snapshot carries the whole view; patches carry entity-level deltas."
+      },
+      "babelconnect.v1.AnswerCall": {
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "the RINGING call's id (proto string)"
+          },
+          "sdp": {
+            "type": "string",
+            "title": "sdp",
+            "description": "WebRTC SDP answer (proto string)"
+          }
+        },
+        "title": "AnswerCall",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.AppConfig": {
+        "type": "object",
+        "properties": {
+          "calls": {
+            "title": "calls",
+            "description": "(proto babelconnect.v1.FeatureCalls)",
+            "$ref": "#/components/schemas/babelconnect.v1.FeatureCalls"
+          },
+          "messaging": {
+            "title": "messaging",
+            "description": "(proto babelconnect.v1.FeatureMessaging)",
+            "$ref": "#/components/schemas/babelconnect.v1.FeatureMessaging"
+          },
+          "history": {
+            "title": "history",
+            "description": "(proto babelconnect.v1.FeatureHistory)",
+            "$ref": "#/components/schemas/babelconnect.v1.FeatureHistory"
+          },
+          "account": {
+            "title": "account",
+            "description": "(proto babelconnect.v1.FeatureAccount)",
+            "$ref": "#/components/schemas/babelconnect.v1.FeatureAccount"
+          },
+          "outbound": {
+            "title": "outbound",
+            "description": "(proto babelconnect.v1.FeatureOutbound)",
+            "$ref": "#/components/schemas/babelconnect.v1.FeatureOutbound"
+          },
+          "cti": {
+            "title": "cti",
+            "description": "(proto babelconnect.v1.FeatureCti)",
+            "$ref": "#/components/schemas/babelconnect.v1.FeatureCti"
+          },
+          "phonebook": {
+            "title": "phonebook",
+            "description": "Contacts (phonebook) tab (proto babelconnect.v1.FeaturePhonebook)",
+            "$ref": "#/components/schemas/babelconnect.v1.FeaturePhonebook"
+          },
+          "serverVersion": {
+            "type": "string",
+            "title": "server_version",
+            "description": "build version for the Status/About surface; reserve 8–14 (proto string)"
+          }
+        },
+        "title": "AppConfig",
+        "additionalProperties": false,
+        "description": "AppConfig is the server-resolved, per-agent feature configuration the client\n renders against (UI = f(view)): which surfaces are shown and their per-feature\n settings. Resolved server-side per deployment + account, so the client is a\n pure renderer. Carried on the snapshot (no patch) — config applies on next connect."
+      },
+      "babelconnect.v1.AuthenticateRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "token",
+            "description": "Optional: token may instead be supplied via \"authorization\" metadata. (proto string)"
+          }
+        },
+        "title": "AuthenticateRequest",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.CallDirection": {
+        "type": "string",
+        "title": "CallDirection",
+        "enum": [
+          "CALL_DIRECTION_UNSPECIFIED",
+          "CALL_DIRECTION_INBOUND",
+          "CALL_DIRECTION_OUTBOUND"
+        ]
+      },
+      "babelconnect.v1.CallLifecycle": {
+        "type": "string",
+        "title": "CallLifecycle",
+        "enum": [
+          "CALL_LIFECYCLE_UNSPECIFIED",
+          "CALL_LIFECYCLE_INIT",
+          "CALL_LIFECYCLE_RINGING",
+          "CALL_LIFECYCLE_IN_PROGRESS",
+          "CALL_LIFECYCLE_BRIDGED",
+          "CALL_LIFECYCLE_COMPLETED",
+          "CALL_LIFECYCLE_FAILED"
+        ]
+      },
+      "babelconnect.v1.CallRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "(proto string)"
+          },
+          "direction": {
+            "title": "direction",
+            "description": "(proto babelconnect.v1.CallDirection)",
+            "$ref": "#/components/schemas/babelconnect.v1.CallDirection"
+          },
+          "from": {
+            "type": "string",
+            "title": "from",
+            "description": "(proto string)"
+          },
+          "to": {
+            "type": "string",
+            "title": "to",
+            "description": "(proto string)"
+          },
+          "contact": {
+            "type": "string",
+            "title": "contact",
+            "description": "phonebook label for the other party, if known (proto string)"
+          },
+          "time": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "time",
+            "format": "int64",
+            "description": "unix seconds of the call (proto int64)"
+          },
+          "durationMs": {
+            "type": "integer",
+            "title": "duration_ms",
+            "format": "int32",
+            "description": "(proto int32)"
+          },
+          "hasRecording": {
+            "type": "boolean",
+            "title": "has_recording",
+            "description": "(proto bool)"
+          },
+          "recordingUrl": {
+            "type": "string",
+            "title": "recording_url",
+            "description": "playback URL when a recording exists (proto string)"
+          }
+        },
+        "title": "CallRecord",
+        "additionalProperties": false,
+        "description": "CallRecord is one past call for the history list (a flattened conversation)."
+      },
+      "babelconnect.v1.CallSource": {
+        "type": "string",
+        "title": "CallSource",
+        "enum": [
+          "CALL_SOURCE_UNSPECIFIED",
+          "CALL_SOURCE_API",
+          "CALL_SOURCE_WEBRTC",
+          "CALL_SOURCE_QUEUE",
+          "CALL_SOURCE_TRANSFER",
+          "CALL_SOURCE_DIALER",
+          "CALL_SOURCE_CONFERENCE",
+          "CALL_SOURCE_CALLBACK"
+        ]
+      },
+      "babelconnect.v1.CallState": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "server call id (proto string)"
+          },
+          "direction": {
+            "title": "direction",
+            "description": "(proto babelconnect.v1.CallDirection)",
+            "$ref": "#/components/schemas/babelconnect.v1.CallDirection"
+          },
+          "state": {
+            "title": "state",
+            "description": "(proto babelconnect.v1.CallLifecycle)",
+            "$ref": "#/components/schemas/babelconnect.v1.CallLifecycle"
+          },
+          "source": {
+            "title": "source",
+            "description": "(proto babelconnect.v1.CallSource)",
+            "$ref": "#/components/schemas/babelconnect.v1.CallSource"
+          },
+          "from": {
+            "type": "string",
+            "title": "from",
+            "description": "(proto string)"
+          },
+          "to": {
+            "type": "string",
+            "title": "to",
+            "description": "(proto string)"
+          },
+          "queueName": {
+            "type": "string",
+            "title": "queue_name",
+            "description": "(proto string)"
+          },
+          "establishedAt": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "established_at",
+            "format": "int64",
+            "description": "unix seconds when the call bridged (0 until then) (proto int64)"
+          },
+          "muted": {
+            "type": "boolean",
+            "title": "muted",
+            "description": "(proto bool)"
+          },
+          "onHold": {
+            "type": "boolean",
+            "title": "on_hold",
+            "description": "(proto bool)"
+          },
+          "recording": {
+            "type": "boolean",
+            "title": "recording",
+            "description": "(proto bool)"
+          },
+          "anonymous": {
+            "type": "boolean",
+            "title": "anonymous",
+            "description": "(proto bool)"
+          },
+          "webrtcOffer": {
+            "type": "string",
+            "title": "webrtc_offer",
+            "description": "SDP offer the client answers; set while RINGING (proto string)"
+          },
+          "recordingId": {
+            "type": "string",
+            "title": "recording_id",
+            "description": "active recording id (for stop/flag/tags) (proto string)"
+          },
+          "recordingTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "recording_tags",
+            "description": "(proto string)"
+          },
+          "recordingFlagged": {
+            "type": "boolean",
+            "title": "recording_flagged",
+            "description": "(proto bool)"
+          },
+          "iceServers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.IceServer"
+            },
+            "title": "ice_servers",
+            "description": "STUN/TURN servers the client applies; for off-host NAT traversal (proto babelconnect.v1.IceServer)"
+          },
+          "canTransferToApplication": {
+            "type": "boolean",
+            "title": "can_transfer_to_application",
+            "description": "can_transfer_to_application is server-computed: true for inbound calls and\n taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain\n outbound calls must not be offered application (IVR module) transfer\n targets — forwarding them into a queue module strands the agent\n (DEV-549/B2-526). Clients gate the \"App\" transfer-target segment on this\n flag instead of re-deriving the rule from direction/source themselves. (proto bool)"
+          }
+        },
+        "title": "CallState",
+        "additionalProperties": false,
+        "description": "CallState is one call as the server sees it. Replace-by-id on upsert."
+      },
+      "babelconnect.v1.Campaign": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "(proto string)"
+          },
+          "name": {
+            "type": "string",
+            "title": "name",
+            "description": "(proto string)"
+          },
+          "testMode": {
+            "type": "boolean",
+            "title": "test_mode",
+            "description": "(proto bool)"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "active",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "Campaign",
+        "additionalProperties": false,
+        "description": "Campaign is one outbound-dialer campaign the agent may join (the picker's\n entries). `test_mode` drives the \"name (live)\" / \"name (test)\" label."
+      },
+      "babelconnect.v1.CampaignMemberState": {
+        "type": "string",
+        "title": "CampaignMemberState",
+        "enum": [
+          "CAMPAIGN_MEMBER_STATE_UNSPECIFIED",
+          "CAMPAIGN_MEMBER_STATE_OFFLINE",
+          "CAMPAIGN_MEMBER_STATE_LOGGING_IN",
+          "CAMPAIGN_MEMBER_STATE_WAITING",
+          "CAMPAIGN_MEMBER_STATE_IDLE",
+          "CAMPAIGN_MEMBER_STATE_IN_PROGRESS",
+          "CAMPAIGN_MEMBER_STATE_DISPOSITION"
+        ],
+        "description": "CampaignMemberState is the predictive-dialer campaign membership\n lifecycle: offline -\u003e logging_in -\u003e waiting -\u003e in_progress -\u003e\n disposition (-\u003e waiting for the next lead), with idle as the paused branch\n (waiting/logging_in \u003c-\u003e idle via pause/resume) and leave returning to\n offline from any state."
+      },
+      "babelconnect.v1.CampaignMetrics": {
+        "type": "object",
+        "properties": {
+          "agentsInCalls": {
+            "type": "integer",
+            "title": "agents_in_calls",
+            "format": "int32",
+            "description": "agents.in_calls (proto int32)"
+          },
+          "agentsInDisp": {
+            "type": "integer",
+            "title": "agents_in_disp",
+            "format": "int32",
+            "description": "agents.in_disp (proto int32)"
+          },
+          "agentsPaused": {
+            "type": "integer",
+            "title": "agents_paused",
+            "format": "int32",
+            "description": "agents.paused (proto int32)"
+          },
+          "agentsWaiting": {
+            "type": "integer",
+            "title": "agents_waiting",
+            "format": "int32",
+            "description": "agents.waiting (proto int32)"
+          },
+          "callsBeingPlaced": {
+            "type": "integer",
+            "title": "calls_being_placed",
+            "format": "int32",
+            "description": "calls.being_placed (proto int32)"
+          },
+          "callsRinging": {
+            "type": "integer",
+            "title": "calls_ringing",
+            "format": "int32",
+            "description": "calls.ringing (proto int32)"
+          }
+        },
+        "title": "CampaignMetrics",
+        "additionalProperties": false,
+        "description": "CampaignMetrics is the campaign's live pacing snapshot — always this exact\n 6-key subset, never more."
+      },
+      "babelconnect.v1.CampaignStatus": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "title": "campaign_id",
+            "description": "(proto string)"
+          },
+          "campaignName": {
+            "type": "string",
+            "title": "campaign_name",
+            "description": "(proto string)"
+          },
+          "state": {
+            "title": "state",
+            "description": "(proto babelconnect.v1.CampaignMemberState)",
+            "$ref": "#/components/schemas/babelconnect.v1.CampaignMemberState"
+          },
+          "paused": {
+            "type": "boolean",
+            "title": "paused",
+            "description": "(proto bool)"
+          },
+          "lastReason": {
+            "type": "string",
+            "title": "last_reason",
+            "description": "(proto string)"
+          },
+          "since": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "since",
+            "format": "int64",
+            "description": "unix seconds this state was entered/last confirmed (proto int64)"
+          },
+          "lead": {
+            "title": "lead",
+            "description": "lead is the customer the dialer connected the agent to — set while a lead\n is being worked (IN_PROGRESS/DISPOSITION), unset otherwise. Updated the\n moment the dialer connects a lead. (proto babelconnect.v1.Lead)",
+            "$ref": "#/components/schemas/babelconnect.v1.Lead"
+          },
+          "metrics": {
+            "title": "metrics",
+            "description": "metrics is the campaign's live pacing snapshot (OBDD1), refreshed\n alongside the enrichment read while `state == IDLE` (paused) — the only\n state the Outbound tab shows it in; unset otherwise (and left unset if the\n GET /agent/outbound/metrics read 404s, e.g. between polls). (proto babelconnect.v1.CampaignMetrics)",
+            "$ref": "#/components/schemas/babelconnect.v1.CampaignMetrics"
+          }
+        },
+        "title": "CampaignStatus",
+        "additionalProperties": false,
+        "description": "CampaignStatus is the agent's outbound-dialer campaign membership envelope,\n kept live by the server. `last_reason` is the platform's last dial-outcome\n as a lowercase string (e.g. \"unreachable\", \"no_answer\", \"busy\", \"answer\",\n \"hungup\", \"none\") — a string rather than a wire enum on purpose. `paused`\n is a convenience mirror of `state == CAMPAIGN_MEMBER_STATE_IDLE`. The lead\n the agent is currently dialing, disposition reasons, and live campaign\n metrics are additive fields below, layered on top of this envelope."
+      },
+      "babelconnect.v1.Command": {
+        "type": "object",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "addConferenceMember": {
+                "title": "add_conference_member",
+                "description": "invite an agent or number (proto babelconnect.v1.AddConferenceMember)",
+                "$ref": "#/components/schemas/babelconnect.v1.AddConferenceMember"
+              }
+            },
+            "title": "add_conference_member",
+            "required": [
+              "addConferenceMember"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "answer": {
+                "title": "answer",
+                "description": "SDP answer to a RINGING CallState (proto babelconnect.v1.AnswerCall)",
+                "$ref": "#/components/schemas/babelconnect.v1.AnswerCall"
+              }
+            },
+            "title": "answer",
+            "required": [
+              "answer"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "disposeCall": {
+                "title": "dispose_call",
+                "description": "record the call outcome, optionally with a callback (OBDC1/OBDC2) (proto babelconnect.v1.DisposeCall)",
+                "$ref": "#/components/schemas/babelconnect.v1.DisposeCall"
+              }
+            },
+            "title": "dispose_call",
+            "required": [
+              "disposeCall"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "dtmf": {
+                "title": "dtmf",
+                "description": "(proto babelconnect.v1.SendDigits)",
+                "$ref": "#/components/schemas/babelconnect.v1.SendDigits"
+              }
+            },
+            "title": "dtmf",
+            "required": [
+              "dtmf"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "endCampaignCall": {
+                "title": "end_campaign_call",
+                "description": "Outbound-dialer call/disposition controls (OBDB2/OBDC1/OBDC2 follow-up). end the live campaign call (OBDB2) (proto babelconnect.v1.EndCampaignCall)",
+                "$ref": "#/components/schemas/babelconnect.v1.EndCampaignCall"
+              }
+            },
+            "title": "end_campaign_call",
+            "required": [
+              "endCampaignCall"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "endConference": {
+                "title": "end_conference",
+                "description": "moderator ends the whole conference (proto babelconnect.v1.EndConference)",
+                "$ref": "#/components/schemas/babelconnect.v1.EndConference"
+              }
+            },
+            "title": "end_conference",
+            "required": [
+              "endConference"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "flagRecording": {
+                "title": "flag_recording",
+                "description": "toggle the \"flagged\" tag on the recording (proto babelconnect.v1.FlagRecording)",
+                "$ref": "#/components/schemas/babelconnect.v1.FlagRecording"
+              }
+            },
+            "title": "flag_recording",
+            "required": [
+              "flagRecording"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "hangup": {
+                "title": "hangup",
+                "description": "(proto babelconnect.v1.Hangup)",
+                "$ref": "#/components/schemas/babelconnect.v1.Hangup"
+              }
+            },
+            "title": "hangup",
+            "required": [
+              "hangup"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "hold": {
+                "title": "hold",
+                "description": "(proto babelconnect.v1.Hold)",
+                "$ref": "#/components/schemas/babelconnect.v1.Hold"
+              }
+            },
+            "title": "hold",
+            "required": [
+              "hold"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "holdConferenceMember": {
+                "title": "hold_conference_member",
+                "description": "moderator holds/unholds a member (proto babelconnect.v1.HoldConferenceMember)",
+                "$ref": "#/components/schemas/babelconnect.v1.HoldConferenceMember"
+              }
+            },
+            "title": "hold_conference_member",
+            "required": [
+              "holdConferenceMember"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "joinCampaign": {
+                "title": "join_campaign",
+                "description": "Outbound-dialer campaign controls (OBDA1–3 CORE). enter a campaign (the picker's \"Enter\") (proto babelconnect.v1.JoinCampaign)",
+                "$ref": "#/components/schemas/babelconnect.v1.JoinCampaign"
+              }
+            },
+            "title": "join_campaign",
+            "required": [
+              "joinCampaign"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kickConferenceMember": {
+                "title": "kick_conference_member",
+                "description": "moderator removes a member (proto babelconnect.v1.KickConferenceMember)",
+                "$ref": "#/components/schemas/babelconnect.v1.KickConferenceMember"
+              }
+            },
+            "title": "kick_conference_member",
+            "required": [
+              "kickConferenceMember"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "leaveCampaign": {
+                "title": "leave_campaign",
+                "description": "leave the campaign (selector row or in-call) (proto babelconnect.v1.LeaveCampaign)",
+                "$ref": "#/components/schemas/babelconnect.v1.LeaveCampaign"
+              }
+            },
+            "title": "leave_campaign",
+            "required": [
+              "leaveCampaign"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "leaveConference": {
+                "title": "leave_conference",
+                "description": "hang up only my own leg (proto babelconnect.v1.LeaveConference)",
+                "$ref": "#/components/schemas/babelconnect.v1.LeaveConference"
+              }
+            },
+            "title": "leave_conference",
+            "required": [
+              "leaveConference"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "markConversationRead": {
+                "title": "mark_conversation_read",
+                "description": "clear unread on an SMS conversation (proto babelconnect.v1.MarkConversationRead)",
+                "$ref": "#/components/schemas/babelconnect.v1.MarkConversationRead"
+              }
+            },
+            "title": "mark_conversation_read",
+            "required": [
+              "markConversationRead"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "mute": {
+                "title": "mute",
+                "description": "(proto babelconnect.v1.Mute)",
+                "$ref": "#/components/schemas/babelconnect.v1.Mute"
+              }
+            },
+            "title": "mute",
+            "required": [
+              "mute"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "muteConferenceMember": {
+                "title": "mute_conference_member",
+                "description": "moderator mutes/unmutes a member (proto babelconnect.v1.MuteConferenceMember)",
+                "$ref": "#/components/schemas/babelconnect.v1.MuteConferenceMember"
+              }
+            },
+            "title": "mute_conference_member",
+            "required": [
+              "muteConferenceMember"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "pauseCampaign": {
+                "title": "pause_campaign",
+                "description": "pause (on=true) / resume (on=false) the campaign (proto babelconnect.v1.PauseCampaign)",
+                "$ref": "#/components/schemas/babelconnect.v1.PauseCampaign"
+              }
+            },
+            "title": "pause_campaign",
+            "required": [
+              "pauseCampaign"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "placeCall": {
+                "title": "place_call",
+                "description": "place an outbound call (proto babelconnect.v1.PlaceCall)",
+                "$ref": "#/components/schemas/babelconnect.v1.PlaceCall"
+              }
+            },
+            "title": "place_call",
+            "required": [
+              "placeCall"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "pong": {
+                "title": "pong",
+                "description": "reply to a server Ping (liveness + RTT); echoes Ping.seq (proto babelconnect.v1.Pong)",
+                "$ref": "#/components/schemas/babelconnect.v1.Pong"
+              }
+            },
+            "title": "pong",
+            "required": [
+              "pong"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "register": {
+                "title": "register",
+                "description": "announce reachability for this session (proto babelconnect.v1.Register)",
+                "$ref": "#/components/schemas/babelconnect.v1.Register"
+              }
+            },
+            "title": "register",
+            "required": [
+              "register"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "resetLineStatus": {
+                "title": "reset_line_status",
+                "description": "clear a blocked line (busy/unreachable) (proto babelconnect.v1.ResetLineStatus)",
+                "$ref": "#/components/schemas/babelconnect.v1.ResetLineStatus"
+              }
+            },
+            "title": "reset_line_status",
+            "required": [
+              "resetLineStatus"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "sendSms": {
+                "title": "send_sms",
+                "description": "send an SMS (same as the SendSms RPC) (proto babelconnect.v1.SendSmsRequest)",
+                "$ref": "#/components/schemas/babelconnect.v1.SendSmsRequest"
+              }
+            },
+            "title": "send_sms",
+            "required": [
+              "sendSms"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "setAgentNumber": {
+                "title": "set_agent_number",
+                "description": "the external-telephone number to bridge to (proto babelconnect.v1.SetAgentNumber)",
+                "$ref": "#/components/schemas/babelconnect.v1.SetAgentNumber"
+              }
+            },
+            "title": "set_agent_number",
+            "required": [
+              "setAgentNumber"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "setConversationOpen": {
+                "title": "set_conversation_open",
+                "description": "open/close (resolve) an SMS conversation (proto babelconnect.v1.SetConversationOpen)",
+                "$ref": "#/components/schemas/babelconnect.v1.SetConversationOpen"
+              }
+            },
+            "title": "set_conversation_open",
+            "required": [
+              "setConversationOpen"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "setDisplayAs": {
+                "title": "set_display_as",
+                "description": "(proto babelconnect.v1.SetDisplayAs)",
+                "$ref": "#/components/schemas/babelconnect.v1.SetDisplayAs"
+              }
+            },
+            "title": "set_display_as",
+            "required": [
+              "setDisplayAs"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "setPresence": {
+                "title": "set_presence",
+                "description": "switch the agent's presence (selector) (proto babelconnect.v1.SetPresence)",
+                "$ref": "#/components/schemas/babelconnect.v1.SetPresence"
+              }
+            },
+            "title": "set_presence",
+            "required": [
+              "setPresence"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "setRecordingTags": {
+                "title": "set_recording_tags",
+                "description": "(proto babelconnect.v1.SetRecordingTags)",
+                "$ref": "#/components/schemas/babelconnect.v1.SetRecordingTags"
+              }
+            },
+            "title": "set_recording_tags",
+            "required": [
+              "setRecordingTags"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "setWebrtc": {
+                "title": "set_webrtc",
+                "description": "browser phone (webrtc) on/off (proto babelconnect.v1.SetWebrtc)",
+                "$ref": "#/components/schemas/babelconnect.v1.SetWebrtc"
+              }
+            },
+            "title": "set_webrtc",
+            "required": [
+              "setWebrtc"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "startConference": {
+                "title": "start_conference",
+                "description": "open a conference around the current call (proto babelconnect.v1.StartConference)",
+                "$ref": "#/components/schemas/babelconnect.v1.StartConference"
+              }
+            },
+            "title": "start_conference",
+            "required": [
+              "startConference"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "startRecording": {
+                "title": "start_recording",
+                "description": "(proto babelconnect.v1.StartRecording)",
+                "$ref": "#/components/schemas/babelconnect.v1.StartRecording"
+              }
+            },
+            "title": "start_recording",
+            "required": [
+              "startRecording"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "stopRecording": {
+                "title": "stop_recording",
+                "description": "(proto babelconnect.v1.StopRecording)",
+                "$ref": "#/components/schemas/babelconnect.v1.StopRecording"
+              }
+            },
+            "title": "stop_recording",
+            "required": [
+              "stopRecording"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "transfer": {
+                "title": "transfer",
+                "description": "(proto babelconnect.v1.Transfer)",
+                "$ref": "#/components/schemas/babelconnect.v1.Transfer"
+              }
+            },
+            "title": "transfer",
+            "required": [
+              "transfer"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "wrapUpCancel": {
+                "title": "wrap_up_cancel",
+                "description": "end after-call-work early (proto babelconnect.v1.WrapUpCancel)",
+                "$ref": "#/components/schemas/babelconnect.v1.WrapUpCancel"
+              }
+            },
+            "title": "wrap_up_cancel",
+            "required": [
+              "wrapUpCancel"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "wrapUpExtend": {
+                "title": "wrap_up_extend",
+                "description": "add time to the after-call-work countdown (proto babelconnect.v1.WrapUpExtend)",
+                "$ref": "#/components/schemas/babelconnect.v1.WrapUpExtend"
+              }
+            },
+            "title": "wrap_up_extend",
+            "required": [
+              "wrapUpExtend"
+            ]
+          }
+        ],
+        "title": "Command",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.Conference": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "conference id (proto string)"
+          },
+          "state": {
+            "type": "string",
+            "title": "state",
+            "description": "created|finishing|finished (proto string)"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.ConferenceMember"
+            },
+            "title": "members",
+            "description": "all members incl. the moderator and me (proto babelconnect.v1.ConferenceMember)"
+          },
+          "iAmModerator": {
+            "type": "boolean",
+            "title": "i_am_moderator",
+            "description": "resolved server-side: is this agent the moderator? (proto bool)"
+          },
+          "myMemberId": {
+            "type": "string",
+            "title": "my_member_id",
+            "description": "the agent's own member id (used for Leave) (proto string)"
+          }
+        },
+        "title": "Conference",
+        "additionalProperties": false,
+        "description": "Conference is one multi-party call the agent is in. The server folds multi-party\n call updates into this entity and emits conference_upsert/remove patches. The\n client is a dumb renderer that shows the participant panel and sends conference\n intents. Usually 0 or 1 per agent. Upsert-by-id; removed when the conference\n finishes or the agent's own member leaves."
+      },
+      "babelconnect.v1.ConferenceMember": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "member id (proto string)"
+          },
+          "state": {
+            "type": "string",
+            "title": "state",
+            "description": "pending|added|removing|removed|failed (proto string)"
+          },
+          "display": {
+            "type": "string",
+            "title": "display",
+            "description": "resolved participant label (proto string)"
+          },
+          "moderator": {
+            "type": "boolean",
+            "title": "moderator",
+            "description": "this member is the conference moderator (proto bool)"
+          },
+          "isMe": {
+            "type": "boolean",
+            "title": "is_me",
+            "description": "this member is the current agent (proto bool)"
+          },
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "the member's call leg id (proto string)"
+          },
+          "onHold": {
+            "type": "boolean",
+            "title": "on_hold",
+            "description": "member is on hold (proto bool)"
+          },
+          "agentId": {
+            "type": "string",
+            "title": "agent_id",
+            "description": "agent UUID when the member is an agent (proto string)"
+          },
+          "number": {
+            "type": "string",
+            "title": "number",
+            "description": "phone number when the member is an external party (proto string)"
+          }
+        },
+        "title": "ConferenceMember",
+        "additionalProperties": false,
+        "description": "ConferenceMember is one participant. `display` is the resolved label (agent\n name, else the caller/dialed number, else \"Anonymous\"). `state` drives the UI:\n pending = ringing, added = live, removing/removed/failed = gone (clients filter\n removed/failed out of the participant list)."
+      },
+      "babelconnect.v1.DisposeCall": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "code",
+            "description": "(proto string)"
+          },
+          "callbackDate": {
+            "type": "string",
+            "title": "callback_date",
+            "description": "(proto string)"
+          }
+        },
+        "title": "DisposeCall",
+        "additionalProperties": false,
+        "description": "DisposeCall records the outcome of a campaign call. `code` is one of\n ListDispositionsResponse's codes (e.g. \"no_answer\", \"callback\").\n `callback_date` is ISO `YYYY-MM-DDTHH:mmZZ` and is set ONLY for the\n \"callback\" disposition — omitted (empty) otherwise."
+      },
+      "babelconnect.v1.EndCampaignCall": {
+        "type": "object",
+        "title": "EndCampaignCall",
+        "additionalProperties": false,
+        "description": "EndCampaignCall ends the agent's live campaign call. Deliberately distinct\n from the generic Hangup: it also releases the dialer's channel and drives\n the campaign member-state transition to DISPOSITION, neither of which a\n plain media-plane hangup would trigger."
+      },
+      "babelconnect.v1.EndConference": {
+        "type": "object",
+        "title": "EndConference",
+        "additionalProperties": false,
+        "description": "EndConference tears down the whole conference (moderator only)."
+      },
+      "babelconnect.v1.Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "code",
+            "description": "(proto string)"
+          },
+          "message": {
+            "type": "string",
+            "title": "message",
+            "description": "(proto string)"
+          },
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "optional: the call the rejected command targeted (proto string)"
+          }
+        },
+        "title": "Error",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.FeatureAccount": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "enabled",
+            "description": "(proto bool)"
+          },
+          "allowDeviceSwitch": {
+            "type": "boolean",
+            "title": "allow_device_switch",
+            "description": "browser/telephone selector + agent-number field (proto bool)"
+          },
+          "showStatus": {
+            "type": "boolean",
+            "title": "show_status",
+            "description": "the Status/About section (proto bool)"
+          },
+          "allowAccountSwitch": {
+            "type": "boolean",
+            "title": "allow_account_switch",
+            "description": "the multi-account switcher (ACC-E2) (proto bool)"
+          },
+          "allowStatusChange": {
+            "type": "boolean",
+            "title": "allow_status_change",
+            "description": "Agents may change their own presence via the status picker. When false\n the picker is locked: still visible, shows the current status, but not\n interactive. Defaults to allowed. (proto bool)"
+          }
+        },
+        "title": "FeatureAccount",
+        "additionalProperties": false,
+        "description": "FeatureAccount gates the Account tab and its sections."
+      },
+      "babelconnect.v1.FeatureCalls": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "enabled",
+            "description": "(proto bool)"
+          },
+          "allowTransfer": {
+            "type": "boolean",
+            "title": "allow_transfer",
+            "description": "cold transfer action (proto bool)"
+          },
+          "allowConference": {
+            "type": "boolean",
+            "title": "allow_conference",
+            "description": "conference action (own bucket later when that surface lands) (proto bool)"
+          }
+        },
+        "title": "FeatureCalls",
+        "additionalProperties": false,
+        "description": "FeatureCalls gates the call surface (Phone tab) and its in-call actions.\n Recording stays gated by AgentInfo.can_record (not duplicated here); device\n (browser/telephone) by AgentInfo.webrtc_enabled."
+      },
+      "babelconnect.v1.FeatureCti": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "enabled",
+            "description": "(proto bool)"
+          },
+          "emitCallEvents": {
+            "type": "boolean",
+            "title": "emit_call_events",
+            "description": "emit cti.call to an embedding host on each transition (proto bool)"
+          },
+          "screenPop": {
+            "type": "boolean",
+            "title": "screen_pop",
+            "description": "surface screen-pop notifications (proto bool)"
+          }
+        },
+        "title": "FeatureCti",
+        "additionalProperties": false,
+        "description": "FeatureCti gates CTI/integration behavior (screen-pop + app→host call events)."
+      },
+      "babelconnect.v1.FeatureHistory": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "enabled",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "FeatureHistory",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.FeatureMessaging": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "enabled",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "FeatureMessaging",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.FeatureOutbound": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "enabled",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "FeatureOutbound",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.FeaturePhonebook": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "enabled",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "FeaturePhonebook",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.FlagRecording": {
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "(proto string)"
+          }
+        },
+        "title": "FlagRecording",
+        "additionalProperties": false,
+        "description": "FlagRecording toggles the \"flagged\" mark on the call's active recording."
+      },
+      "babelconnect.v1.GetStateRequest": {
+        "type": "object",
+        "title": "GetStateRequest",
+        "additionalProperties": false,
+        "description": "GetStateRequest fetches the current AgentView (the unary \"get current state\").\n Empty; the bearer token rides in \"authorization\" metadata like every call."
+      },
+      "babelconnect.v1.Hangup": {
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "(proto string)"
+          }
+        },
+        "title": "Hangup",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.HistoryRequest": {
+        "type": "object",
+        "properties": {
+          "max": {
+            "type": "integer",
+            "title": "max",
+            "format": "int32",
+            "description": "page size (default 50) (proto int32)"
+          },
+          "page": {
+            "type": "integer",
+            "title": "page",
+            "format": "int32",
+            "description": "1-based page (default 1) (proto int32)"
+          }
+        },
+        "title": "HistoryRequest",
+        "additionalProperties": false,
+        "description": "HistoryRequest pages the agent's call history (newest first)."
+      },
+      "babelconnect.v1.HistoryResponse": {
+        "type": "object",
+        "properties": {
+          "calls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.CallRecord"
+            },
+            "title": "calls",
+            "description": "(proto babelconnect.v1.CallRecord)"
+          }
+        },
+        "title": "HistoryResponse",
+        "additionalProperties": false,
+        "description": "HistoryResponse is one page of past calls."
+      },
+      "babelconnect.v1.Hold": {
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "(proto string)"
+          },
+          "on": {
+            "type": "boolean",
+            "title": "on",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "Hold",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.HoldConferenceMember": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "title": "member_id",
+            "description": "(proto string)"
+          },
+          "on": {
+            "type": "boolean",
+            "title": "on",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "HoldConferenceMember",
+        "additionalProperties": false,
+        "description": "HoldConferenceMember holds or unholds an individual member (moderator only)."
+      },
+      "babelconnect.v1.IceServer": {
+        "type": "object",
+        "properties": {
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "urls",
+            "description": "e.g. [\"turn:host:3478?transport=tcp\"] (proto string)"
+          },
+          "username": {
+            "type": "string",
+            "title": "username",
+            "description": "(proto string)"
+          },
+          "credential": {
+            "type": "string",
+            "title": "credential",
+            "description": "(proto string)"
+          }
+        },
+        "title": "IceServer",
+        "additionalProperties": false,
+        "description": "IceServer is a STUN/TURN server the client applies to its WebRTC peer\n connection (RTCIceServer shape). Carried on CallState so an off-host client\n (e.g. a phone) can relay media through TURN when it can't reach the server's\n host ICE candidates. Empty in the in-cluster/LAN case."
+      },
+      "babelconnect.v1.Identity": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "title": "agent_id",
+            "description": "Agent UUID, hyphen-normalized (proto string)"
+          },
+          "account": {
+            "type": "string",
+            "title": "account",
+            "description": "customer / account id (proto string)"
+          },
+          "number": {
+            "type": "string",
+            "title": "number",
+            "description": "agent's number, if any (proto string)"
+          },
+          "username": {
+            "type": "string",
+            "title": "username",
+            "description": "(proto string)"
+          },
+          "state": {
+            "title": "state",
+            "description": "current presence (proto babelconnect.v1.AgentState)",
+            "$ref": "#/components/schemas/babelconnect.v1.AgentState"
+          },
+          "accountName": {
+            "type": "string",
+            "title": "account_name",
+            "description": "account / company display name, when known (ACC-E1) (proto string)"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.Account"
+            },
+            "title": "accounts",
+            "description": "accounts this agent may switch to (ACC-E2) (proto babelconnect.v1.Account)"
+          }
+        },
+        "title": "Identity",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.JoinCampaign": {
+        "type": "object",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "title": "campaign_id",
+            "description": "(proto string)"
+          },
+          "paused": {
+            "type": "boolean",
+            "title": "paused",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "JoinCampaign",
+        "additionalProperties": false,
+        "description": "JoinCampaign enters a campaign. The client normally sends `paused` false so\n the agent starts `waiting` for a lead right away."
+      },
+      "babelconnect.v1.Keepalive": {
+        "type": "object",
+        "title": "Keepalive",
+        "additionalProperties": false,
+        "description": "Keepalive is an empty heartbeat frame sent on the Subscribe stream so\n idle connections through proxies/LBs are not closed as idle. Notably the AWS\n Classic ELB in front of ingress-nginx (dev/prod EKS) has a 300s connection\n idle timeout; without these frames a quiet agent's gRPC-web server-stream is\n killed after 5 min. The server sends one every ~15s. It carries no state and\n does NOT advance `seq`; client caches treat a keepalive StateUpdate as a no-op."
+      },
+      "babelconnect.v1.KickConferenceMember": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "title": "member_id",
+            "description": "(proto string)"
+          }
+        },
+        "title": "KickConferenceMember",
+        "additionalProperties": false,
+        "description": "KickConferenceMember removes a member from the conference (moderator only)."
+      },
+      "babelconnect.v1.Lead": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "internal lead-list-item id (uuid); may be empty (proto string)"
+          },
+          "uid": {
+            "type": "string",
+            "title": "uid",
+            "description": "customer-provided lead identifier — the UI's \"id\" (proto string)"
+          },
+          "number": {
+            "type": "string",
+            "title": "number",
+            "description": "(proto string)"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "rank",
+            "format": "int32",
+            "description": "(proto int32)"
+          },
+          "data": {
+            "type": "object",
+            "title": "data",
+            "additionalProperties": {
+              "type": "string",
+              "title": "value",
+              "description": "(proto string)"
+            },
+            "description": "arbitrary customer-supplied key/values (proto babelconnect.v1.Lead.DataEntry)"
+          }
+        },
+        "title": "Lead",
+        "additionalProperties": false,
+        "description": "Lead is the customer the outbound dialer connected the agent to. `id`/`rank`\n are only present on the richer (list-enriched) form some reads return. `id`\n is the internal lead-list-item id — DISTINCT from `uid`, the\n customer-provided identifier shown as the lead's id in the UI."
+      },
+      "babelconnect.v1.Lead.DataEntry": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "key",
+            "description": "(proto string)"
+          },
+          "value": {
+            "type": "string",
+            "title": "value",
+            "description": "(proto string)"
+          }
+        },
+        "title": "DataEntry",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.LeaveCampaign": {
+        "type": "object",
+        "title": "LeaveCampaign",
+        "additionalProperties": false,
+        "description": "LeaveCampaign exits the current campaign (the server resolves which one).\n Available both from the campaign selector row and from within an active\n call."
+      },
+      "babelconnect.v1.LeaveConference": {
+        "type": "object",
+        "title": "LeaveConference",
+        "additionalProperties": false,
+        "description": "LeaveConference hangs up only the agent's own leg; the others stay connected."
+      },
+      "babelconnect.v1.ListCampaignsRequest": {
+        "type": "object",
+        "title": "ListCampaignsRequest",
+        "additionalProperties": false,
+        "description": "ListCampaignsRequest / ListCampaignsResponse back the campaign picker\n (OBDA1). Empty request: the server always asks the backend for active\n campaigns only (`?active=true`) — there is no agent-facing use for\n inactive ones."
+      },
+      "babelconnect.v1.ListCampaignsResponse": {
+        "type": "object",
+        "properties": {
+          "campaigns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.Campaign"
+            },
+            "title": "campaigns",
+            "description": "(proto babelconnect.v1.Campaign)"
+          }
+        },
+        "title": "ListCampaignsResponse",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.ListDispositionsRequest": {
+        "type": "object",
+        "title": "ListDispositionsRequest",
+        "additionalProperties": false,
+        "description": "ListDispositionsRequest / ListDispositionsResponse back the disposition\n picker (OBDC1). Empty request: the list is a static global on the backend,\n not campaign- or agent-scoped."
+      },
+      "babelconnect.v1.ListDispositionsResponse": {
+        "type": "object",
+        "properties": {
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "reasons",
+            "description": "raw codes, e.g. \"no_answer\", \"callback\" (proto string)"
+          }
+        },
+        "title": "ListDispositionsResponse",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.MarkConversationRead": {
+        "type": "object",
+        "properties": {
+          "conversationId": {
+            "type": "string",
+            "title": "conversation_id",
+            "description": "(proto string)"
+          }
+        },
+        "title": "MarkConversationRead",
+        "additionalProperties": false,
+        "description": "MarkConversationRead clears the unread count on an SMS conversation (the agent\n opened its thread)."
+      },
+      "babelconnect.v1.Mute": {
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "(proto string)"
+          },
+          "on": {
+            "type": "boolean",
+            "title": "on",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "Mute",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.MuteConferenceMember": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "title": "member_id",
+            "description": "(proto string)"
+          },
+          "on": {
+            "type": "boolean",
+            "title": "on",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "MuteConferenceMember",
+        "additionalProperties": false,
+        "description": "MuteConferenceMember mutes or unmutes an individual member (moderator only)."
+      },
+      "babelconnect.v1.Notification": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "kind",
+            "description": "e.g. \"cti.message\" (proto string)"
+          },
+          "title": {
+            "type": "string",
+            "title": "title",
+            "description": "(proto string)"
+          },
+          "body": {
+            "type": "string",
+            "title": "body",
+            "description": "(proto string)"
+          },
+          "dataJson": {
+            "type": "string",
+            "title": "data_json",
+            "description": "arbitrary pushed payload, JSON-encoded (proto string)"
+          },
+          "ts": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "ts",
+            "format": "int64",
+            "description": "(proto int64)"
+          }
+        },
+        "title": "Notification",
+        "additionalProperties": false,
+        "description": "Notification is a transient one-shot the client surfaces (a CTI screen-pop /\n pushed agent data). It is NOT stored in the AgentView snapshot — it fires once."
+      },
+      "babelconnect.v1.Patch": {
+        "type": "object",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "agent": {
+                "title": "agent",
+                "description": "(proto babelconnect.v1.AgentInfo)",
+                "$ref": "#/components/schemas/babelconnect.v1.AgentInfo"
+              }
+            },
+            "title": "agent",
+            "required": [
+              "agent"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "callRemove": {
+                "type": "string",
+                "title": "call_remove",
+                "description": "call id to drop (proto string)"
+              }
+            },
+            "title": "call_remove",
+            "required": [
+              "callRemove"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "callUpsert": {
+                "title": "call_upsert",
+                "description": "(proto babelconnect.v1.CallState)",
+                "$ref": "#/components/schemas/babelconnect.v1.CallState"
+              }
+            },
+            "title": "call_upsert",
+            "required": [
+              "callUpsert"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "conferenceRemove": {
+                "type": "string",
+                "title": "conference_remove",
+                "description": "conference id to drop (finished/left) (proto string)"
+              }
+            },
+            "title": "conference_remove",
+            "required": [
+              "conferenceRemove"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "conferenceUpsert": {
+                "title": "conference_upsert",
+                "description": "upsert a conference by id (proto babelconnect.v1.Conference)",
+                "$ref": "#/components/schemas/babelconnect.v1.Conference"
+              }
+            },
+            "title": "conference_upsert",
+            "required": [
+              "conferenceUpsert"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "config": {
+                "title": "config",
+                "description": "resolved feature config (emitted on register) (proto babelconnect.v1.AppConfig)",
+                "$ref": "#/components/schemas/babelconnect.v1.AppConfig"
+              }
+            },
+            "title": "config",
+            "required": [
+              "config"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "notification": {
+                "title": "notification",
+                "description": "transient CTI screen-pop (not part of the view) (proto babelconnect.v1.Notification)",
+                "$ref": "#/components/schemas/babelconnect.v1.Notification"
+              }
+            },
+            "title": "notification",
+            "required": [
+              "notification"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "smsRemove": {
+                "type": "string",
+                "title": "sms_remove",
+                "description": "SMS conversation id to drop (proto string)"
+              }
+            },
+            "title": "sms_remove",
+            "required": [
+              "smsRemove"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "smsUpsert": {
+                "title": "sms_upsert",
+                "description": "upsert an SMS thread summary by id (proto babelconnect.v1.SmsConversation)",
+                "$ref": "#/components/schemas/babelconnect.v1.SmsConversation"
+              }
+            },
+            "title": "sms_upsert",
+            "required": [
+              "smsUpsert"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "wrapUp": {
+                "title": "wrap_up",
+                "description": "(proto babelconnect.v1.WrapUpStatus)",
+                "$ref": "#/components/schemas/babelconnect.v1.WrapUpStatus"
+              }
+            },
+            "title": "wrap_up",
+            "required": [
+              "wrapUp"
+            ]
+          }
+        ],
+        "title": "Patch",
+        "additionalProperties": false,
+        "description": "Patch is an entity-level delta applied mechanically by the client cache:\n replace the agent block, upsert/remove a call by id, or set wrap-up."
+      },
+      "babelconnect.v1.PauseCampaign": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean",
+            "title": "on",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "PauseCampaign",
+        "additionalProperties": false,
+        "description": "PauseCampaign pauses (`on=true`, POST .../pause) or resumes (`on=false`,\n POST .../unpause) the campaign — no request body either way (OBDA2), same\n on/off shape as Mute/Hold."
+      },
+      "babelconnect.v1.PhonebookEntry": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "label",
+            "description": "contact name, or \"recent\" for a recently dialed number (proto string)"
+          },
+          "number": {
+            "type": "string",
+            "title": "number",
+            "description": "(proto string)"
+          }
+        },
+        "title": "PhonebookEntry",
+        "additionalProperties": false,
+        "description": "PhonebookEntry is one dialable contact (or a recent number) for the dialer's\n autocomplete."
+      },
+      "babelconnect.v1.PhonebookRequest": {
+        "type": "object",
+        "properties": {
+          "max": {
+            "type": "integer",
+            "title": "max",
+            "format": "int32",
+            "description": "page size (default 200) (proto int32)"
+          },
+          "page": {
+            "type": "integer",
+            "title": "page",
+            "format": "int32",
+            "description": "1-based page (default 1) (proto int32)"
+          },
+          "query": {
+            "type": "string",
+            "title": "query",
+            "description": "optional label/number filter (proto string)"
+          }
+        },
+        "title": "PhonebookRequest",
+        "additionalProperties": false,
+        "description": "PhonebookRequest / PhonebookResponse re-pull the agent's merged contacts +\n recent numbers on demand (refresh). `query` filters by label/number server-side."
+      },
+      "babelconnect.v1.PhonebookResponse": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.PhonebookEntry"
+            },
+            "title": "entries",
+            "description": "(proto babelconnect.v1.PhonebookEntry)"
+          }
+        },
+        "title": "PhonebookResponse",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.Ping": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "seq",
+            "format": "int64",
+            "description": "(proto uint64)"
+          }
+        },
+        "title": "Ping",
+        "additionalProperties": false,
+        "description": "Ping is a liveness probe the server sends on the heartbeat tick (replacing the\n bare Keepalive frame). The client echoes `seq` back in a Pong command; the server\n measures round-trip time (RTT) from the reply and tracks per-session liveness.\n Like Keepalive it keeps the connection warm, carries no state, and does NOT\n advance `seq` — caches ignore it, and the reply is handled in the client's stream\n loop, not the state reducer. (APP-A5/CALL-M6.)"
+      },
+      "babelconnect.v1.PlaceCall": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "title": "to",
+            "description": "(proto string)"
+          },
+          "displayAsTo": {
+            "type": "string",
+            "title": "display_as_to",
+            "description": "service number shown to the consumer (proto string)"
+          },
+          "displayAsFrom": {
+            "type": "string",
+            "title": "display_as_from",
+            "description": "number shown to the agent (proto string)"
+          },
+          "record": {
+            "type": "boolean",
+            "title": "record",
+            "description": "start recording the call from answer (recording.autostart) (proto bool)"
+          },
+          "session": {
+            "type": "object",
+            "title": "session",
+            "additionalProperties": {
+              "type": "string",
+              "title": "value",
+              "description": "(proto string)"
+            },
+            "description": "opaque CTI/embedding correlation (from session.set) (proto babelconnect.v1.PlaceCall.SessionEntry)"
+          }
+        },
+        "title": "PlaceCall",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.PlaceCall.SessionEntry": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "key",
+            "description": "(proto string)"
+          },
+          "value": {
+            "type": "string",
+            "title": "value",
+            "description": "(proto string)"
+          }
+        },
+        "title": "SessionEntry",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.Pong": {
+        "type": "object",
+        "properties": {
+          "seq": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "seq",
+            "format": "int64",
+            "description": "(proto uint64)"
+          }
+        },
+        "title": "Pong",
+        "additionalProperties": false,
+        "description": "Pong replies to a server Ping (StateUpdate.ping), echoing its `seq` so the server\n can match it to the outstanding ping and compute RTT. Sent automatically by the\n SDK from its stream-receive loop — not a user intent. (APP-A5/CALL-M6.)"
+      },
+      "babelconnect.v1.PresenceOption": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "name",
+            "description": "e.g. \"available\", \"break\" (proto string)"
+          },
+          "label": {
+            "type": "string",
+            "title": "label",
+            "description": "e.g. \"Available\", \"Break\" (proto string)"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "available",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "PresenceOption",
+        "additionalProperties": false,
+        "description": "PresenceOption is one selectable agent presence — \"Available\" or a configured\n pause reason. `available` is whether the agent can receive calls in it."
+      },
+      "babelconnect.v1.Register": {
+        "type": "object",
+        "properties": {
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "capabilities",
+            "description": "advisory, e.g. [\"webrtc\"] (proto string)"
+          }
+        },
+        "title": "Register",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.ResetLineStatus": {
+        "type": "object",
+        "title": "ResetLineStatus",
+        "additionalProperties": false,
+        "description": "ResetLineStatus clears a blocked line state (busy/unreachable/declined) so the\n agent can receive calls again."
+      },
+      "babelconnect.v1.SendDigits": {
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "(proto string)"
+          },
+          "digits": {
+            "type": "string",
+            "title": "digits",
+            "description": "DTMF, e.g. \"1\", \"#\" (proto string)"
+          }
+        },
+        "title": "SendDigits",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.SendSmsRequest": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "title": "to",
+            "description": "(proto string)"
+          },
+          "text": {
+            "type": "string",
+            "title": "text",
+            "description": "(proto string)"
+          },
+          "from": {
+            "type": "string",
+            "title": "from",
+            "description": "(proto string)"
+          },
+          "session": {
+            "type": "object",
+            "title": "session",
+            "additionalProperties": {
+              "type": "string",
+              "title": "value",
+              "description": "(proto string)"
+            },
+            "description": "(proto babelconnect.v1.SendSmsRequest.SessionEntry)"
+          }
+        },
+        "title": "SendSmsRequest",
+        "additionalProperties": false,
+        "description": "SendSmsRequest sends an SMS. `from` defaults to the agent's SMS-capable number\n when empty. `session` carries opaque\n CTI/embedding correlation keys (e.g. from session.set), like PlaceCall."
+      },
+      "babelconnect.v1.SendSmsRequest.SessionEntry": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "key",
+            "description": "(proto string)"
+          },
+          "value": {
+            "type": "string",
+            "title": "value",
+            "description": "(proto string)"
+          }
+        },
+        "title": "SessionEntry",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.SetAgentNumber": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "title": "number",
+            "description": "(proto string)"
+          }
+        },
+        "title": "SetAgentNumber",
+        "additionalProperties": false,
+        "description": "SetAgentNumber sets the external phone number the agent's calls bridge to."
+      },
+      "babelconnect.v1.SetConversationOpen": {
+        "type": "object",
+        "properties": {
+          "conversationId": {
+            "type": "string",
+            "title": "conversation_id",
+            "description": "(proto string)"
+          },
+          "open": {
+            "type": "boolean",
+            "title": "open",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "SetConversationOpen",
+        "additionalProperties": false,
+        "description": "SetConversationOpen opens (reopens) or closes (resolves) an SMS conversation.\n The server flips SmsConversation.open optimistically and re-confirms."
+      },
+      "babelconnect.v1.SetDisplayAs": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "title": "number",
+            "description": "outbound number to present (proto string)"
+          }
+        },
+        "title": "SetDisplayAs",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.SetPresence": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "name",
+            "description": "presence to switch to, e.g. \"available\" or a pause reason (proto string)"
+          }
+        },
+        "title": "SetPresence",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.SetRecordingTags": {
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "(proto string)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "title": "tags",
+            "description": "(proto string)"
+          }
+        },
+        "title": "SetRecordingTags",
+        "additionalProperties": false,
+        "description": "SetRecordingTags replaces the tags on the call's active recording."
+      },
+      "babelconnect.v1.SetWebrtc": {
+        "type": "object",
+        "properties": {
+          "on": {
+            "type": "boolean",
+            "title": "on",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "SetWebrtc",
+        "additionalProperties": false,
+        "description": "SetWebrtc enables or disables the browser phone (WebRTC). Off = bridge calls to\n the external-telephone number instead."
+      },
+      "babelconnect.v1.SmsConversation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "conversation id (proto string)"
+          },
+          "peer": {
+            "type": "string",
+            "title": "peer",
+            "description": "the other party's number (proto string)"
+          },
+          "lastDirection": {
+            "title": "last_direction",
+            "description": "INBOUND = received, OUTBOUND = sent (proto babelconnect.v1.CallDirection)",
+            "$ref": "#/components/schemas/babelconnect.v1.CallDirection"
+          },
+          "lastText": {
+            "type": "string",
+            "title": "last_text",
+            "description": "latest message preview (proto string)"
+          },
+          "lastTs": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "last_ts",
+            "format": "int64",
+            "description": "unix seconds of the latest message (proto int64)"
+          },
+          "unread": {
+            "type": "integer",
+            "title": "unread",
+            "description": "unread message count (proto uint32)"
+          },
+          "contactLabel": {
+            "type": "string",
+            "title": "contact_label",
+            "description": "phonebook label for the peer, if known (proto string)"
+          },
+          "open": {
+            "type": "boolean",
+            "title": "open",
+            "description": "conversation open (unresolved) vs closed (proto bool)"
+          }
+        },
+        "title": "SmsConversation",
+        "additionalProperties": false,
+        "description": "SmsConversation is one SMS thread summary carried in the AgentView (the full\n thread history is fetched on demand, not held in the snapshot). Upsert-by-id;\n the reducer keeps the list sorted by last_ts descending."
+      },
+      "babelconnect.v1.SmsMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "(proto string)"
+          },
+          "direction": {
+            "title": "direction",
+            "description": "INBOUND = received, OUTBOUND = sent (proto babelconnect.v1.CallDirection)",
+            "$ref": "#/components/schemas/babelconnect.v1.CallDirection"
+          },
+          "from": {
+            "type": "string",
+            "title": "from",
+            "description": "(proto string)"
+          },
+          "to": {
+            "type": "string",
+            "title": "to",
+            "description": "(proto string)"
+          },
+          "text": {
+            "type": "string",
+            "title": "text",
+            "description": "(proto string)"
+          },
+          "ts": {
+            "type": [
+              "integer",
+              "string"
+            ],
+            "title": "ts",
+            "format": "int64",
+            "description": "unix seconds (dateCreated) (proto int64)"
+          },
+          "state": {
+            "type": "string",
+            "title": "state",
+            "description": "received/sent/delivered/failed/scheduled (display only) (proto string)"
+          }
+        },
+        "title": "SmsMessage",
+        "additionalProperties": false,
+        "description": "SmsMessage is one message inside a conversation thread, fetched on demand via\n GetSmsThread (the AgentView only carries the lightweight SmsConversation\n summary, not the full history). Oldest-first; the client bubbles it by\n direction. `state` is the message status (received/sent/delivered/failed/\n scheduled) for display only."
+      },
+      "babelconnect.v1.SmsThreadRequest": {
+        "type": "object",
+        "properties": {
+          "conversationId": {
+            "type": "string",
+            "title": "conversation_id",
+            "description": "(proto string)"
+          },
+          "max": {
+            "type": "integer",
+            "title": "max",
+            "format": "int32",
+            "description": "page size (default 50) (proto int32)"
+          },
+          "page": {
+            "type": "integer",
+            "title": "page",
+            "format": "int32",
+            "description": "1-based page (default 1) (proto int32)"
+          }
+        },
+        "title": "SmsThreadRequest",
+        "additionalProperties": false,
+        "description": "SmsThreadRequest / SmsThreadResponse page the messages of one SMS conversation."
+      },
+      "babelconnect.v1.SmsThreadResponse": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.SmsMessage"
+            },
+            "title": "messages",
+            "description": "(proto babelconnect.v1.SmsMessage)"
+          }
+        },
+        "title": "SmsThreadResponse",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.StartConference": {
+        "type": "object",
+        "properties": {
+          "hold": {
+            "type": "boolean",
+            "title": "hold",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "StartConference",
+        "additionalProperties": false,
+        "description": "StartConference opens a conference around the agent's current call. `hold` puts\n the existing party on hold while the first new member is dialed."
+      },
+      "babelconnect.v1.StartRecording": {
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "(proto string)"
+          }
+        },
+        "title": "StartRecording",
+        "additionalProperties": false,
+        "description": "StartRecording begins recording the given call."
+      },
+      "babelconnect.v1.StateUpdate": {
+        "type": "object",
+        "allOf": [
+          {
+            "properties": {
+              "seq": {
+                "type": [
+                  "integer",
+                  "string"
+                ],
+                "title": "seq",
+                "format": "int64",
+                "description": "(proto uint64)"
+              }
+            }
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "title": "error",
+                    "description": "(proto babelconnect.v1.Error)",
+                    "$ref": "#/components/schemas/babelconnect.v1.Error"
+                  }
+                },
+                "title": "error",
+                "required": [
+                  "error"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "keepalive": {
+                    "title": "keepalive",
+                    "description": "(proto babelconnect.v1.Keepalive)",
+                    "$ref": "#/components/schemas/babelconnect.v1.Keepalive"
+                  }
+                },
+                "title": "keepalive",
+                "required": [
+                  "keepalive"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "patch": {
+                    "title": "patch",
+                    "description": "(proto babelconnect.v1.Patch)",
+                    "$ref": "#/components/schemas/babelconnect.v1.Patch"
+                  }
+                },
+                "title": "patch",
+                "required": [
+                  "patch"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ping": {
+                    "title": "ping",
+                    "description": "(proto babelconnect.v1.Ping)",
+                    "$ref": "#/components/schemas/babelconnect.v1.Ping"
+                  }
+                },
+                "title": "ping",
+                "required": [
+                  "ping"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "snapshot": {
+                    "title": "snapshot",
+                    "description": "(proto babelconnect.v1.AgentView)",
+                    "$ref": "#/components/schemas/babelconnect.v1.AgentView"
+                  }
+                },
+                "title": "snapshot",
+                "required": [
+                  "snapshot"
+                ]
+              }
+            ]
+          }
+        ],
+        "title": "StateUpdate",
+        "additionalProperties": false,
+        "description": "StateUpdate is the single server → client message on the Subscribe stream. On\n open the client receives a snapshot; thereafter partial patches. `seq` is\n monotonic across snapshot+patch — a gap means the client should resubscribe\n for a fresh snapshot. `error` is an out-of-band notice (command rejection /\n server warning) and does NOT advance `seq`. `keepalive` is an empty transport\n heartbeat (see Keepalive) that likewise does NOT advance `seq` and carries no\n state — client caches must ignore it."
+      },
+      "babelconnect.v1.StopRecording": {
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "(proto string)"
+          }
+        },
+        "title": "StopRecording",
+        "additionalProperties": false,
+        "description": "StopRecording ends the call's active recording."
+      },
+      "babelconnect.v1.SubscribeRequest": {
+        "type": "object",
+        "title": "SubscribeRequest",
+        "additionalProperties": false,
+        "description": "SubscribeRequest opens the StateUpdate stream for the authenticated agent (the\n bearer token rides in \"authorization\" metadata, like every call). Empty today;\n reserved for future subscription filters."
+      },
+      "babelconnect.v1.Transfer": {
+        "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "(proto string)"
+          },
+          "to": {
+            "type": "string",
+            "title": "to",
+            "description": "external number target (proto string)"
+          },
+          "warm": {
+            "type": "boolean",
+            "title": "warm",
+            "description": "true = attended/warm, false = blind/cold (proto bool)"
+          },
+          "agentId": {
+            "type": "string",
+            "title": "agent_id",
+            "description": "transfer to another agent (proto string)"
+          },
+          "applicationId": {
+            "type": "string",
+            "title": "application_id",
+            "description": "transfer to a queue / voice application (proto string)"
+          }
+        },
+        "title": "Transfer",
+        "additionalProperties": false,
+        "description": "Transfer hands the current call to a target. Exactly one target is set:\n `to` (external number), `agent_id` (another agent), or `application_id` (a\n queue/voice application). `warm` selects attended (consult-then-drop) vs\n blind/cold (single action)."
+      },
+      "babelconnect.v1.TransferTarget": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "id",
+            "description": "(proto string)"
+          },
+          "kind": {
+            "title": "kind",
+            "description": "(proto babelconnect.v1.TransferTargetKind)",
+            "$ref": "#/components/schemas/babelconnect.v1.TransferTargetKind"
+          },
+          "label": {
+            "type": "string",
+            "title": "label",
+            "description": "(proto string)"
+          },
+          "number": {
+            "type": "string",
+            "title": "number",
+            "description": "NUMBER kind, and AGENT kind when it has a PSTN number (proto string)"
+          },
+          "category": {
+            "type": "string",
+            "title": "category",
+            "description": "APPLICATION only: the IVR module name (proto string)"
+          },
+          "browser": {
+            "type": "boolean",
+            "title": "browser",
+            "description": "AGENT only: browser-phone-reachable, no PSTN number (proto bool)"
+          }
+        },
+        "title": "TransferTarget",
+        "additionalProperties": false,
+        "description": "TransferTarget is one autocomplete result for a blind transfer / add-member\n pick. `id` is the backend id to pass back on Transfer/AddConferenceMember\n (an agent or application UUID; for a synthetic NUMBER result it is the raw\n query, not a stable id — clients should send `number`, not `id`, for that\n kind). `category` is the IVR module name (APPLICATION only, e.g.\n \"simpleMenu\"); `browser` marks an agent reachable only via browser phone\n (no PSTN number) — AGENT only."
+      },
+      "babelconnect.v1.TransferTargetKind": {
+        "type": "string",
+        "title": "TransferTargetKind",
+        "enum": [
+          "TRANSFER_TARGET_KIND_UNSPECIFIED",
+          "TRANSFER_TARGET_KIND_AGENT",
+          "TRANSFER_TARGET_KIND_NUMBER",
+          "TRANSFER_TARGET_KIND_APPLICATION"
+        ],
+        "description": "TransferTargetKind discriminates a TransferTarget. The wire type only ever\n carries agent / number / application (a UI may group results differently,\n e.g. a \"phonebook\" section, but that is presentation only)."
+      },
+      "babelconnect.v1.TransferTargetsRequest": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "query",
+            "description": "(proto string)"
+          }
+        },
+        "title": "TransferTargetsRequest",
+        "additionalProperties": false,
+        "description": "TransferTargetsRequest / TransferTargetsResponse back the transfer-target\n autocomplete (blind transfer + add-member dialogs). `query` filters\n server-side; empty returns the default result set (a synthetic NUMBER\n target only appears once `query` looks like a number)."
+      },
+      "babelconnect.v1.TransferTargetsResponse": {
+        "type": "object",
+        "properties": {
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/babelconnect.v1.TransferTarget"
+            },
+            "title": "targets",
+            "description": "(proto babelconnect.v1.TransferTarget)"
+          }
+        },
+        "title": "TransferTargetsResponse",
+        "additionalProperties": false
+      },
+      "babelconnect.v1.WrapUpCancel": {
+        "type": "object",
+        "title": "WrapUpCancel",
+        "additionalProperties": false,
+        "description": "WrapUpCancel ends the agent's after-call-work early."
+      },
+      "babelconnect.v1.WrapUpExtend": {
+        "type": "object",
+        "properties": {
+          "seconds": {
+            "type": "integer",
+            "title": "seconds",
+            "format": "int32",
+            "description": "extra wrap-up seconds to add (e.g. 30) (proto int32)"
+          }
+        },
+        "title": "WrapUpExtend",
+        "additionalProperties": false,
+        "description": "WrapUpExtend adds time to the agent's after-call-work countdown."
+      },
+      "babelconnect.v1.WrapUpStatus": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean",
+            "title": "active",
+            "description": "(proto bool)"
+          },
+          "remainingSeconds": {
+            "type": "integer",
+            "title": "remaining_seconds",
+            "format": "int32",
+            "description": "(proto int32)"
+          },
+          "lastCallType": {
+            "type": "string",
+            "title": "last_call_type",
+            "description": "(proto string)"
+          },
+          "canCancel": {
+            "type": "boolean",
+            "title": "can_cancel",
+            "description": "(proto bool)"
+          },
+          "canExtend": {
+            "type": "boolean",
+            "title": "can_extend",
+            "description": "(proto bool)"
+          }
+        },
+        "title": "WrapUpStatus",
+        "additionalProperties": false,
+        "description": "WrapUpStatus is the after-call-work countdown."
+      },
+      "connect-protocol-version": {
+        "type": "number",
+        "title": "Connect-Protocol-Version",
+        "enum": [
+          1
+        ],
+        "description": "Define the version of the Connect protocol",
+        "const": 1
+      },
+      "connect-timeout-header": {
+        "type": "number",
+        "title": "Connect-Timeout-Ms",
+        "description": "Define the timeout, in ms"
+      },
+      "connect.error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "examples": [
+              "not_found"
+            ],
+            "enum": [
+              "canceled",
+              "unknown",
+              "invalid_argument",
+              "deadline_exceeded",
+              "not_found",
+              "already_exists",
+              "permission_denied",
+              "resource_exhausted",
+              "failed_precondition",
+              "aborted",
+              "out_of_range",
+              "unimplemented",
+              "internal",
+              "unavailable",
+              "data_loss",
+              "unauthenticated"
+            ],
+            "description": "The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code]."
+          },
+          "message": {
+            "type": "string",
+            "description": "A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client."
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/connect.error_details.Any"
+            },
+            "description": "A list of messages that carry the error details. There is no limit on the number of messages."
+          }
+        },
+        "title": "Connect Error",
+        "additionalProperties": true,
+        "description": "Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation"
+      },
+      "connect.error_details.Any": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "A URL that acts as a globally unique identifier for the type of the serialized message. For example: `type.googleapis.com/google.rpc.ErrorInfo`. This is used to determine the schema of the data in the `value` field and is the discriminator for the `debug` field."
+          },
+          "value": {
+            "type": "string",
+            "format": "binary",
+            "description": "The Protobuf message, serialized as bytes and base64-encoded. The specific message type is identified by the `type` field."
+          },
+          "debug": {
+            "oneOf": [
+              {
+                "type": "object",
+                "title": "Any",
+                "additionalProperties": true,
+                "description": "Detailed error information."
+              }
+            ],
+            "discriminator": {
+              "propertyName": "type"
+            },
+            "title": "Debug",
+            "description": "Deserialized error detail payload. The 'type' field indicates the schema. This field is for easier debugging and should not be relied upon for application logic."
+          }
+        },
+        "additionalProperties": true,
+        "description": "Contains an arbitrary serialized message along with a @type that describes the type of the serialized message, with an additional debug field for ConnectRPC error details."
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/oauth/token": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "OAuth2 token grant (resource-owner password)",
+        "description": "Exchanges agent credentials for a bearer access token. Proxied verbatim to the backend OAuth2 endpoint by babelconnect-server (`backendAuthProxy`); the server adds no logic.\n",
+        "operationId": "oauthToken",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "grant_type",
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "enum": [
+                      "password"
+                    ]
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "default": "manager"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token issued.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "examples": [
+                        "bearer"
+                      ]
+                    },
+                    "expires_in": {
+                      "type": "integer",
+                      "description": "Lifetime in seconds."
+                    },
+                    "refresh_token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request or unsupported grant."
+          },
+          "401": {
+            "description": "Invalid credentials."
+          },
+          "502": {
+            "description": "Backend unreachable."
+          }
+        }
+      }
+    },
+    "/oauth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Revoke the current session / token",
+        "description": "Proxied to the backend logout endpoint; carries the bearer token.",
+        "operationId": "oauthLogout",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logged out."
+          },
+          "401": {
+            "description": "Missing or invalid bearer token."
+          },
+          "502": {
+            "description": "Backend unreachable."
+          }
+        }
+      }
+    },
+    "/oauth/revoke": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Revoke an OAuth token (RFC 7009)",
+        "description": "Proxied to the backend token-revocation endpoint; revokes the agent's access token on sign-out. The bearer is also carried for backends that authenticate the revoke request.\n",
+        "operationId": "oauthRevoke",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "The token to revoke."
+                  },
+                  "token_type_hint": {
+                    "type": "string",
+                    "enum": [
+                      "access_token",
+                      "refresh_token"
+                    ]
+                  },
+                  "client_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revoked (best-effort; RFC 7009 returns 200 even for an unknown token).\n"
+          },
+          "401": {
+            "description": "Missing or invalid bearer token."
+          },
+          "502": {
+            "description": "Backend unreachable."
+          }
+        }
+      }
+    },
+    "/account/password/reset": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Request a password-reset email",
+        "operationId": "passwordReset",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accepted (best-effort; returns 200 even for unknown emails to avoid account enumeration).\n"
+          },
+          "502": {
+            "description": "Backend unreachable."
+          }
+        }
+      }
+    },
+    "/auth/sso/init/{tenant}/babelconnect": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Begin an SSO login (returns the IdP redirect URL)",
+        "operationId": "ssoInit",
+        "security": [],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Account / tenant identifier."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "redirect_uri": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "IdP authorization URL to redirect the user to.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Backend unreachable."
+          }
+        }
+      }
+    },
+    "/auth/sso/{tenant}": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Complete an SSO login (exchange the IdP code for a bearer token)",
+        "operationId": "ssoExchange",
+        "security": [],
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Account / tenant identifier."
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Authorization code returned by the IdP."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bearer token issued.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "examples": [
+                        "bearer"
+                      ]
+                    },
+                    "expires_in": {
+                      "type": "integer",
+                      "description": "Lifetime in seconds."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Backend unreachable."
+          }
+        }
+      }
+    },
+    "/babelconnect.v1.Agent/Send": {
+      "post": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "Send",
+        "operationId": "babelconnect.v1.Agent.Send",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.Command"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.Ack"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/babelconnect.v1.Agent/Subscribe": {
+      "post": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "Subscribe",
+        "description": "Subscribe + Send are the control stream, split into its server→client and\n client→server halves — the one shape every client uses (RPC-A4 retired the\n earlier bidi `Session` RPC, which needed HTTP/2 end-to-end and couldn't\n ride gRPC-web or a plain HTTP/1.1 ingress). Subscribe is the server→client\n half (StateUpdate: one snapshot on open, then entity-level patches; UI =\n f(AgentView)). Send is the client→server half (one Command per unary\n call). Together they key to the agent's one state store. Command\n rejections arrive as an Error on the Subscribe stream, never on Send's\n reply.",
+        "operationId": "babelconnect.v1.Agent.Subscribe",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/connect+json": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.SubscribeRequest"
+              }
+            },
+            "application/connect+proto": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.SubscribeRequest"
+              }
+            },
+            "application/grpc": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.SubscribeRequest"
+              }
+            },
+            "application/grpc+proto": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.SubscribeRequest"
+              }
+            },
+            "application/grpc+json": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.SubscribeRequest"
+              }
+            },
+            "application/grpc-web": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.SubscribeRequest"
+              }
+            },
+            "application/grpc-web+proto": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.SubscribeRequest"
+              }
+            },
+            "application/grpc-web+json": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.SubscribeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/connect+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              },
+              "application/connect+proto": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              },
+              "application/grpc": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              },
+              "application/grpc+proto": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              },
+              "application/grpc+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              },
+              "application/grpc-web": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              },
+              "application/grpc-web+proto": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              },
+              "application/grpc-web+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/connect+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.StateUpdate"
+                }
+              },
+              "application/connect+proto": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.StateUpdate"
+                }
+              },
+              "application/grpc": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.StateUpdate"
+                }
+              },
+              "application/grpc+proto": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.StateUpdate"
+                }
+              },
+              "application/grpc+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.StateUpdate"
+                }
+              },
+              "application/grpc-web": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.StateUpdate"
+                }
+              },
+              "application/grpc-web+proto": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.StateUpdate"
+                }
+              },
+              "application/grpc-web+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.StateUpdate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/babelconnect.v1.Agent/Authenticate": {
+      "post": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "Authenticate",
+        "description": "Authenticate validates the caller's bearer token and returns the resolved\n agent identity (id, account, presence).",
+        "operationId": "babelconnect.v1.Agent.Authenticate",
+        "parameters": [
+          {
+            "name": "Connect-Protocol-Version",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/connect-protocol-version"
+            }
+          },
+          {
+            "name": "Connect-Timeout-Ms",
+            "in": "header",
+            "schema": {
+              "$ref": "#/components/schemas/connect-timeout-header"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.AuthenticateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.Identity"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent/history": {
+      "get": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "GetHistory",
+        "description": "GetHistory returns the agent's past calls (the History tab). A unary query —\n history is on-demand reference data, not part of the live AgentView snapshot.",
+        "operationId": "babelconnect.v1.Agent.GetHistory",
+        "parameters": [
+          {
+            "name": "max",
+            "in": "query",
+            "description": "page size (default 50) (proto int32)",
+            "schema": {
+              "type": "integer",
+              "title": "max",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "1-based page (default 1) (proto int32)",
+            "schema": {
+              "type": "integer",
+              "title": "page",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.HistoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent/outbound/campaigns": {
+      "get": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "ListCampaigns",
+        "description": "ListCampaigns lists the outbound-dialer campaigns the agent may join (the\n Outbound tab's campaign picker) — on-demand reference data like\n GetPhonebook/GetTransferTargets.",
+        "operationId": "babelconnect.v1.Agent.ListCampaigns",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.ListCampaignsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent/outbound/dispositions": {
+      "get": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "ListDispositions",
+        "description": "ListDispositions lists the available call-outcome codes for the disposition\n picker — on-demand reference data like ListCampaigns. The list is a static\n global, not campaign-scoped, so the request carries no campaign id.",
+        "operationId": "babelconnect.v1.Agent.ListDispositions",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.ListDispositionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent/phonebook": {
+      "get": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "GetPhonebook",
+        "description": "GetPhonebook returns the agent's dial-from contacts + recent numbers (the\n Contacts tab). A unary query like GetHistory: the live AgentView carries a\n phonebook snapshot frozen at register (AgentInfo.phonebook); this re-pulls the\n merged contacts+recents list on demand (refresh) so a long-running session can\n see new contacts. `query` filters by label/number.",
+        "operationId": "babelconnect.v1.Agent.GetPhonebook",
+        "parameters": [
+          {
+            "name": "max",
+            "in": "query",
+            "description": "page size (default 200) (proto int32)",
+            "schema": {
+              "type": "integer",
+              "title": "max",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "1-based page (default 1) (proto int32)",
+            "schema": {
+              "type": "integer",
+              "title": "page",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "optional label/number filter (proto string)",
+            "schema": {
+              "type": "string",
+              "title": "query"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.PhonebookResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent/sms": {
+      "post": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "SendSms",
+        "description": "SendSms sends an SMS and returns the (upserted) conversation summary. Exposed\n over REST as POST /v1/agent/sms and as the Command.send_sms intent on the\n stream — both send the same message.",
+        "operationId": "babelconnect.v1.Agent.SendSms",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/babelconnect.v1.SendSmsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.SmsConversation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent/sms/thread": {
+      "get": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "GetSmsThread",
+        "description": "GetSmsThread returns the messages of one SMS conversation (the chat thread).\n A unary query like GetHistory — the live AgentView carries only the\n SmsConversation summary; the full thread is fetched on demand. conversation_id\n is a query param (it can be a peer phone number when no conversation id is\n available), so this stays distinct from the POST /v1/agent/sms send.",
+        "operationId": "babelconnect.v1.Agent.GetSmsThread",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "query",
+            "description": "(proto string)",
+            "schema": {
+              "type": "string",
+              "title": "conversation_id"
+            }
+          },
+          {
+            "name": "max",
+            "in": "query",
+            "description": "page size (default 50) (proto int32)",
+            "schema": {
+              "type": "integer",
+              "title": "max",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "1-based page (default 1) (proto int32)",
+            "schema": {
+              "type": "integer",
+              "title": "page",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.SmsThreadResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent/state": {
+      "get": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "GetState",
+        "description": "GetState returns the agent's current AgentView as a single unary call — the\n REST/web \"get current state\" (the Subscribe stream is the realtime twin). When\n no live session backs the caller, the server builds the snapshot on demand\n (agent + presence + wrap-up); live call state requires a stream.",
+        "operationId": "babelconnect.v1.Agent.GetState",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.AgentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/agent/transfer-targets": {
+      "get": {
+        "tags": [
+          "babelconnect.v1.Agent"
+        ],
+        "summary": "GetTransferTargets",
+        "description": "GetTransferTargets autocompletes blind-transfer / add-member targets as the\n agent types — agents, raw numbers, and IVR applications. `query` filters\n server-side (substring across name/email/number for agents, name for\n applications); the lookup has no call-context param, so eligibility by call\n direction is a separate, already-server-computed flag the client applies\n itself (CallState.can_transfer_to_application hides APPLICATION results).",
+        "operationId": "babelconnect.v1.Agent.GetTransferTargets",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "(proto string)",
+            "schema": {
+              "type": "string",
+              "title": "query"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/babelconnect.v1.TransferTargetsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

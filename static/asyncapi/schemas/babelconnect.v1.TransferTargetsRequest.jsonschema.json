@@ -1,0 +1,14 @@
+{
+  "$id": "babelconnect.v1.TransferTargetsRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "TransferTargetsRequest / TransferTargetsResponse back the transfer-target\n autocomplete (blind transfer + add-member dialogs). `query` filters\n server-side; empty returns the default result set (a synthetic NUMBER\n target only appears once `query` looks like a number).",
+  "properties": {
+    "query": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Transfer Targets Request",
+  "type": "object"
+}

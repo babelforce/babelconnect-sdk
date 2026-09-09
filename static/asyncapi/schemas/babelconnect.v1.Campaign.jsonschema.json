@@ -1,0 +1,32 @@
+{
+  "$id": "babelconnect.v1.Campaign.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Campaign is one outbound-dialer campaign the agent may join (the picker's\n entries). `test_mode` drives the \"name (live)\" / \"name (test)\" label.",
+  "patternProperties": {
+    "^(test_mode)$": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "properties": {
+    "active": {
+      "default": false,
+      "type": "boolean"
+    },
+    "id": {
+      "default": "",
+      "type": "string"
+    },
+    "name": {
+      "default": "",
+      "type": "string"
+    },
+    "testMode": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Campaign",
+  "type": "object"
+}

@@ -1,0 +1,15 @@
+{
+  "$id": "babelconnect.v1.ListCampaignsResponse.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "campaigns": {
+      "items": {
+        "$ref": "babelconnect.v1.Campaign.jsonschema.json"
+      },
+      "type": "array"
+    }
+  },
+  "title": "List Campaigns Response",
+  "type": "object"
+}

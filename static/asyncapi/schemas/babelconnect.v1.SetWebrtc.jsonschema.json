@@ -1,0 +1,14 @@
+{
+  "$id": "babelconnect.v1.SetWebrtc.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SetWebrtc enables or disables the browser phone (WebRTC). Off = bridge calls to\n the external-telephone number instead.",
+  "properties": {
+    "on": {
+      "default": false,
+      "type": "boolean"
+    }
+  },
+  "title": "Set Webrtc",
+  "type": "object"
+}

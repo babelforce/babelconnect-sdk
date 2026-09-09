@@ -1,0 +1,19 @@
+{
+  "$id": "babelconnect.v1.Hangup.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "patternProperties": {
+    "^(call_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "callId": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Hangup",
+  "type": "object"
+}

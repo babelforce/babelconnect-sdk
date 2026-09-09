@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.GetStateRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "GetStateRequest fetches the current AgentView (the unary \"get current state\").\n Empty; the bearer token rides in \"authorization\" metadata like every call.",
+  "properties": {},
+  "title": "Get State Request",
+  "type": "object"
+}

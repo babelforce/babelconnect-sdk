@@ -1,0 +1,42 @@
+{
+  "$id": "babelconnect.v1.PhonebookRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "PhonebookRequest / PhonebookResponse re-pull the agent's merged contacts +\n recent numbers on demand (refresh). `query` filters by label/number server-side.",
+  "properties": {
+    "max": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "page": {
+      "anyOf": [
+        {
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": "integer"
+        },
+        {
+          "pattern": "^-?[0-9]+$",
+          "type": "string"
+        }
+      ],
+      "default": 0
+    },
+    "query": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Phonebook Request",
+  "type": "object"
+}

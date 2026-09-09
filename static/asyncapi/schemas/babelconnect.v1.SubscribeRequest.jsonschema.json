@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.SubscribeRequest.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SubscribeRequest opens the StateUpdate stream for the authenticated agent (the\n bearer token rides in \"authorization\" metadata, like every call). Empty today;\n reserved for future subscription filters.",
+  "properties": {},
+  "title": "Subscribe Request",
+  "type": "object"
+}

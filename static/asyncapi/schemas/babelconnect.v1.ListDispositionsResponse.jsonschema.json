@@ -1,0 +1,15 @@
+{
+  "$id": "babelconnect.v1.ListDispositionsResponse.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "reasons": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "title": "List Dispositions Response",
+  "type": "object"
+}

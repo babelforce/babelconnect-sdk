@@ -1,0 +1,48 @@
+{
+  "$id": "babelconnect.v1.AgentView.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "AgentView is the complete per-agent state the server owns and renders to. A\n snapshot carries the whole view; patches carry entity-level deltas.",
+  "patternProperties": {
+    "^(active_calls)$": {
+      "items": {
+        "$ref": "babelconnect.v1.CallState.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "^(wrap_up)$": {
+      "$ref": "babelconnect.v1.WrapUpStatus.jsonschema.json"
+    }
+  },
+  "properties": {
+    "activeCalls": {
+      "items": {
+        "$ref": "babelconnect.v1.CallState.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "agent": {
+      "$ref": "babelconnect.v1.AgentInfo.jsonschema.json"
+    },
+    "conferences": {
+      "items": {
+        "$ref": "babelconnect.v1.Conference.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "config": {
+      "$ref": "babelconnect.v1.AppConfig.jsonschema.json"
+    },
+    "sms": {
+      "items": {
+        "$ref": "babelconnect.v1.SmsConversation.jsonschema.json"
+      },
+      "type": "array"
+    },
+    "wrapUp": {
+      "$ref": "babelconnect.v1.WrapUpStatus.jsonschema.json"
+    }
+  },
+  "title": "Agent View",
+  "type": "object"
+}

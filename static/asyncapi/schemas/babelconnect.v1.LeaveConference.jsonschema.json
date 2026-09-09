@@ -1,0 +1,9 @@
+{
+  "$id": "babelconnect.v1.LeaveConference.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "LeaveConference hangs up only the agent's own leg; the others stay connected.",
+  "properties": {},
+  "title": "Leave Conference",
+  "type": "object"
+}
