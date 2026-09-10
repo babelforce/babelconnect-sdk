@@ -1,6 +1,8 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+// The site's version = the release stamped by scripts/set-version.py (SRE-A9); shown in the navbar.
+import pkg from './package.json';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -88,6 +90,7 @@ const config: Config = {
         {to: '/docs/go/getting-started', label: 'Go', position: 'left'},
         {to: 'pathname:///reference/rest/', label: 'REST API', position: 'left'},
         {to: 'pathname:///reference/events/', label: 'Events API', position: 'left'},
+        {to: '/docs/changelog', label: `v${pkg.version}`, position: 'right'},
         {
           href: 'https://github.com/babelforce',
           label: 'GitHub',

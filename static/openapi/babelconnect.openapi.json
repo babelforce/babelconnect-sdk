@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Babelconnect Agent API",
-    "version": "1.0.0",
+    "version": "0.23.1",
     "description": "Control-plane contract for **babelconnect-server** — the single API surface every\nBabelconnect SDK (Go, TypeScript, Dart; later Python) targets.\n\nThis document is generated from the protobuf source of truth\n(`babelconnect-proto/proto/babelconnect/v1/babelconnect.proto`) and describes the\n**request/response plane**: the `Agent` gRPC service (native HTTP/2 + gRPC-web) and\nthe REST/JSON endpoints mapped from it. The server→client **event plane** — the\n`StateUpdate` push stream delivered over `Session`/`Subscribe` — is documented\nseparately in the AsyncAPI spec (`docs/asyncapi/babelconnect.asyncapi.yaml`).\n\n**Auth:** clients obtain an OAuth2 bearer token (password grant via `POST /oauth/token`,\nor the `/auth/sso/*` SSO flow) and send it as `authorization: Bearer \u003ctoken\u003e` gRPC\nmetadata on every call — or as the `Authorization` header on the REST/JSON endpoints.\n"
   },
   "servers": [

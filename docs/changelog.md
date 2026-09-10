@@ -6,9 +6,134 @@ sidebar_label: Changelog
 
 # Changelog
 
-Notable changes to the babelConnect SDKs and the embedding contract. This is the
-customer-facing view; full engineering detail (server, proto, app, per-SDK) lives in the
-repository `CHANGELOG.md`.
+Notable changes to the babelConnect SDKs, the embedding contract and the agent app, by release.
+Every release is listed; one with nothing you can observe says so. The version shown in the
+navbar is the release these pages describe.
+
+## 0.23.1 — 2026-09-10
+
+- **This changelog is complete again, and the site knows its version.** Every release since
+  0.17.0 is listed below (the page had stopped at 0.16.0), the navbar shows the release these
+  pages describe, and the REST and Events references carry the release version instead of a
+  fixed `1.0.0`.
+- **The Go SDK page says where the public module stands.** The published module is v0.1.0 and
+  predates the Connect transport; the page now says so and points to the TypeScript SDK until a
+  current release of the Go module is published.
+
+## 0.23.0 — 2026-09-09
+
+- **Fixed: the agent's own phone number is no longer offered as a caller ID.** The caller-ID
+  list mixed the account's service numbers with the agent's own number; choosing the latter made
+  every outbound call fail with a "number forbidden as Display-As" rejection, and an agent with no
+  service number could not place a call at all. The list now holds service numbers only, and with
+  none available the call goes out on the account's default outbound number. Fixes the app and
+  every SDK at once.
+- **A refused outbound call now names its reason.** Instead of one `place_call_failed` carrying
+  raw backend JSON, the server sends **`agent_not_available`** (the line is blocked or the presence
+  is not Available — reset the line status or pick an Available presence) or
+  **`display_as_forbidden`** (the chosen caller ID is not a service number of the account). Other
+  rejections keep `place_call_failed` and now carry the backend's message plus per-field detail.
+  A conference invite with a rejected caller ID reports `display_as_forbidden` too.
+- **Fixed: a cold transfer to a busy target completed on the agent's own leg.** The transfer now
+  resolves only when the invited target answers; a busy, rejected or unanswered target takes the
+  abort path — the caller is taken off hold, the agent keeps the call, and `transfer_rejected`
+  is sent.
+- **Docs: an [Error codes](./protocol/error-codes.md) reference** — all 30 codes the server can
+  send, each with when it is sent, whether it carries a `callId`, and how to recover — plus two
+  Troubleshooting entries indexed by what the agent sees.
+
+## 0.22.2 — 2026-09-08
+
+- **Fixed: muting or holding for more than a minute ended the call.** While muted or on hold the
+  server sent no audio at all toward the telephony side, whose inactivity timer then hung the
+  channel up after about 60 seconds. The server now sends silence in both states and keeps the
+  stream alive whenever the client goes quiet, so mute and hold last as long as you need.
+- **Fixed: a cold transfer left the caller on an orphaned leg for about a minute.** A transfer, a
+  completed warm transfer and leaving a conference now end the telephony leg immediately.
+- **Docs: a line-blocked banner recipe.** A ringing offer that goes unanswered puts the agent in
+  `unreachable`, an involuntary line block. The Recipes page shows how to render the banner and
+  the reset action so an agent can recover; the state model links to it.
+
+## 0.22.1 — 2026-08-24
+
+- **Fixed: one agent refreshing their browser tab could take the server down for every agent on
+  the deployment.** A client that disconnected while its registration was still loading tripped a
+  server fault; browsers saw the restart window as a CORS failure on `Subscribe`, which is what it
+  looked like from the outside. Late updates for a closed stream are now dropped, and any future
+  fault on that path degrades to one lost state patch instead of an outage.
+- **Loopback port wildcards in origin allowlists.** `http://localhost:*`, `http://127.0.0.1:*` and
+  `http://[::1]:*` are accepted in the CORS and embed origin allowlists, so a developer is allowed
+  without anyone guessing which port their dev server picks. A port wildcard on any other host
+  matches nothing; a pattern is still never used as a `postMessage` target origin.
+
+## 0.22.0 — 2026-07-28
+
+- **Fixed: conference invites and blind transfers to external numbers work again.** Inviting an
+  external (PSTN) number requires a caller ID; the server sent none, so every "add to call" and
+  blind transfer to an external number failed. Add-to-call now sends one, and a blind transfer
+  shows the transferred-to party the **original customer's** number. With no selectable number at
+  all, an external invite fails fast with `no_caller_id` instead of a raw 400.
+- **Optional per-invite caller ID.** `AddConferenceMember` gains `display_as`; leave it out and the
+  server uses the agent's currently selected outbound number. TypeScript and Dart:
+  `addConferenceMember(..., displayAs)`. **Go (breaking):** `Client.AddConferenceMember` takes a
+  trailing `displayAs string` — pass `""` for the previous behaviour.
+- **Wildcard origin patterns.** The CORS and embed origin allowlists accept a pattern matching one
+  leading host label: `https://*.zendesk.com` matches `https://acme.zendesk.com` and never a deeper
+  subdomain, the bare apex, another scheme or port, or a lookalike such as
+  `https://acme.zendesk.com.evil.test`. A match answers with the full requested origin.
+
+## 0.21.3 — 2026-07-06
+
+- **Allow-all embed origins for a shared deployment.** With the embed allowlist set to `*`, a
+  framed widget accepts host commands from any origin — the bearer token is the security gate, so a
+  framer without a valid `auth.set` token drives an inert widget. An *empty* allowlist still fails
+  closed, data-bearing app→host events never broadcast to `*`, and the host origin locks on the
+  first command. `*` in the CORS allowlist is now allow-all as well (it previously matched nothing).
+
+## 0.21.2 — 2026-07-06
+
+- **Fixed: signing out of the deployed web app flashed a 502 "gateway unavailable".** Sign-out no
+  longer forces a full-page reload unless a newer bundle is actually deployed, and closes the
+  connection first when a reload is warranted.
+
+## 0.21.1 — 2026-07-06
+
+- No customer-facing changes. Test infrastructure only: the three SDKs' state caches are now
+  checked against one shared golden script on every change, and the TypeScript package's `exports`
+  map and type resolution are verified before every publish.
+
+## 0.21.0 — 2026-07-06
+
+- **Dart SDK: a detected sequence gap in the state stream now re-syncs from a fresh snapshot** and
+  replays `Register` — the same recovery as a real drop, without the reconnecting banner or backoff
+  since the transport is still healthy. Previously a gap only fired the optional `onGap` callback
+  and left the client on a possibly diverged view.
+
+## 0.20.0 — 2026-07-06
+
+- No customer-facing changes. Integration-test coverage of the call lifecycle in the agent app.
+
+## 0.19.0 — 2026-07-06
+
+- **App shell:** the Account tab moves to the end of the bottom navigation, and the header shows the
+  brand glyph alone, centered. The brand name stays as the logo's accessibility label.
+
+## 0.18.0 — 2026-07-05
+
+- **Sign-out revokes the token actually in use.** After a host rotated the bearer mid-session via
+  `auth.set`, sign-out still revoked the token the session *started* with; it now revokes the
+  current one.
+- **Security: standalone web token storage hardened.** The bearer moves from `localStorage` to
+  `sessionStorage` (per tab: a reload restores the session, closing the tab drops it), with a
+  one-time migration that keeps live sessions signed in, and the app now ships a `script-src`
+  Content Security Policy. Embedded sessions were never persisted and are unaffected.
+
+## 0.17.0 — 2026-07-05
+
+- The programmatic TypeScript client — the surface you build your own softphone UI on — is now
+  covered by a browser end-to-end suite on every change: password grant, `Subscribe`, the
+  `StateCache`-reduced snapshot, `placeCall`, a real WebRTC auto-answer, hangup, wrap-up and media
+  teardown, plus both auth-failure paths. No API change.
 
 ## 0.16.0 — 2026-07-05
 

@@ -17,7 +17,7 @@
 asyncapi: 3.0.0
 info:
   title: Babelconnect Agent — Event Plane
-  version: 1.0.0
+  version: 0.23.1
   description: |
     The **server-authoritative push stream** every Babelconnect SDK consumes. On the
     `Agent.Subscribe` (server-streaming) RPC the server emits a single message

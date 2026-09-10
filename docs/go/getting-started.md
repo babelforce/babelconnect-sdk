@@ -13,6 +13,14 @@ terminal apps — services, dashboards, bots, and CLIs that drive calls or react
 
 ## Install
 
+:::caution The published Go module is behind
+The module currently published at `github.com/babelforce/babelconnect-sdk-go` is **v0.1.0**
+(June 2026). It predates the Connect transport introduced in 0.13.0 and does not connect to
+current servers. A release matching the current version is planned; until it lands, use the
+[TypeScript SDK](../typescript/getting-started.md) or contact babelforce for early access to the
+current Go SDK. The API documented on these pages is the current one.
+:::
+
 ```sh
 go get github.com/babelforce/babelconnect-sdk-go
 ```
