@@ -86,6 +86,11 @@
             "type": "boolean",
             "title": "hold_others",
             "description": "(proto bool)"
+          },
+          "displayAs": {
+            "type": "string",
+            "title": "display_as",
+            "description": "Caller-ID shown to an invited EXTERNAL (PSTN) member. OPTIONAL, exactly like\n PlaceCall.display_as_to on the dialer: leave it empty and the server\n substitutes the agent's currently selected number (AgentInfo.display_as).\n Ignored for agent / internal-extension targets, which take the moderator's\n own number. Unlike the outbound endpoint the backend has no default here —\n it rejects a PSTN invite carrying no caller-ID — so the server always fills\n one in rather than passing an empty value through (CA5). (proto string)"
           }
         },
         "title": "AddConferenceMember",

@@ -12,10 +12,18 @@ A mounted embed. Use the verb groups ([auth](BabelconnectEmbed.md#auth), [calls]
 ```ts
 readonly app: {
   setTab: (tab) => void;
+  setTheme: (theme) => void;
 };
 ```
 
-Route the agent to a tab: `phone` | `chat` | `history` | `outbound`.
+Route the agent to a tab, and brand the app.
+
+`setTheme` merges the tokens you pass into the theme already in effect
+and posts the merged set, so `setTheme({ mode: "dark" })` changes only
+the mode and the app re-themes in place — no reload, no interruption to
+a live call. Pass `null` for a token to drop it back to the deployment's
+value. See [EmbedTheme](../interfaces/EmbedTheme.md) for the token table and what happens to a
+value the app refuses.
 
 #### setTab()
 
@@ -28,6 +36,22 @@ setTab: (tab) => void;
 ###### tab
 
 `string`
+
+##### Returns
+
+`void`
+
+#### setTheme()
+
+```ts
+setTheme: (theme) => void;
+```
+
+##### Parameters
+
+###### theme
+
+[`EmbedTheme`](../interfaces/EmbedTheme.md)
 
 ##### Returns
 

@@ -170,6 +170,7 @@ party unconditionally in that case.
 | agent_id | [string](#scalar-value-types) |  |  |
 | number | [string](#scalar-value-types) |  |  |
 | hold_others | [bool](#scalar-value-types) |  |  |
+| display_as | [string](#scalar-value-types) |  | Caller-ID shown to an invited EXTERNAL (PSTN) member. OPTIONAL, exactly like PlaceCall.display_as_to on the dialer: leave it empty and the server substitutes the agent&#39;s currently selected number (AgentInfo.display_as). Ignored for agent / internal-extension targets, which take the moderator&#39;s own number. Unlike the outbound endpoint the backend has no default here — it rejects a PSTN invite carrying no caller-ID — so the server always fills one in rather than passing an empty value through (CA5). |
 
 
 

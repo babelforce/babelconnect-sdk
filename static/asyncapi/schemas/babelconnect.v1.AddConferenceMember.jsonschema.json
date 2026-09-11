@@ -8,6 +8,11 @@
       "default": "",
       "type": "string"
     },
+    "^(display_as)$": {
+      "default": "",
+      "description": "Caller-ID shown to an invited EXTERNAL (PSTN) member. OPTIONAL, exactly like\n PlaceCall.display_as_to on the dialer: leave it empty and the server\n substitutes the agent's currently selected number (AgentInfo.display_as).\n Ignored for agent / internal-extension targets, which take the moderator's\n own number. Unlike the outbound endpoint the backend has no default here —\n it rejects a PSTN invite carrying no caller-ID — so the server always fills\n one in rather than passing an empty value through (CA5).",
+      "type": "string"
+    },
     "^(hold_others)$": {
       "default": false,
       "type": "boolean"
@@ -16,6 +21,11 @@
   "properties": {
     "agentId": {
       "default": "",
+      "type": "string"
+    },
+    "displayAs": {
+      "default": "",
+      "description": "Caller-ID shown to an invited EXTERNAL (PSTN) member. OPTIONAL, exactly like\n PlaceCall.display_as_to on the dialer: leave it empty and the server\n substitutes the agent's currently selected number (AgentInfo.display_as).\n Ignored for agent / internal-extension targets, which take the moderator's\n own number. Unlike the outbound endpoint the backend has no default here —\n it rejects a PSTN invite carrying no caller-ID — so the server always fills\n one in rather than passing an empty value through (CA5).",
       "type": "string"
     },
     "holdOthers": {

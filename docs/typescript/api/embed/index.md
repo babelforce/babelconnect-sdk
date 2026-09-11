@@ -8,6 +8,7 @@
 
 - [AuthSetArgs](interfaces/AuthSetArgs.md)
 - [EmbedOptions](interfaces/EmbedOptions.md)
+- [EmbedTheme](interfaces/EmbedTheme.md)
 
 ## Type Aliases
 

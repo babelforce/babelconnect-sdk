@@ -81,6 +81,18 @@ Optional initial session correlation (also settable later via [session](EmbedOpt
 
 ***
 
+### theme?
+
+```ts
+optional theme: EmbedTheme;
+```
+
+Optional brand tokens for the embedded app — your colours, your name,
+your logo (also settable later via app's `setTheme`).
+See [EmbedTheme](EmbedTheme.md).
+
+***
+
 ### token
 
 ```ts

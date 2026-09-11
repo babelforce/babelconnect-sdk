@@ -58,6 +58,15 @@ invite fails.
 
 `string`
 
+###### displayAs
+
+`string`
+
+Caller ID shown to an invited EXTERNAL (PSTN) number. OPTIONAL, exactly
+like `placeCall`'s `displayAsTo`: omit it and the server uses the agent's
+currently selected outbound number. Ignored for agent targets and
+internal extensions, which take the moderator's own number (CA5).
+
 ###### holdOthers
 
 `boolean`
