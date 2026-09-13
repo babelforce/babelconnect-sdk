@@ -398,7 +398,7 @@ metrics are additive fields below, layered on top of this envelope.
 | last_reason | [string](#scalar-value-types) |  |  |
 | since | [int64](#scalar-value-types) |  | unix seconds this state was entered/last confirmed |
 | lead | [Lead](#babelconnect-v1-Lead) |  | lead is the customer the dialer connected the agent to — set while a lead is being worked (IN_PROGRESS/DISPOSITION), unset otherwise. Updated the moment the dialer connects a lead. |
-| metrics | [CampaignMetrics](#babelconnect-v1-CampaignMetrics) |  | metrics is the campaign&#39;s live pacing snapshot (OBDD1), refreshed alongside the enrichment read while `state == IDLE` (paused) — the only state the Outbound tab shows it in; unset otherwise (and left unset if the GET /agent/outbound/metrics read 404s, e.g. between polls). |
+| metrics | [CampaignMetrics](#babelconnect-v1-CampaignMetrics) |  | metrics is the campaign&#39;s live pacing snapshot, refreshed while `state == IDLE` (paused). Unset otherwise, or when metrics are unavailable. |
 
 
 

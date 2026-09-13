@@ -42,4 +42,4 @@ Updated session correlation. Omit to leave the currently-tracked value unchanged
 token: string;
 ```
 
-New bearer token.
+New bearer token. In legacy mode this is passed to `legacyAuth.set`.

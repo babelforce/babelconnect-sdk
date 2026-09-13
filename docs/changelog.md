@@ -10,6 +10,21 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.24.0 — 2026-09-13
+
+- **Use the v2 embed API with a legacy app.** The TypeScript SDK now includes
+  the legacy iframe bridge in its module and browser bundles. Set
+  `legacyBridge: true` and supply your application's `legacyAuth` hook; no
+  additional package or script is needed. Session, context, dialing and the
+  supported tabs keep the same host API. Loaded events remain minimal unless
+  you request `eventsVersion: "v1"`. See the
+  [legacy-runtime guide](./typescript/embedding#5-use-the-v2-api-with-a-legacy-app).
+- **The embedding reference covers the adapter and host themes.** It explains
+  credential refresh, bridge disposal, supported tabs, unsupported theme
+  operations, and the current app's theme tokens.
+- **Layout and embedding improvements:** the app offers a right-to-left layout
+  override, and wildcard origin patterns can cover multiple subdomain levels.
+
 ## 0.23.1 — 2026-09-10
 
 - **This changelog is complete again, and the site knows its version.** Every release since

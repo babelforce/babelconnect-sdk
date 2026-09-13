@@ -24,6 +24,9 @@ the mode and the app re-themes in place — no reload, no interruption to
 a live call. Pass `null` for a token to drop it back to the deployment's
 value. See [EmbedTheme](../interfaces/EmbedTheme.md) for the token table and what happens to a
 value the app refuses.
+In legacy mode, `setTheme` and tabs without a legacy equivalent throw
+[UnsupportedEmbedFeatureError](UnsupportedEmbedFeatureError.md). Supported named tabs are `phone`,
+`messaging` (`chat`), `history`, and `outbound`.
 
 #### setTab()
 
@@ -35,7 +38,7 @@ setTab: (tab) => void;
 
 ###### tab
 
-`string`
+`string` | `number`
 
 ##### Returns
 
@@ -73,6 +76,8 @@ live app applies it in place without interrupting the session or any
 active call. Also remembers the values as *current*, so if the
 iframe later reloads and re-emits `ready`, the handshake hands off this
 refreshed token rather than the one passed to [BabelconnectEmbed.mount](BabelconnectEmbed.md#mount).
+In legacy mode, calls [LegacyAuth.set](../interfaces/LegacyAuth.md#set) with the current payload
+instead; the host owns how the legacy app accepts refreshed credentials.
 
 #### set()
 

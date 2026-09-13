@@ -67,18 +67,15 @@ app → host:  { type: "bcConnect", name: "agent.loaded", data: { agentId, … }
 ```
 
 **Refreshing the token mid-session:** send `auth.set` again with the new token once the agent is
-already live — the app applies it **in place**, without interrupting the session or any active call:
+already live — the current app applies it **in place**, without interrupting the session or any active call:
 the next request (and the next automatic reconnect of the state stream, if the connection ever drops)
 uses the new token, and the handshake is **not** re-run (no second `ready` / `agent.loaded` /
 `user.loaded`). An `auth.set` that arrives while the session is still starting (before `agent.loaded`)
 is ignored — refresh only once the agent is live. The SDK sends the initial `auth.set` for you at
-mount; to refresh, post the same message to the iframe yourself:
+mount; to refresh, use the SDK's authentication group:
 
 ```ts
-bc.element.contentWindow?.postMessage(
-  { type: "connect", module: "auth", name: "auth.set", args: { token: newToken } },
-  "https://agent.example.com", // your babelconnect-server origin
-);
+bc.auth.set({ token: newToken });
 ```
 
 Both ends validate `event.origin`. In production, configure your babelconnect-server so that its **CSP
@@ -264,6 +261,117 @@ The `cti.call` payload is `{ call: { id, state, type, from, to } }`, emitted onc
 `inbound` / `outbound`. It's gated by the deployment's **`config.cti.emitCallEvents`** — a deployment can turn
 host call-event emission off, so don't assume it always fires. (`agent.loaded` / `user.loaded` always fire on
 ready.)
+
+## 5. Use the v2 API with a legacy app
+
+The SDK includes a legacy iframe bridge in both its `/embed` module and its
+browser bundle. Select it for one mount with `legacyBridge: true`. Set
+`serverUrl` to the **legacy app's origin** and, if necessary, `path` to its
+entry path. Omitting `legacyBridge` selects the current app protocol.
+
+You must provide `legacyAuth`. Its `set` function hands credentials to the
+legacy app using **your application's existing authentication integration**.
+The SDK does not define a legacy token, cookie or storage mechanism.
+`getAgentToken()` and `handOffLegacyCredentials()` below are functions your
+application supplies; the latter must actually authenticate the selected app.
+
+```ts
+// legacy-runtime-example
+import { BabelconnectEmbed } from "@babelforce/babelconnect-sdk/embed";
+
+const bc = BabelconnectEmbed.mount({
+  container: document.getElementById("bc")!,
+  serverUrl: "https://legacy-agent.example.com",
+  token: await getAgentToken(),
+  legacyBridge: true,
+  legacyAuth: {
+    set: (args) => handOffLegacyCredentials(args),
+  },
+  session: { ticketId: "ticket-123" },
+  context: { source: "crm" },
+});
+
+bc.on("agent.loaded", () => {
+  bc.calls.dial("+49301234567", false); // pre-fill after the app is connected
+  bc.app.setTab("phone");
+});
+bc.on("cti.error", (error) => console.error(error));
+
+// Once your token has been refreshed:
+bc.auth.set({ token: await getAgentToken() });
+
+// When the containing view is closed:
+// bc.dispose();
+```
+
+The hook receives the full current
+[`AuthSetArgs`](./api/embed/interfaces/AuthSetArgs) payload: `token` and any
+`session`, `context`, or `eventsVersion` you set. It runs on iframe load and
+on `bc.auth.set()`, including after a reload. A thrown error or rejected
+promise emits `cti.error` with `code: "legacy_auth_failed"`; other bridge
+failures use `legacy_bridge_failed`.
+
+Legacy `ready` is synthesized from **iframe load**. It does not wait for
+authentication to finish. Wait for `agent.loaded` before dialing or switching
+tabs. Calls return `void`; they do not acknowledge that the app completed an
+operation.
+
+| Operation | Legacy behavior |
+|---|---|
+| `bc.calls.dial(number, dial)` | Dial or pre-fill, carrying the current session. |
+| `bc.session.set(values)` | Replace session correlation. |
+| `bc.context.set(values)` | Merge shared context. |
+| `bc.app.setTab(name)` | `phone`, `messaging` (`chat`), `history`, and `outbound` map to legacy indices `0`–`3`. Numeric indices pass through. |
+| `bc.on(name, handler)` | Forward app events. Loaded events default to `{ agentId }`; `eventsVersion: "v1"` opts into the legacy agent/user fields. |
+| `bc.dispose()` | Remove the iframe, subscriptions and connection's message listener. |
+
+`phonebook`, `contacts`, `account` and unknown named tabs throw
+[`UnsupportedEmbedFeatureError`](./api/embed/classes/UnsupportedEmbedFeatureError).
+Legacy mode also rejects `theme` at mount and `bc.app.setTheme()` with that
+error. The theme section above applies to the current app. Supplying only
+one of `legacyBridge` and `legacyAuth` throws
+[`LegacyEmbedConfigurationError`](./api/embed/classes/LegacyEmbedConfigurationError).
+
+For **script-tag usage**, load `babelconnect-embed.iife.js` from a current SDK
+deployment or copy `dist/web/babelconnect-embed.iife.js` from this npm package
+to your host's assets. Then use `window.BabelconnectEmbed.mount()` with the
+same options above. The SDK bundle and the legacy iframe may be served from
+different origins; `serverUrl` always identifies the iframe's origin. No
+additional legacy script or global is required. The legacy bridge accepts
+messages only from that origin and that iframe window.
+
+Here is the script-tag version in plain JavaScript. Copy the package's browser
+bundle to `/assets/babelconnect-embed.iife.js` and supply the two authentication
+functions described above:
+
+```html
+<!-- legacy-script-example -->
+<div id="bc" style="width: 380px; height: 640px"></div>
+<script src="/assets/babelconnect-embed.iife.js"></script>
+<script>
+(async () => {
+  const bc = window.BabelconnectEmbed.mount({
+    container: document.getElementById("bc"),
+    serverUrl: "https://legacy-agent.example.com",
+    token: await getAgentToken(),
+    legacyBridge: true,
+    legacyAuth: { set: (args) => handOffLegacyCredentials(args) },
+    session: { ticketId: "ticket-123" },
+    context: { source: "crm" },
+  });
+  bc.on("agent.loaded", () => {
+    bc.calls.dial("+49301234567", false);
+    bc.app.setTab("phone");
+  });
+  bc.on("cti.error", (error) => console.error(error));
+  // Later: bc.auth.set({ token: refreshedToken });
+  // When this view closes: bc.dispose();
+})();
+</script>
+```
+
+An application with its own lifecycle-capable bridge can supply a
+[`LegacyBridge`](./api/embed/interfaces/LegacyBridge) object instead of `true`.
 
 ## Reference
 

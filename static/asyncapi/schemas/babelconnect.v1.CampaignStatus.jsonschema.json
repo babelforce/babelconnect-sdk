@@ -36,7 +36,7 @@
     },
     "metrics": {
       "$ref": "babelconnect.v1.CampaignMetrics.jsonschema.json",
-      "description": "metrics is the campaign's live pacing snapshot (OBDD1), refreshed\n alongside the enrichment read while `state == IDLE` (paused) — the only\n state the Outbound tab shows it in; unset otherwise (and left unset if the\n GET /agent/outbound/metrics read 404s, e.g. between polls)."
+      "description": "metrics is the campaign's live pacing snapshot, refreshed while\n `state == IDLE` (paused). Unset otherwise, or when metrics are unavailable."
     },
     "paused": {
       "default": false,

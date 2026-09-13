@@ -51,6 +51,30 @@ CRM users by email or routing by number. See the Embedding guide,
 
 ***
 
+### legacyAuth?
+
+```ts
+optional legacyAuth: LegacyAuth;
+```
+
+Required in legacy mode; the host supplies the legacy app's credential handoff.
+
+***
+
+### legacyBridge?
+
+```ts
+optional legacyBridge: true | LegacyBridge;
+```
+
+Set to `true` to use the bundled legacy iframe bridge, or inject a
+lifecycle-capable bridge. The v2 facade delegates host commands and
+app events to this bridge instead of using the modern postMessage client.
+Requires [legacyAuth](EmbedOptions.md#legacyauth); point [serverUrl](EmbedOptions.md#serverurl) and [path](EmbedOptions.md#path) at
+the legacy app. Omit to use the current app protocol.
+
+***
+
 ### path?
 
 ```ts
@@ -67,7 +91,7 @@ Path within the app (default `/`).
 serverUrl: string;
 ```
 
-babelconnect-server origin (the iframe `src` + the only origin messages are exchanged with).
+App origin (the iframe `src` + the only origin the legacy bridge exchanges messages with).
 
 ***
 
@@ -88,8 +112,9 @@ optional theme: EmbedTheme;
 ```
 
 Optional brand tokens for the embedded app — your colours, your name,
-your logo (also settable later via app's `setTheme`).
-See [EmbedTheme](EmbedTheme.md).
+your logo (also settable later via [BabelconnectEmbed.app](../classes/BabelconnectEmbed.md#app)'s `setTheme`).
+See [EmbedTheme](EmbedTheme.md). Legacy mode rejects this option with
+[UnsupportedEmbedFeatureError](../classes/UnsupportedEmbedFeatureError.md).
 
 ***
 
@@ -99,4 +124,4 @@ See [EmbedTheme](EmbedTheme.md).
 token: string;
 ```
 
-Bearer token, handed to the app via `postMessage` after its `ready` event (never in the URL).
+Bearer token, handed to the app via the active bridge after readiness (never in the URL).
