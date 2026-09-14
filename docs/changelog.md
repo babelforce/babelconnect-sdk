@@ -10,6 +10,26 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.24.2 — 2026-09-14
+
+- **A failed cold transfer now says why.** Every way an invited target could fail produced one code,
+  `transfer_rejected`, and one sentence, "transfer target did not answer" — a colleague who is not
+  logged in and one who simply lets it ring were indistinguishable to the transferring agent. The
+  abort now carries **`transfer_target_no_answer`**, **`transfer_target_unreachable`**,
+  **`transfer_target_busy`** or **`transfer_target_declined`**. `transfer_rejected` remains as the
+  fallback for a reason the vocabulary does not name, so a client that branched on it keeps working.
+  `ConferenceMember.failure_reason` carries the same word on the conference patch.
+
+- **A blocked line says why.** When an agent's line is blocked, `AgentInfo.line_blocked_reason` now
+  names the cause — `unreachable`, `busy`, `declined` or `dnd`, and empty when the line is not
+  blocked. An agent whose phone rang for a colleague's transfer and who did not reach it in time can
+  be told that, instead of seeing an unexplained blocked line.
+
+- **An incoming call is no longer mistaken for your own outbound call.** If a queue offer arrived in
+  the window between placing a call and that call ringing back, it was labelled as the agent's own
+  outbound leg — so a client set to answer its own dials automatically could connect an agent to a
+  caller they never accepted. The two are now told apart by the number on the leg.
+
 ## 0.24.1 — 2026-09-14
 
 - **An agent holding two calls could lose one of them.** Every action your integration sends —
