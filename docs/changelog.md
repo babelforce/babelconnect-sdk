@@ -10,6 +10,16 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.24.3 — 2026-09-14
+
+- **The cold-transfer failure codes now read every spelling of a reason.** The four codes introduced
+  in 0.24.2 — `transfer_target_no_answer`, `transfer_target_unreachable`, `transfer_target_busy`,
+  `transfer_target_declined` — are derived through a single normalisation, so a reason that differs
+  only in case, surrounding whitespace or word separator maps to the same code. Nothing you can
+  observe changes: on the live transfer path the normalisation already applied in 0.24.2, and every
+  code an agent saw then is the code they see now. This closes the gap for a caller that supplies a
+  reason itself.
+
 ## 0.24.2 — 2026-09-14
 
 - **A failed cold transfer now says why.** Every way an invited target could fail produced one code,
