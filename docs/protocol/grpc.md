@@ -204,6 +204,7 @@ login / email |
 | account_id | [string](#scalar-value-types) |  | customer / account id |
 | account_name | [string](#scalar-value-types) |  | account / company display name, when known |
 | line_blocked | [bool](#scalar-value-types) |  | Involuntary line block: the ACD/platform marked the agent busy / unreachable / declined (a recoverable state cleared via ResetLineStatus) — distinct from a chosen &#34;busy&#34; presence the agent (or sign-out-as-busy) selected. Drives the line-blocked banner &#43; Reset; a voluntary busy presence leaves this false. |
+| line_blocked_reason | [string](#scalar-value-types) |  | Why `line_blocked` is true, when the platform said (DEV-844): unreachable (the agent&#39;s own leg rang out or could not be reached — the ACD folds both into one state), busy, declined, or dnd. Empty when the line is not blocked. The same vocabulary as ConferenceMember.failure_reason: a client can say &#34;you missed a transfer invite; the line frees itself shortly&#34; instead of showing a bare block. |
 | accounts | [Account](#babelconnect-v1-Account) | repeated | Accounts this agent may switch to without re-logging-in (agent-role only, resolved at auth). One is marked `current`. Drives the Account tab&#39;s switcher; empty/single ⇒ no picker. |
 | email | [string](#scalar-value-types) |  | The agent&#39;s own email — distinct from `username`, which is the *login* identity and may differ. Populated for the embedding bridge&#39;s legacy-shaped `agent.loaded` payload so host pages can match/route on it. |
 | sms_capable_numbers | [string](#scalar-value-types) | repeated | Subset of `available_numbers` the platform marks SMS-capable. Drives the SMS composer&#39;s From picker; empty/unknown ⇒ client falls back to `available_numbers`. |
@@ -498,6 +499,7 @@ removed/failed out of the participant list).
 | on_hold | [bool](#scalar-value-types) |  | member is on hold |
 | agent_id | [string](#scalar-value-types) |  | agent UUID when the member is an agent |
 | number | [string](#scalar-value-types) |  | phone number when the member is an external party |
+| failure_reason | [string](#scalar-value-types) |  | Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the leg rang out), unreachable (it could not be reached — not registered / not logged in / unroutable number), busy, or declined. Empty while the member is pending/added, and for a reason the platform did not name. Derived from the invite leg&#39;s finishReason on the /conferences push; the same vocabulary as AgentInfo.line_blocked_reason. |
 
 
 

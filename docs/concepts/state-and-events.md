@@ -275,6 +275,7 @@ The `agent` block (`AgentInfo`) is the one you render most — identity, presenc
 | `presenceName` · `presenceLabel` | the exact current presence (e.g. `break` / "Break") |
 | `presenceOptions` | the presence values the agent may switch to — feed your presence selector |
 | `lineBlocked` | involuntary ACD block (busy/unreachable/declined/dnd); render Reset when true |
+| `lineBlockedReason` | which block it is — `unreachable`, `busy`, `declined` or `dnd`; empty when not blocked |
 | `webrtcEnabled` | whether the in-browser phone is armed |
 | `displayAs` · `availableNumbers` | the selected outbound caller ID, and the numbers to choose from |
 | `canRecord` · `availableTags` · `alwaysRecordOutbound` | recording capability, the tags you may apply, and whether outbound is always recorded |
@@ -293,6 +294,7 @@ bug — keep them apart:
 | `presence` | the coarse `AgentState` enum — for the status icon/colour | server-computed |
 | `presenceName` · `presenceLabel` | the agent's *chosen* presence (e.g. `break`) | the agent picks it |
 | `lineBlocked` | an **involuntary** ACD line block — the platform stopped routing calls (the external phone went busy/unreachable, declined, or is on DND), recoverable with `resetLineStatus` | the platform sets it |
+| `lineBlockedReason` | **which** block: `unreachable` (the agent's leg rang out or could not be reached — the platform uses one word for both, and this block **lifts itself** after a short wrap-up), `busy`, `declined`, or `dnd`. Empty whenever `lineBlocked` is false | the platform sets it |
 
 `lineBlocked` is the flag a "Reset line" action gates on — **not** `presence == BUSY`. A `BUSY` presence can be
 *voluntary* (the agent, or a sign-out-as-busy, chose it), which needs no Reset; only an involuntary block does,
@@ -308,7 +310,13 @@ The two paths look alike in the coarse `presence` but differ in `lineBlocked`:
 - **Agent chooses pause "break"** → `presenceName` becomes `break` and `presence` shifts (to `PAUSED`);
   `lineBlocked` stays **false**. This is voluntary — show the pause state, but **no** Reset.
 - **Platform marks the agent busy** (the line went busy/unreachable/declined) → `lineBlocked` becomes
-  **true**. This is involuntary — render the banner + Reset so the agent can clear it.
+  **true** and `lineBlockedReason` says which. This is involuntary — render the banner + Reset so the
+  agent can clear it. The most common case is `unreachable` after a **missed transfer invite**: a colleague
+  cold-transferred a call to this agent, it rang out, and the platform parked the line for a few seconds
+  (the `wrapUp` countdown runs alongside) — say so, rather than showing an unexplained dead line. The same
+  vocabulary names the other side of that event: the transferring agent's error is
+  [`transfer_target_no_answer`](../protocol/error-codes#transfer--conference), and the failed
+  conference member carries `failureReason`.
 
 The list fields — `activeCalls`, `sms`, `conferences` — are always present as (possibly empty) arrays, so you
 can iterate them without null checks; `agent` and `config` populate once you `register`.

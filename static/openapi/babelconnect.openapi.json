@@ -202,6 +202,11 @@
             "title": "line_blocked",
             "description": "Involuntary line block: the ACD/platform marked the agent busy / unreachable /\n declined (a recoverable state cleared via ResetLineStatus) — distinct from a\n chosen \"busy\" presence the agent (or sign-out-as-busy) selected. Drives the\n line-blocked banner + Reset; a voluntary busy presence leaves this false. (proto bool)"
           },
+          "lineBlockedReason": {
+            "type": "string",
+            "title": "line_blocked_reason",
+            "description": "Why `line_blocked` is true, when the platform said (DEV-844): unreachable (the\n agent's own leg rang out or could not be reached — the ACD folds both into one\n state), busy, declined, or dnd. Empty when the line is not blocked. The same\n vocabulary as ConferenceMember.failure_reason: a client can say \"you missed a\n transfer invite; the line frees itself shortly\" instead of showing a bare block. (proto string)"
+          },
           "accounts": {
             "type": "array",
             "items": {
@@ -1291,6 +1296,11 @@
             "type": "string",
             "title": "number",
             "description": "phone number when the member is an external party (proto string)"
+          },
+          "failureReason": {
+            "type": "string",
+            "title": "failure_reason",
+            "description": "Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the\n leg rang out), unreachable (it could not be reached — not registered / not\n logged in / unroutable number), busy, or declined. Empty while the member is\n pending/added, and for a reason the platform did not name. Derived from the\n invite leg's finishReason on the /conferences push; the same vocabulary as\n AgentInfo.line_blocked_reason. (proto string)"
           }
         },
         "title": "ConferenceMember",

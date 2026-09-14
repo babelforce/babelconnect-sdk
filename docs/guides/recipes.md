@@ -133,8 +133,14 @@ agent silently stops receiving calls** and has no way to get them back.
 
 ```ts
 // From your subscribe handler, on every update:
+const why: Record<string, string> = {
+  unreachable: 'you missed a call offer (often a colleague\'s transfer) — the line frees itself shortly',
+  busy:        'your line reported busy',
+  declined:    'a call offer was declined',
+  dnd:         'your line is on do-not-disturb',
+};
 renderLineBlockedBanner(view.agent.lineBlocked ? {
-  text:   'You are not receiving calls — your line was marked unreachable.',
+  text:   `You are not receiving calls — ${why[view.agent.lineBlockedReason] ?? 'your line was blocked'}.`,
   action: { label: 'Reset', onClick: () => bc.resetLineStatus() },
 } : null);
 ```

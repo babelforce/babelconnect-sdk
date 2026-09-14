@@ -68,7 +68,8 @@ platform sets — separate from the chosen one. See [State & events](./state-and
 ### line_blocked
 An **involuntary** block set by the [ACD](#acd-state) / platform (busy / unreachable / declined / dnd),
 distinct from a chosen `busy` [presence](#presence) the agent selected; cleared via Reset (`resetLineStatus`).
-See [State & events](./state-and-events).
+`lineBlockedReason` says which of the four it is — `unreachable` is the one a missed transfer invite leaves
+behind, and it lifts itself after a short wrap-up. See [State & events](./state-and-events).
 
 ### ACD state
 The **platform's routing state** for the agent — what the ACD (automatic call distributor) thinks of the

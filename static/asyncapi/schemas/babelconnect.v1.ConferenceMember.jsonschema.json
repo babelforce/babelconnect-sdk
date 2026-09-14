@@ -12,6 +12,11 @@
       "default": "",
       "type": "string"
     },
+    "^(failure_reason)$": {
+      "default": "",
+      "description": "Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the\n leg rang out), unreachable (it could not be reached — not registered / not\n logged in / unroutable number), busy, or declined. Empty while the member is\n pending/added, and for a reason the platform did not name. Derived from the\n invite leg's finishReason on the /conferences push; the same vocabulary as\n AgentInfo.line_blocked_reason.",
+      "type": "string"
+    },
     "^(is_me)$": {
       "default": false,
       "type": "boolean"
@@ -32,6 +37,11 @@
     },
     "display": {
       "default": "",
+      "type": "string"
+    },
+    "failureReason": {
+      "default": "",
+      "description": "Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the\n leg rang out), unreachable (it could not be reached — not registered / not\n logged in / unroutable number), busy, or declined. Empty while the member is\n pending/added, and for a reason the platform did not name. Derived from the\n invite leg's finishReason on the /conferences push; the same vocabulary as\n AgentInfo.line_blocked_reason.",
       "type": "string"
     },
     "id": {
