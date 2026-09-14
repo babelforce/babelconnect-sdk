@@ -10,6 +10,26 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.24.1 — 2026-09-14
+
+- **An agent holding two calls could lose one of them.** Every action your integration sends —
+  answer, hang up, mute, hold, keypad digits, transfer — names the call it applies to. The server
+  was ignoring that name and applying the action to whichever call had rung most recently.
+
+  With one call in progress this was invisible. With two, the action landed on the wrong call.
+  Answering the second applied its answer to the first, so the second was never answered: it rang
+  out, and the agent's line was then marked unreachable and blocked. Muting silenced the wrong
+  call, and a transfer could move a caller to a destination chosen for a different conversation. A
+  call bouncing between agents is exactly the situation that leaves an agent holding two calls.
+
+- **A cold transfer now completes on the call it was started for**, rather than on whatever call
+  became current while the transfer target was still ringing.
+
+- **No change is required in your integration.** The SDKs already send the call id on every
+  command; the server now uses it. A command that omits the id still applies to the agent's current
+  call, as before. A command naming a call the agent does not hold is now refused with `no_call`
+  instead of being applied to another one.
+
 ## 0.24.0 — 2026-09-13
 
 - **Use the v2 embed API with a legacy app.** The TypeScript SDK now includes
