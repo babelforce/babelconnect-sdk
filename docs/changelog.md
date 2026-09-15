@@ -10,6 +10,88 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.25.0 — 2026-09-15
+
+- A cold transfer to the caller's own number is refused with `transfer_target_unreachable`; the caller stays with the agent.
+- **A conference command can name the call it acts on.** `startConference`, `addConferenceMember` and
+  `leaveConference` now take an optional call id, the way `mute`, `hold` and `transfer` already do. An
+  agent holding two calls can start or leave a conference on the one they mean; leaving it out still
+  means the current call, so nothing an existing integration sends changes behaviour. The TypeScript,
+  Dart, Go and Python SDKs all carry the field, and each fills it from the active call when you do not
+  pass one.
+
+- **Two new error codes.** `ambiguous_call` answers a conference command that names *no* call while the
+  agent holds more than one — the server refuses to guess which conversation you meant, and the fix is
+  to resend the command with the call id. `call_on_hold` answers keypad digits sent into a held call:
+  hold silences audio in both directions, so the digits would never have reached the far end, and the
+  send used to be a silent no-op. Take the call off hold, or gate the keypad on the call's hold state.
+
+- **A second window of the same agent is refused, and says so.** An embedded app in two host windows
+  with the same agent used to open two sessions, and only one of them could reach the live call — so
+  mute, hold, hang up and transfer did nothing in the other. The embedded app now takes part in the
+  single-instance guard: the second instance shows a take-over screen, starts no session, and never
+  renders controls that act on nothing. Every transition is reported to the host as a new event,
+  `session.guard` `{state, instanceId}`, with state `holder`, `blocked` or `released`. The guard is
+  keyed on the **browser origin**, not on the agent, so a second embed on the same page is blocked even
+  when your host hands it a different token; a host that needs two agents side by side needs two
+  origins. Taking over mid-call does not hang up — the call is parked briefly and reclaimed by the new
+  instance, exactly as on a reload.
+
+- **Every event names the instance it came from, and says which one holds the audio.** Each app→host
+  message now carries an `instanceId` — yours from `EmbedOptions.instanceId`, otherwise generated per
+  mount — and the embed exposes `bc.instanceId` plus a `{name, instanceId}` second argument on every
+  `on()` handler. `cti.call` gains `ownsMedia`, true only in the instance whose own connection holds
+  that call's audio, and a `call.media_owner` event fires when ownership changes. The owning instance
+  arms the browser's own close prompt, so an agent is warned before closing the window carrying the
+  live call (the browser only shows it once the agent has clicked inside the embed, and no browser
+  allows custom wording). Two embeds on one page no longer receive each other's events.
+
+- **The host theme rules are what the documentation says.** A colour must be `#rrggbb`, or `#aarrggbb`
+  only when the alpha is `FF`; any other alpha is refused by name — including the RGBA order a design
+  tool emits, where `#112233FF` is alpha `11`. A `surfaceColor` now re-derives the app's container
+  tints from your surface as contrast-checked tonal steps, so card and dialog text stays at WCAG AA in
+  either mode instead of, say, painting white on a dark surface sent in light mode. `cornerRadius`
+  reaches cards, dialogs and popup menus, and deliberately not controls; send no token and the app
+  keeps its own shapes. A refused token is reported once and no longer re-sent on every reload, so it
+  cannot earn a repeated rejection.
+
+- **The embed bundle is about six times smaller.** The bundled legacy bridge is loaded on demand,
+  only when you pass `legacyBridge: true`, instead of riding in the module entry point: the ES module
+  entry drops from roughly 45 KB to 7 KB. The browser bundle for a `<script src>` host is unchanged and
+  still self-contained. Because the bridge can now arrive after `mount()` returns, calls you make in
+  between are queued and replayed in order, and a bridge that fails to load is reported as
+  `cti.error{legacy_bridge_failed}` rather than thrown.
+
+- **Events sent before your first command reach you again.** If your embed allowlist holds only patterns
+  and no exact host origin, every app→host event fired before the host's first command was posted to an
+  empty list of targets — including the `cti.error{no_token}` that says the token handoff failed, which is
+  the only diagnostic you have at that point. The embedding page's own origin is now matched against the
+  allowlist by the same rule a command sender is checked with, and the boot events are delivered there. A
+  data event still never goes to `*`, and an origin nothing matched is dropped and named in a console
+  warning rather than posted blind.
+
+- **Recording commands name the call they act on.** `startRecording`, `stopRecording`, `flagRecording` and
+  `setRecordingTags` now resolve the call id you send, the way answer, mute, hold, digits and transfer
+  already did. `stopRecording` for call B while A was the current call used to stop A and then tell you B
+  had stopped. Leaving the id out still means the current call; an id the agent does not hold is refused
+  with `no_call` instead of being applied to another call.
+
+- **A reload or a closed window no longer strands the agent's other calls.** An agent holding two calls
+  who reloaded or closed the window kept only the call that was current — the rest stayed up on the
+  platform with nothing attached to them. Every call the agent holds is now parked together for the
+  reconnect grace window, so one reload reclaims all of them and one expiry ends all of them.
+
+- **The Python SDK stubs are regenerated and require `protobuf>=7.36.0`.** The committed stubs were 31
+  types behind the schema — 19 messages and 2 enums missing and 10 changed, among them the three
+  conference commands — so Python was the one SDK the call-id regeneration had missed. The regenerated
+  code checks the protobuf runtime version at import time and raises on anything older, so the
+  requirement now pins that floor instead of naming `protobuf` bare.
+
+- **The Events page on this site renders again.** The AsyncAPI document it serves is meant to be a
+  self-contained bundle, but it shipped with its external references unresolved, and a browser cannot
+  follow those — the page showed an error banner where the event catalogue belongs. The document is now
+  bundled when these docs are built.
+
 ## 0.24.3 — 2026-09-14
 
 - **The cold-transfer failure codes now read every spelling of a reason.** The four codes introduced
