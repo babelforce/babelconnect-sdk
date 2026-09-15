@@ -121,8 +121,8 @@ See [Embedding](../typescript/embedding).
 reliable ones; confirm the rest against your deployment. See [Embedding → events](../typescript/embedding#4-react-to-the-app-app--host).
 
 **The host theme doesn't apply, or only partly.** Subscribe to `cti.error` and look for
-`code: "theme_rejected"` — its `message` names the token(s) the app refused (a colour that isn't 6/8 hex
-digits, a `logoUrl` that isn't `https:`, a `mode` outside `light`/`dark`/`system`, a `cornerRadius` outside
+`code: "theme_rejected"` — its `message` names the token(s) the app refused (a colour that isn't 6 hex
+digits or 8 with an `FF` alpha, a `logoUrl` that isn't `https:`, a `mode` outside `light`/`dark`/`system`, a `cornerRadius` outside
 `0`–`32`, a blank or over-long `brandName`); every accepted sibling still applied. A theme sent over raw
 `postMessage` must be re-posted after **every** `ready` — `mount({ theme })` and `bc.app.setTheme()` do that
 for you. See [Embedding → Theme the app](../typescript/embedding#3b-theme-the-app-your-brand-inside-the-iframe).

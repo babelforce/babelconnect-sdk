@@ -149,11 +149,11 @@ never refused — a token added in a later SDK is always safe to send to an olde
 |---|---|---|---|
 | `brandName` | string, 1–64 characters after trimming | the window/tab title and the accessible label of the logo (sign-in screen and header). It is **not painted as text** — the header shows the logo alone. | the deployment's product name, else `babelConnect` |
 | `logoUrl` | string, an absolute **`https:`** URL with a host | the logo on the sign-in screen and in the app header, rendered as-is (never recoloured) | the deployment's logo, else the built-in babelconnect mark |
-| `accentColor` | string, `#rrggbb` or `#aarrggbb` — 6 or 8 hex digits, the `#` optional, case-insensitive | the accent role: primary (filled) buttons and the call actions. Its text/icon colour is **derived** for contrast, never taken from you. | the deployment's accent colour, else `#F94721` |
+| `accentColor` | string, `#rrggbb` — 6 hex digits, or 8 as `#aarrggbb` **whose alpha is `FF`**; the `#` optional, case-insensitive. Any other alpha is refused, including the RGBA order a design tool may hand you (`#112233FF` is alpha `11`, not `FF`). | the accent role: primary (filled) buttons and the call actions. Its text/icon colour is **derived** for contrast, never taken from you. | the deployment's accent colour, else `#F94721` |
 | `mode` | `"light"` \| `"dark"` \| `"system"` (case-insensitive) | light or dark; `system` follows the viewer's OS setting. Overrides the agent's own choice in the Account tab for as long as you keep it set. | the agent's own choice (stored by the app; light until they change it) |
 | `primaryColor` | string, same format as `accentColor` | the primary colour role (focused input borders and other primary-role controls); its foreground is derived. The lighter container tints keep their defaults. | `#05445E` in light, `#5BCACE` in dark |
-| `surfaceColor` | string, same format as `accentColor` | the base surface: page background and app bar; its text colour is derived. Cards, dialogs and the navigation bar keep their own tints. | `#FFFFFF` in light, `#0F1424` in dark |
-| `cornerRadius` | number, `0`–`32` (a JSON number, not a string) | the corner radius of cards and containers, in logical pixels | `12` |
+| `surfaceColor` | string, same format as `accentColor` | the base surface: page background and app bar; its text colour is derived. The container tints — cards, dialogs, popup menus, the navigation bar — are re-derived from your colour as small, contrast-checked tonal steps of it, so the text stays readable (WCAG AA) whichever end of the scale you send, in either mode. | `#FFFFFF` in light, `#0F1424` in dark |
+| `cornerRadius` | number, `0`–`32` (a JSON number, not a string) | the corner radius of the app's containers — cards, dialogs and popup menus — in logical pixels. Controls (buttons, chips, inputs) keep their own shapes. | `12` for cards; dialogs and popup menus keep the app's own shapes until you send the token |
 
 **Not a token:** the help link on the Account tab stays the deployment's — a host cannot redirect it.
 
@@ -173,7 +173,7 @@ means). No `theme` at all — or `theme: {}` — renders exactly the deployment'
 ### Refused values: `cti.error` with `code: "theme_rejected"`
 
 The app validates each token and refuses, **by name**, anything outside the formats in the table: a colour
-that is not 6 or 8 hex digits, a `logoUrl` that is not `https:` (or has no host), a `mode` outside the three
+that is not 6 hex digits (or 8 with an `FF` alpha), a `logoUrl` that is not `https:` (or has no host), a `mode` outside the three
 names, a `cornerRadius` below `0`, above `32` or not a number, a `brandName` that is blank or longer than
 64 characters, or any token of the wrong JSON type. You get **one** event per payload, naming every refused
 token:

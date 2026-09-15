@@ -143,13 +143,13 @@ starts recording from answer without a separate `startRecording`.
 
 | Intent | What it does | Result in `AgentView` | TypeScript · Go |
 |---|---|---|---|
-| Start conference | Open a conference around the current call. | `conferenceUpsert` | `startConference(hold?)` · `StartConference(hold)` |
-| Add member | Invite an agent or a number. | `conferenceUpsert` | `addConferenceMember(opts)` · `AddConferenceMember(agentID, number)` |
+| Start conference | Open a conference around a call. | `conferenceUpsert` | `startConference(hold?, callId?)` · `StartConference(hold, callID?)` |
+| Add member | Invite an agent or a number. | `conferenceUpsert` | `addConferenceMember(opts)` · `AddConferenceMember(agentID, number, holdOthers, displayAs, callID?)` |
 | Kick member | Moderator removes a member. | `conferenceUpsert` | `kickConferenceMember(id)` · `KickConferenceMember(id)` |
 | Hold member | Moderator holds / unholds a member. | `conferenceUpsert` | `holdConferenceMember(id, on)` · `HoldConferenceMember(id, on)` |
 | Mute member | Moderator mutes / unmutes a member. | `conferenceUpsert` | `muteConferenceMember(id, on)` · `MuteConferenceMember(id, on)` |
 | End conference | Moderator ends the whole conference. | `conferenceRemove` | `endConference()` · `EndConference()` |
-| Leave conference | Hang up only your own leg. | `conferenceUpsert` / `conferenceRemove` | `leaveConference()` · `LeaveConference()` |
+| Leave conference | Hang up only your own leg. | `conferenceUpsert` / `conferenceRemove` | `leaveConference(callId?)` · `LeaveConference(callID?)` |
 
 **Conferencing:** the agent who calls `startConference` becomes the **moderator** — gate the moderator-only
 controls (kick / hold / mute member, end) on `Conference.iAmModerator`. Each member is an agent or an external
@@ -160,6 +160,11 @@ consult before bridging them together. You don't have to call it explicitly:
 **`addConferenceMember` starts a conference for you if none is active, and that auto-start parks the current
 call on hold** — which is why a [warm transfer](#calls) is just `addConferenceMember(target)` then `transfer`,
 with no separate `startConference`.
+
+**Which call?** `startConference`, `addConferenceMember` and `leaveConference` all take an optional **call
+id** — the call the command addresses, matching `mute`/`hold`/`transfer`. Omit it and the SDK names the
+active call, which is what the server assumed before the field existed; pass it when the agent has more
+than one call attached, or the server has nothing to disambiguate on.
 
 ## Messaging (SMS)
 

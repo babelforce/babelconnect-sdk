@@ -38,7 +38,8 @@ bc.app.setTheme({ mode: "dark" }); // mid-session, no reload
 optional accentColor: null | string;
 ```
 
-Accent/CTA colour as `#rrggbb` (or `#aarrggbb`).
+Accent/CTA colour as `#rrggbb`, or `#aarrggbb` whose alpha is `FF`. Any
+other alpha is refused.
 
 ***
 
@@ -58,7 +59,8 @@ Product name — window/tab title and the logo's accessible label. Up to 64 char
 optional cornerRadius: null | number;
 ```
 
-Optional: card/container corner radius in pixels, `0`–`32`.
+Optional: corner radius of the app's containers — cards, dialogs and
+popup menus — in pixels, `0`–`32`. Controls keep their own shapes.
 
 ***
 
@@ -98,4 +100,6 @@ Optional: the primary colour role, as `#rrggbb`.
 optional surfaceColor: null | string;
 ```
 
-Optional: the base surface colour, as `#rrggbb`.
+Optional: the base surface colour, as `#rrggbb`. The container tints —
+cards, dialogs, popup menus — are re-derived from it as contrast-checked
+tonal steps, so text stays readable on any surface you send.

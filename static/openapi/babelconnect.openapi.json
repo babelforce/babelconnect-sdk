@@ -91,6 +91,11 @@
             "type": "string",
             "title": "display_as",
             "description": "Caller-ID shown to an invited EXTERNAL (PSTN) member. OPTIONAL, exactly like\n PlaceCall.display_as_to on the dialer: leave it empty and the server\n substitutes the agent's currently selected number (AgentInfo.display_as).\n Ignored for agent / internal-extension targets, which take the moderator's\n own number. Unlike the outbound endpoint the backend has no default here —\n it rejects a PSTN invite carrying no caller-ID — so the server always fills\n one in rather than passing an empty value through (CA5). (proto string)"
+          },
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "The call this command addresses; empty means the active call. Only consulted\n when no conference is active yet and one is started around that call. (proto string)"
           }
         },
         "title": "AddConferenceMember",
@@ -1760,6 +1765,13 @@
       },
       "babelconnect.v1.LeaveConference": {
         "type": "object",
+        "properties": {
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "the call this command addresses; empty means the active call (proto string)"
+          }
+        },
         "title": "LeaveConference",
         "additionalProperties": false,
         "description": "LeaveConference hangs up only the agent's own leg; the others stay connected."
@@ -2544,6 +2556,11 @@
             "type": "boolean",
             "title": "hold",
             "description": "(proto bool)"
+          },
+          "callId": {
+            "type": "string",
+            "title": "call_id",
+            "description": "the call this command addresses; empty means the active call (proto string)"
           }
         },
         "title": "StartConference",
