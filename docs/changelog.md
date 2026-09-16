@@ -10,6 +10,12 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.27.1 — 2026-09-16
+
+- **Nothing you can observe.** This release changes only how babelforce's own conformance suite
+  waits for a backend event while it tests the agent server. No behaviour of the app, the SDKs or
+  the embedding contract is affected, and no version you embed needs to change.
+
 ## 0.27.0 — 2026-09-16
 
 - **Where an agent's calls are delivered now follows their session, not a stored preference.** While
