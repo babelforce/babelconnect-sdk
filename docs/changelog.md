@@ -10,6 +10,13 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.26.2 — 2026-09-16
+
+- Nothing you can observe. 0.26.0 and 0.26.1 both stopped short: our conformance gate looked for its
+  report in the wrong directory and failed the tag pipeline before the container image and the Helm
+  chart were published. 0.26.2 is the same code with that gate fixed, and is the first of the three
+  to publish completely. No SDK, embedding-contract or agent-app behaviour changed across any of them.
+
 ## 0.26.1 — 2026-09-16
 
 - Nothing you can observe. The release pipeline for 0.26.0 failed on our own conformance gate, whose
