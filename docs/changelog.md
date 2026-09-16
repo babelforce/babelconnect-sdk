@@ -10,6 +10,18 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.26.0 — 2026-09-16
+
+- **An accepted `placeCall` whose agent leg never arrives now tells you so.** A new error code,
+  `no_agent_leg`, arrives about ten seconds after the platform accepted the call, while the dial is
+  still pending — the agent's leg is being delivered somewhere this client is not. Show the agent
+  that the call did not go through rather than leaving them on "Calling…", and let them retry.
+- **A client that stops answering the stream's `Ping` is dropped after three intervals (45 s).** The
+  registration is what calls are routed by, so a slept laptop or a dropped link no longer keeps
+  receiving offers nobody can answer. Every first-party SDK already answers a ping; nothing to change.
+- Nothing else in the embedding contract changed. The rest of this release is the server's own
+  routing and the specification's conformance gate.
+
 ## 0.25.0 — 2026-09-15
 
 - A cold transfer to the caller's own number is refused with `transfer_target_unreachable`; the caller stays with the agent.
