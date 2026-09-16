@@ -10,6 +10,29 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.27.0 — 2026-09-16
+
+- **Where an agent's calls are delivered now follows their session, not a stored preference.** While
+  an agent holds a babelconnect session, their calls come to it; when the session ends, they take the
+  platform's other path. Nothing has to be enabled per agent first.
+
+  This removes a failure you may have hit: an agent who had never opened the Account tab could place
+  a call that sat on "Calling…" for a minute with no error, because the leg was being delivered
+  somewhere their client was not. An agent in that state now just works.
+
+  A page reload keeps the agent reachable for ten seconds, so a call arriving while the app restarts
+  is not lost.
+
+- **The Account tab's "Receive calls via babelconnect" switch is gone.** There is nothing left for it
+  to choose. An agent who does not want calls in the app turns the browser phone off, or signs out.
+
+- **New error code `no_agent_leg`.** The server accepted an outbound call and the agent's leg never
+  arrived; sent about ten seconds after the accept, while the dial is still pending. Previously this
+  was silence. See the error-code reference for what to do with it.
+
+- `getFeatures` and `setFeature` remain on the SDKs and the endpoint behind them is unchanged; the two
+  babelconnect flags they used to carry are no longer read by anything.
+
 ## 0.26.2 — 2026-09-16
 
 - Nothing you can observe. 0.26.0 and 0.26.1 both stopped short: our conformance gate looked for its
