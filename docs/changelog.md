@@ -10,6 +10,13 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.26.1 — 2026-09-16
+
+- Nothing you can observe. The release pipeline for 0.26.0 failed on our own conformance gate, whose
+  pass-count floor could not tolerate a scenario that is known to flap; the gate now holds the number
+  of scenarios that reached a verdict instead. No SDK, embedding-contract or agent-app behaviour
+  changed between 0.26.0 and 0.26.1.
+
 ## 0.26.0 — 2026-09-16
 
 - **An accepted `placeCall` whose agent leg never arrives now tells you so.** A new error code,
