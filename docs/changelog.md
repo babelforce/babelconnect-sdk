@@ -10,6 +10,20 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.31.0 — 2026-09-19
+
+- **The TypeScript SDK now exports `SDK_VERSION`.** If you want to log or show which build of the
+  SDK your integration is running, you can read it directly:
+  `import { SDK_VERSION } from "@babelforce/babelconnect-sdk"`. The value was already being sent to
+  babelforce on every call, but there was no supported way to read it from your own code — the
+  import simply failed. The Dart SDK has exposed the same constant all along; this brings the
+  TypeScript SDK into line with it.
+- **The agent app now reports its own version rather than the SDK's.** When a sign-in completed
+  before the app had finished reading its deployed version, it sent the SDK's version in its place.
+  Nothing you call behaves differently and no call was affected — but a version number recorded
+  against a babelConnect app session from before this release may name the SDK build instead of the
+  app build, so treat older readings with care when tracing an issue to a particular deployment.
+
 ## 0.30.1 — 2026-09-18
 
 - **Nothing you can observe changed.** This release carries a fix to babelforce's own test suite:
