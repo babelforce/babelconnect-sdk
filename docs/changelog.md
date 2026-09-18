@@ -10,6 +10,44 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.30.0 — 2026-09-18
+
+Nothing in the SDKs, the embedding contract or the agent app changed in this release. It exists to
+republish these pages.
+
+- **These pages were stuck at 0.28.0.** The 0.29.0 notes below — the ten fixes from the 2026-09-16
+  QA pass — were written and released on time, but the step that copies this documentation to the
+  public site refused to run and nothing said so. If you read this changelog between 2026-09-17 and
+  today and concluded 0.29.0 had not shipped, it had: the packages, the server image and the chart
+  were all published. Only the documentation was missing.
+- **Everything 0.29.0 documented is now readable**, including the `hangup_failed` entry in
+  [Error codes](protocol/error-codes), which names the request the platform did not accept.
+
+## 0.29.0 — 2026-09-18
+
+Eight defects found in a hand QA pass on 2026-09-16, all of them things an agent or a caller could
+see.
+
+- **Keypad digits from the caller now reach the agent as tones.** They arrived as crackling, because
+  the tone events were being played to the agent as if they were speech.
+- **A held caller hears hold music** instead of silence.
+- **The call card shows the queue the call came from, the number the caller dialled, and the call's
+  own state** — none of which it showed before.
+- **A second browser window for the same agent agrees with the first.** The window that did not
+  answer the call could not mute or hang it up and said there was no call at all; it now explains
+  why, and mute applied in one window shows in the other.
+- **Asking for more wrap-up time when policy will not allow it gives a sentence, not a raw error
+  from the platform** — and in your own language.
+- **Extending wrap-up on an outbound call extends it.** It used to remove the wrap-up entirely while
+  the platform still held the agent in it.
+- **Transferring a call to a colleague who cannot take it no longer leaves the caller connected to
+  nobody.**
+- **Flagging a recording sticks.** It silently unflagged itself a moment later.
+- **An outbound lead's rank no longer flickers to zero** while the agent is working it.
+
+One thing did not change: ending a call from the caller's side still shows no post-call survey.
+Ending it from the agent's side now does.
+
 ## 0.28.0 — 2026-09-16
 
 - **Nothing you can observe.** This release is babelforce's own conformance testing: the suite that
