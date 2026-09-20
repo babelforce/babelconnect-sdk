@@ -10,6 +10,24 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.31.1 — 2026-09-20
+
+- **Recording controls keep working after a reload mid-call.** If an agent reloaded the page while a
+  call was recording, the app rebuilt its state from the server but lost track of which recording was
+  running, so stop, flag and tag stopped responding until the call ended. The running recording is
+  now identified correctly after a reload and the controls work again.
+- **A rejected command now tells you which field was missing.** When the server rejects a command for
+  a missing argument — an answer with no SDP, a transfer with no target, an SMS without `to` or
+  `text`, a conference member action with no member id, and so on — it now returns a specific code
+  you can branch on (`answer_requires_sdp`, `transfer_target_required`, `send_sms_requires_to_and_text`,
+  `member_id_required`, …) instead of a single generic `bad_request`. The full list is in the
+  error-code reference. As before, nothing was sent onward and nothing changed — fix the arguments and
+  resend.
+- **An aborted cold transfer returns the caller.** When a cold transfer was aborted while the caller
+  was still being connected, the caller could be left parked in an empty conference while the agent
+  was told the transfer had failed. The caller is now returned correctly. One narrow case — the
+  transfer completing at the very moment the caller is still connecting — is tracked separately.
+
 ## 0.31.0 — 2026-09-19
 
 - **The TypeScript SDK now exports `SDK_VERSION`.** If you want to log or show which build of the

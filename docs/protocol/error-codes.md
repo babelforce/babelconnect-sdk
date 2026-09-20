@@ -21,7 +21,9 @@ Two conventions run through the table:
 
 - **`<intent>_failed`** means the command was well-formed and reached the platform, which then refused it.
   The `message` carries the platform's own reason, so **show it** — it is the only detail you get.
-- Anything else (`bad_request`, `no_call`, `not_recording`, …) is a **precondition** the server checked
+- **`<what>_required`** means a required field was missing or empty. The command never left the
+  server, nothing changed, and a blind retry fails identically — fix the arguments.
+- Anything else (`no_call`, `not_recording`, …) is a **precondition** the server checked
   itself. The command never left the server, and retrying it unchanged fails identically.
 
 In the **`callId?`** column: **✓** = always carries one · **—** = never · *sometimes* = only in the cases named.
@@ -30,7 +32,17 @@ In the **`callId?`** column: **✓** = always carries one · **—** = never · 
 
 | `code` | When it is sent | `callId`? | What to do |
 |---|---|---|---|
-| `bad_request` | a required field was missing or empty — `answerCall` without an SDP, `sendDigits` without digits, a transfer with no target, `sendSms` without `to`/`text`, a conversation command without a conversation id, `addConferenceMember` without an agent or number, a member action without a member id, `setPresence` without a name, `setAgentNumber` without a number, `joinCampaign` without a campaign id, `disposeCall` without a code | *sometimes* — when the command targets the active call (answer, digits, transfer) | fix the arguments. Nothing was sent onward and nothing changed; a blind retry fails the same way. |
+| `answer_requires_sdp` | `answerCall` carried no SDP answer. | *sometimes* — it echoes the `callId` you sent; empty when you sent none | send the SDP answer your peer connection produced for the offer on `call.webrtcOffer`. Nothing was sent onward. |
+| `digits_required` | `sendDigits` carried no digits. | ✓ | send the digits. Nothing was sent onward. |
+| `transfer_target_required` | a transfer named no target — no number, no agent and no application. | ✓ | pick a target and resend. Nothing was sent onward. |
+| `send_sms_requires_to_and_text` | `sendSms` was missing `to`, `text`, or both. | — | fill both and resend. Nothing was sent onward. |
+| `conversation_id_required` | `setConversationOpen` or `markConversationRead` carried no conversation id. | — | send the id of the conversation the agent acted on. Nothing was sent onward. |
+| `target_required` | `addConferenceMember` named neither an agent nor a number. | — | pick one and resend. Nobody was invited. |
+| `member_id_required` | a conference member action — hold, mute or kick — carried no member id. | — | send the member id from `conferences[].members`. Nothing was sent onward. |
+| `presence_name_required` | `setPresence` carried no presence name. | — | send one of the names in `presenceOptions`. The presence did not change. |
+| `agent_number_required` | `setAgentNumber` carried no number. | — | send one of the numbers in `availableNumbers`. The number did not change. |
+| `campaign_id_required` | `joinCampaign` carried no campaign id. | — | send the id of the campaign to join. The agent joined nothing. |
+| `dispose_code_required` | `disposeCall` carried no disposition code. | — | send one of the codes the campaign offers. The call was not disposed. |
 | `no_call` | the command acts on a call this session does not hold — the `callId` you sent names no call of the agent's, or you sent none and there is no active call. Covers answer, hangup, mute, hold, digits, transfer, all four recording commands, and the conference commands that need a live call (start, add member, leave). | *sometimes* — it echoes the `callId` you sent, the conference commands included; empty when you sent none | the call ended, or you raced the stream. Re-read `activeCalls` from your cached `AgentView` and re-derive the button state instead of retrying. |
 | `ambiguous_call` | a command that carries **no call id at all** arrived while the agent holds **more than one** call. `startConference`, `addConferenceMember` and `leaveConference` **do** carry a `callId` now, and one that names a call is routed to it — this code is only ever the answer to an id-less one, where with a second call up the server cannot tell which you meant and refuses rather than guess, because guessing `leaveConference` hangs up a conversation nobody ended. | ✓ — the call it *would* have acted on (the active one) | **send the id.** Resend the same command with `callId` set to the call the agent's control belongs to; that is the fix, and it needs no change to the agent's calls. Only a client that cannot name the call has to get the agent down to one — hang up or transfer the others — before repeating it. |
 | `call_on_hold` | `sendDigits` was addressed to a call that is **on hold**. Hold silences audio in both directions, so the digits would never reach the far end; the server refuses instead of playing them into a closed gate. | ✓ | take the call off hold (`hold(id, false)`) and send the digits again. Gate the keypad on `call.onHold` so the agent isn't offered an action that cannot work. |
