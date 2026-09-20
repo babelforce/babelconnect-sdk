@@ -10,6 +10,13 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.31.3 — 2026-09-20
+
+- **The build that actually ships.** 0.31.1 and 0.31.2 published this SDK and these docs but a CI step
+  stopped the matching server build from completing. 0.31.3 is the complete build of the same changes —
+  the recording-controls, rejected-command-code and cold-transfer fixes described under 0.31.1. Nothing
+  you can observe changed beyond 0.31.1.
+
 ## 0.31.2 — 2026-09-20
 
 - **A packaging fix for 0.31.1.** The 0.31.1 release published the SDK and these docs but, because a
