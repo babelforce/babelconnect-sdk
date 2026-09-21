@@ -10,6 +10,15 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.31.4 — 2026-09-21
+
+- Transferring an agent's outbound call to another agent now leaves the receiving agent's call
+  ringing until they accept it. Application-transfer eligibility remains correct for that call.
+- Held callers now receive hold music, including while the agent's microphone is muted or their
+  browser tab is in the background. Earlier releases announced this behavior but still sent silence.
+- Expanded conformance checks cover failed transfers, repeated answers and call-event ordering.
+  The SDK APIs are unchanged.
+
 ## 0.31.3 — 2026-09-20
 
 - **The build that actually ships.** 0.31.1 and 0.31.2 published this SDK and these docs but a CI step
