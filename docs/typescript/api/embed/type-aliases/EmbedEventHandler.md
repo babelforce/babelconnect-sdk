@@ -1,7 +1,7 @@
 # Type Alias: EmbedEventHandler()
 
 ```ts
-type EmbedEventHandler = (data) => void;
+type EmbedEventHandler = (data, meta) => void;
 ```
 
 A handler for an app→host event's `data` payload.
@@ -11,6 +11,10 @@ A handler for an app→host event's `data` payload.
 ### data
 
 `unknown`
+
+### meta
+
+[`EmbedEventMeta`](../interfaces/EmbedEventMeta.md)
 
 ## Returns
 

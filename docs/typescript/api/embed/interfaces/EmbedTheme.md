@@ -18,7 +18,9 @@ always safe to send to an older app.
 
 The theme is **not persisted** by the app. The SDK remembers what you last
 set and re-sends it on every `ready`, exactly as it does the bearer token,
-so an iframe reload keeps your branding.
+so an iframe reload keeps your branding. A **refused** token is dropped from
+those re-sends — the app would refuse it again and you would collect one more
+identical `cti.error` per reload — until you set a new value for it.
 
 ## Example
 

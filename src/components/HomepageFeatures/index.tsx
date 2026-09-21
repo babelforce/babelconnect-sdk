@@ -1,6 +1,7 @@
 import type {ReactNode} from 'react';
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
+import Link from '@docusaurus/Link';
 import styles from './styles.module.css';
 
 type FeatureItem = {
@@ -11,33 +12,32 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'TypeScript SDK',
+    title: 'Build your own phone',
     Svg: require('@site/static/img/feature-browser.svg').default,
     description: (
       <>
-        <code>@babelforce/babelconnect-sdk</code> — a typed gRPC-web client with native WebRTC audio for
-        browser softphone &amp; CTI apps, plus an embeddable <code>/embed</code> widget you drive from
-        your CRM.
+        Render live calls and send typed commands. The TypeScript SDK handles browser audio.
+        {' '}<Link to="/docs/tutorial/first-softphone">Follow the tutorial →</Link>
       </>
     ),
   },
   {
-    title: 'Go SDK',
+    title: 'Connect a Go tool',
     Svg: require('@site/static/img/feature-terminal.svg').default,
     description: (
       <>
-        <code>go get github.com/babelforce/babelconnect-sdk-go</code> — the same server-authoritative
-        client for back-end and terminal apps, with a pluggable media leg.
+        Read agent state and drive calls from a terminal or service.
+        {' '}<Link to="/docs/go/getting-started">Check availability and setup →</Link>
       </>
     ),
   },
   {
-    title: 'Open contract',
+    title: 'Explore the contract',
     Svg: require('@site/static/img/feature-contract.svg').default,
     description: (
       <>
-        One <code>babelconnect.v1</code> gRPC contract, projected to REST/OpenAPI and generated SDK
-        types. Your UI is a pure function of <code>AgentView</code>; you send typed intents.
+        Look up commands, state fields and errors, with REST and event schemas for tooling.
+        {' '}<Link to="/docs/protocol/overview">Browse the references →</Link>
       </>
     ),
   },

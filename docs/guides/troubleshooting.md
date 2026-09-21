@@ -2,136 +2,55 @@
 title: Troubleshooting
 sidebar_label: Troubleshooting
 sidebar_position: 5
-description: Common symptoms and their fixes — no audio, calls that don't ring, reconnects, and integration gotchas — each linking to the detail.
+description: Find a symptom, check the cause, and follow the relevant guide.
 ---
 
 # Troubleshooting
 
-Common symptoms, their usual cause, and where to read more. If something here is wrong or missing, the
-detailed guides ([State & events](../concepts/state-and-events), [Errors & reconnects](./errors-and-reconnects),
-[Authentication](./authentication)) are the source of truth.
-
 ## Audio & media
 
-**A connected call has no audio.** Usually one of: you're running **control-only** (`mediaFactory: null`, so
-there's no media leg), the **microphone was denied**, or the browser blocked audio **autoplay**. Pass the
-browser `mediaFactory`, grant mic access, and trigger answer/dial from a **user gesture** (a click) so playback
-is allowed. See [Your first softphone → Troubleshooting](../tutorial/first-softphone#troubleshooting-your-first-call).
-
-**Answering raises `no_media`.** Answering takes the ringing call's WebRTC offer and runs it through a media
-leg — a control-only client (no `mediaFactory`) has none. Supply a `mediaFactory`, or don't answer with audio
-on that client. See [Errors & reconnects](./errors-and-reconnects#1-command-rejections-onerror).
+| Symptom | Check |
+|---|---|
+| Connected but silent | HTTPS/localhost, microphone permission, browser autoplay, and reachable STUN/TURN. Go's default is silent media. [Media setup](../typescript/quickstart-client#bring-your-own-media). |
+| `no_media` | TS has `mediaFactory: null`; it cannot answer audio. Supply media or use an external phone. [Control only](../typescript/quickstart-control-only). |
+| Microphone error | `mic_not_found`, `mic_permission_denied`, or `mic_in_use` identifies absent, denied, or occupied hardware. [Errors](./errors-and-reconnects#1-command-rejections-onerror). |
 
 ## Calls & ringing
 
-**An inbound call never rings in the browser.** You didn't call `register()` (it arms the WebRTC path), or
-WebRTC is off (`agent.webrtcEnabled` is false), so the backend bridges the call to the agent's external number
-instead. See [Where calls ring](../concepts/intents#session--identity).
-
-**An outbound *callback* doesn't auto-answer.** A [callback](../concepts/glossary#callback) (a scheduled
-outbound call the agent accepts) arrives `RINGING` and waits for `answerCall`, like an inbound call — **even
-with `autoAnswer` on**. Distinguish it by `CallState.source` = `callback`.
-
-**Outbound call rejected: "Number forbidden as Display-As" (or no caller ID offered).** The caller ID the
-call would go out with is **not a service number of the account**, so the platform refuses it — and
-if the agent has no assignable numbers at all, `agent.availableNumbers` is empty to begin with and there is
-nothing to pick. Choose another number from `availableNumbers`, or have an admin
-[add a Display-As number for the agent](https://help.babelforce.com/hc/en-us/articles/4410103310100-Add-a-Display-As-number-for-an-agent-to-be-presented-in-the-babelConnect-app).
-The SDK reports this as [`display_as_forbidden`](../protocol/error-codes#outbound--answering). The same
-rejection reaches a **conference invite** to an external number; see
-[A conference panel](./recipes#a-conference-panel).
-
-**Outbound call rejected: "agent state must be available".** Two different causes wear the same rejection.
-Either the agent's line is **blocked** — involuntary, most often after a call offer rang out unanswered — or
-their chosen presence simply isn't Available. Check `agent.lineBlocked` first and offer
-`resetLineStatus()`; if it's false, it's the presence, and the agent needs to pick an available one. The
-SDK reports this as [`agent_not_available`](../protocol/error-codes#outbound--answering). See
-[A line-blocked banner](./recipes#a-line-blocked-banner) for the UI, the line-blocked entry at the end of
-this section for the sign-out case that looks identical, and
-[the three availability fields](../concepts/state-and-events#consuming-it) for why `presence == BUSY` is
-not the flag to gate on.
-
-**The agent is unreachable.** A reachable agent needs **one of**: WebRTC on (`register()` enables it) **or** an
-agent number set (`setAgentNumber`). With neither, calls can't reach them. See
-[A device selector](./recipes#a-device-selector-where-calls-ring).
-
-**Nothing shows up in `activeCalls`.** Either `subscribe` wasn't attached before the call arrived, or `calls`
-is disabled in `AgentView.config` for this deployment. Attach the subscriber first, and gate call UI on
-`config.calls.enabled`. See [State & events](../concepts/state-and-events).
-
-**A command seems to do nothing.** The server rejects invalid commands **out-of-band**, on the `onError`
-callback — not as a thrown error or a state change. Wire up `onError` and surface it. See
-[Command rejections](./errors-and-reconnects#1-command-rejections-onerror).
-
-**I see a "line blocked" / can't take calls right after signing back in.** This is almost always the
-**chosen** busy from your *previous* sign-out, not a platform fault: sign-out flips presence to `busy`
-**by design** (so routing stops while the token is revoked), and that presence outlives the session.
-Just **pick an available presence** again and calls will route. Reach for **Reset** (`resetLineStatus`)
-**only** for a genuine *involuntary* `line_blocked` — the server-imposed block you didn't choose. See
-[State & events](../concepts/state-and-events) for how chosen presence differs from an involuntary block.
+| Symptom | Check |
+|---|---|
+| No browser ringing | Register, confirm WebRTC routing and agent availability. With WebRTC off, configure an external number. [Routing](../concepts/intents#session--identity). |
+| Callback waits for Answer | Expected: callbacks never auto-answer, even when outbound auto-answer is enabled. [Call model](../concepts/state-and-events#a-call-end-to-end). |
+| No calls in the UI | Inspect `bc.view`, connection errors, registration and routing; check `config.calls.enabled` for visibility. A late subscriber receives cached state and does not itself lose calls. |
+| `display_as_forbidden` or no caller ID | Select an allowed `availableNumbers` entry. An admin may need to [assign a Display-As number](https://help.babelforce.com/hc/en-us/articles/4410103310100-Add-a-Display-As-number-for-an-agent-to-be-presented-in-the-babelConnect-app). External conference invites can fail the same way. [Error reference](../protocol/error-codes#outbound--answering). |
+| `agent_not_available` | If `lineBlocked`, offer Reset; otherwise choose an available presence. [Banner](./recipes#a-line-blocked-banner). |
+| Busy after signing back in | The prebuilt app chooses busy on sign-out; that choice persists. Select Available. A standalone SDK `close()` does not set presence. Reset is for involuntary blocking only. |
+| A command does nothing | Handle the send result and error callback; command outcomes arrive separately in state. [Errors](./errors-and-reconnects). |
 
 ## Connection & lifecycle
 
-**Reconnecting drops a live call's audio.** `close()` tears down the media legs, and a reopened session won't
-re-answer an in-progress call, so reconnect when the agent is **idle** where you can. See
-[Disconnects & reconnects](./errors-and-reconnects#3-disconnects--token-expiry--reconnect-with-backoff).
-
-**A dropped connection isn't detected (Go).** The Go client's receive loop exits silently on a stream error —
-there's no disconnect callback. Detect a drop from a **failing intent send** (Go intents return an error) or
-stalled updates, then reconnect. (The TypeScript client fires `onError` with `disconnected`.) See
-[Showing a connection indicator](./errors-and-reconnects#showing-a-connection-indicator).
-
-**The view has drifted out of sync.** Every update carries a monotonic `seq`; if it **skips**, a patch was
-missed and the cached `AgentView` is stale. The SDK detects this and calls `onGap` — handle it by
-**resubscribing** for a fresh snapshot. See [Sequence gaps](./errors-and-reconnects#2-sequence-gaps-ongap).
-
-**A long-running session stops connecting.** The bearer token has likely **expired**. Mint a fresh one (re-run
-your login / `passwordGrant`) and reconnect — don't cache a token past its lifetime. See
-[Token lifetime](./authentication#token-lifetime).
+| Symptom | Check |
+|---|---|
+| Audio lost on reconnect | Close releases media; standalone SDKs don't re-answer an in-progress call. [Recovery limits](./errors-and-reconnects#3-disconnects--token-expiry--reconnect-with-backoff). |
+| Connection indicator looks healthy after a drop | An immediate cache callback or successful send doesn't prove stream health. Go has no disconnect callback; TS clean stream endings are silent. [Indicators](./errors-and-reconnects#showing-a-connection-indicator). |
+| `onGap` or stale state | Get a fresh snapshot; see the [TS notification sequencing caveat](../concepts/state-and-events#seq-ordering-and-gap-recovery). |
+| Reconnect rejected | The token may have expired or been revoked. [Renew/login](./authentication#token-lifetime). |
 
 ## Setup & integration
 
-**The browser blocks requests with a CORS error.** If your app is served from a **different origin** than the
-babelconnect-server, that origin must be in the server's **CORS allowlist**. (An empty allowlist permits all
-origins — for development only.) See [One origin, and CORS](../typescript/getting-started).
-
-**You can't `require()` the SDK in Node.** `@babelforce/babelconnect-sdk` is **ESM-only**, so a CommonJS
-project must load it with a dynamic import: `const { BabelconnectClient } = await import("@babelforce/babelconnect-sdk")`.
-See [Getting started](../typescript/getting-started).
-
-**`config`, `presenceOptions`, or `phonebook` are empty.** These load on **`register()`** — before you
-register, `AgentView.config` and `agent` aren't populated. Call `register()` after `subscribe`. See
-[Register](../concepts/glossary#register).
-
-**A control-only client still receives WebRTC calls.** `register()` marks the agent WebRTC-reachable
-regardless of `mediaFactory`. If that client takes live calls, pair it with `setWebrtc(false)` +
-`setAgentNumber(...)` so calls bridge to an external phone. See
-[Control only → reachability](../typescript/quickstart-control-only).
-
-**The phonebook shows "recent" as a contact name.** Recently-dialed numbers carry the literal label
-`"recent"`. Skip those entries (`label !== "recent"`) when resolving a name. See
-[A contacts list](./recipes#a-contacts-list-dial-from-the-phonebook).
-
-**The embedded app is blank or has no audio.** Check that the host page delegates `microphone` to the
-babelconnect-server origin and that the server's CSP `frame-ancestors` / CORS allowlist name your host origin.
-See [Embedding](../typescript/embedding).
-
-**An embed event (e.g. `cti.message`) never fires.** The SDK relays only what the embedded app posts, so
-**forwarded** events depend on the deployed app version. `agent.loaded` / `user.loaded` / `cti.call` are the
-reliable ones; confirm the rest against your deployment. See [Embedding → events](../typescript/embedding#4-react-to-the-app-app--host).
-
-**The host theme doesn't apply, or only partly.** Subscribe to `cti.error` and look for
-`code: "theme_rejected"` — its `message` names the token(s) the app refused (a colour that isn't 6 hex
-digits or 8 with an `FF` alpha, a `logoUrl` that isn't `https:`, a `mode` outside `light`/`dark`/`system`, a `cornerRadius` outside
-`0`–`32`, a blank or over-long `brandName`); every accepted sibling still applied. A theme sent over raw
-`postMessage` must be re-posted after **every** `ready` — `mount({ theme })` and `bc.app.setTheme()` do that
-for you. See [Embedding → Theme the app](../typescript/embedding#3b-theme-the-app-your-brand-inside-the-iframe).
+| Symptom | Check |
+|---|---|
+| CORS failure | Add the app origin to the API allowlist. Empty is permissive. [TS setup](../typescript/getting-started). |
+| Go cannot reach an HTTPS origin | Current `Addr` constructs plain HTTP. [Go limitations](../go/getting-started). |
+| `require()` fails | Use ESM or dynamic `import()`. [TS installation](../typescript/getting-started#install). |
+| Config/options/contacts missing | Registration loads these in separate updates and may encounter partial fetch failures. Handle absent fields. |
+| Control-only client receives offers | Registration requests WebRTC reachability regardless of media/capabilities. [Restore external routing](../typescript/quickstart-control-only). |
+| Contact name says "recent" | That literal denotes a recent number, not a person's name. [Contacts](./recipes#a-contacts-list-dial-from-the-phonebook). |
+| Embed is blank or silent | Check CSP framing, embed message origins and host microphone delegation separately. [Embedding](../typescript/embedding). |
+| Embed event missing | Wait for `agent.loaded`; deployed app support and CTI feature flags govern events. [Events](../typescript/embedding#4-react-to-the-app-app--host). |
+| Host theme partly ignored | Read `theme_rejected`; accepted sibling tokens still apply. Re-send after ready when using raw messages. [Theme rules](../typescript/embedding#3b-theme-the-app-your-brand-inside-the-iframe). |
 
 ## See also
 
-- **[Errors & reconnects](./errors-and-reconnects)** — the full error model, codes, and the reconnect pattern.
-- **[Authentication](./authentication#security-checklist)** — tokens, CORS/TLS, and the security checklist.
-- **[State & events](../concepts/state-and-events)** — how state arrives, so you can reason about what you see.
-
-**Still stuck?** The SDK sources live on **[GitHub](https://github.com/babelforce)** — check the repo for your
-SDK (TypeScript, Go, or the proto contract) for open issues and the latest releases.
+[Authentication](./authentication) · [Error codes](../protocol/error-codes) ·
+[State & events](../concepts/state-and-events).

@@ -7,19 +7,10 @@ description: Every typed intent an SDK can send — what it does, the state it p
 
 # Intents reference
 
-You never mutate agent state directly. You send a typed **intent**, the server reduces it, and the result
-comes back as a **[patch](./state-and-events#the-patch-types)** on the state stream. This page is the full
-catalogue of intents — one per `Command` in the `babelconnect.v1` contract — with the **TypeScript** and
-**Go** method that sends each one, and the part of `AgentView` it moves.
-
-:::tip The loop
-Every row is the same shape: **you call the method → the server reduces it → a patch updates `AgentView`.**
-Read [State & events](./state-and-events) first if that loop isn't familiar yet.
-:::
-
-Method names differ only by language convention — TypeScript is `camelCase` on
-[`BabelconnectClient`](../typescript/api/index/classes/BabelconnectClient), Go is `PascalCase` on the
-`bcclient.Client`. They map one-to-one.
+Send a typed command and render its resulting [state patch](./state-and-events#the-patch-types).
+This reference maps common controls to TypeScript and Go methods. The generated
+[Command reference](../protocol/grpc#babelconnect-v1-Command) is exhaustive; SDK availability and
+return conventions are in [TypeScript vs Go](../guides/typescript-vs-go).
 
 ## Session & identity
 
@@ -31,12 +22,9 @@ Method names differ only by language convention — TypeScript is `camelCase` on
 | Set presence | Switch presence (`"available"` or a pause reason). | `agent` | `setPresence(name)` · `SetPresence(name)` |
 | Set display-as | Choose the outbound number presented to the consumer. | `agent` | `setDisplayAs(num)` · `SetDisplayAs(num)` |
 
-**Presence values** are deployment-defined: read the list from `AgentView.agent.presenceOptions` — each has a
-`name` to pass to `setPresence`, a display `label`, and an `available` flag — rather than hard-coding pause
-reasons. Don't confuse this with `agent.presence` (an `AgentState`): that's the **coarse, server-computed**
-status bucket for a status icon — `available`, `in_call`, `ringing`, `wrap_up`, `paused`, `busy`, `offline` —
-which you render but never set. `setPresence` moves the agent's *chosen* presence (reflected in `presenceName`
-/ `presenceLabel`); the server derives the `presence` bucket from that plus what the agent is actually doing.
+Choose a presence by `presenceOptions[].name`; render its label and availability flag. The
+[availability model](./state-and-events#consuming-it) distinguishes chosen presence, coarse state
+and an involuntary line block.
 
 **Outbound caller ID:** the numbers the agent can present are `AgentView.agent.availableNumbers`; the current
 selection is `agent.displayAs`, and `setDisplayAs` changes it.
@@ -50,18 +38,15 @@ bridges the call to the agent's external number (`setAgentNumber`) instead. `Age
 tells you which is active. An agent needs **one of the two** — WebRTC on, or an agent number set — to be
 reachable; with neither, calls can't reach them.
 
-**Register capabilities:** TypeScript defaults the list, so `register()` sends `["webrtc"]`; Go is variadic
-with no default, so pass it explicitly — `Register("webrtc")`. Note that **registering marks the agent
-WebRTC-reachable** on the backend regardless of the list, so its call leg routes to this client. A
-**control-only** client has no media leg to carry that audio — follow `register()` with `setWebrtc(false)` +
-`setAgentNumber(...)` to bridge calls to an external phone instead (see
-[Control only → reachability](../typescript/quickstart-control-only)).
+**Registration requests WebRTC reachability**, regardless of capabilities. TypeScript supplies
+`["webrtc"]` by default; Go has no default list; the current server ignores both. For an external
+phone, follow the ordered setup in [Control only](../typescript/quickstart-control-only).
 
 ## Calls
 
 | Intent | What it does | Result in `AgentView` | TypeScript · Go |
 |---|---|---|---|
-| Place call | Dial out; the agent's own leg auto-answers. Go's positional args are `to` (destination), `displayAsTo` (what the **consumer** sees), `displayAsFrom` (what the **agent** sees), `record`. | `callUpsert` | `placeCall(to, opts?)` · `PlaceCall(to, displayAsTo, displayAsFrom, record)` |
+| Place call | Dial out; answering follows the SDK's auto-answer policy. Go's positional args are `to` (destination), `displayAsTo` (what the **consumer** sees), `displayAsFrom` (what the **agent** sees), `record`. | `callUpsert` | `placeCall(to, opts?)` · `PlaceCall(to, displayAsTo, displayAsFrom, record)` |
 | Answer | Accept a `RINGING` call by id. | `callUpsert` (→ in-progress) | `answerCall(id)` · `Answer(id)` |
 | Hangup | End / reject a call by id. | `callRemove` | `hangup(id)` · `Hangup(id)` |
 | Mute | Mute or unmute your leg. | `callUpsert` | `mute(id, on)` · `Mute(id, on)` |
@@ -121,10 +106,6 @@ seconds** (`wrapUpExtend()`), while Go takes an explicit `int32`. Show the exten
 (the server doesn't tick it per second; reconcile to each `wrapUp` patch). See the
 [wrap-up walkthrough](./state-and-events#wrap-up-end-to-end) for the full sequence.
 
-**Wrap-up (ACW)** is the timed after-call-work window: when a call ends the server may start it, emitting a
-`wrapUp` patch with `active: true` and a `remainingSeconds` countdown. Show the extend / cancel controls only
-when `WrapUpStatus.canExtend` / `canCancel` are set.
-
 ## Recording
 
 | Intent | What it does | Result in `AgentView` | TypeScript · Go |
@@ -177,7 +158,7 @@ than one call attached, or the server has nothing to disambiguate on.
 **SMS `from` & `session`:** `from` is the sending number (which of your numbers the message goes out from);
 `session` attaches opaque CTI correlation — the same data the embed bridge sets via `session.set`.
 
-Sending is the same operation on either surface: the `sendSms` stream intent and `POST /v1/agent/sms` send the
+Sending is the same operation on either surface: the `sendSms` command and `POST /v1/agent/sms` send the
 identical message, and the unary REST form returns the upserted `SmsConversation` summary directly.
 
 ## Reference data (unary — not intents)

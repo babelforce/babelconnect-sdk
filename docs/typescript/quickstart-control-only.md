@@ -2,70 +2,50 @@
 title: Control only (no audio)
 sidebar_label: Control only
 sidebar_position: 3
-description: Run the client without a WebRTC leg — for dashboards, back-end services, SMS, and presence.
+description: Observe state and send commands without browser media, while routing calls to an external phone.
 ---
 
 # Control only (no audio)
 
-Pass `mediaFactory: null` to skip the WebRTC leg entirely. The client still opens the control stream, mirrors
-`AgentView`, and accepts every non-audio intent — it just never negotiates audio. This is the right mode
-whenever audio is handled elsewhere (or not at all):
+Set `mediaFactory: null` explicitly; omitting it selects browser media. Also set `autoAnswer: false`
+so outbound offers don't trigger attempts to answer without media. This works in browsers and Node 20+.
 
-:::caution `null`, not omitted
-It must be explicitly `null`. **Omitting** `mediaFactory` defaults to the browser audio leg
-(`browserMediaFactory`) — so leaving it out does *not* give you a control-only client.
-:::
+The following fragment assumes `serverUrl`, `token`, and your `render` callback:
 
 ```ts
 import { BabelconnectClient } from "@babelforce/babelconnect-sdk";
 
-const bc = BabelconnectClient.connect({ serverUrl, token, mediaFactory: null });
-
-bc.subscribe(render);                       // render(AgentView) on every update
-bc.sendSms("+49301234567", "On my way!");
-bc.setPresence("available");
+const bc = BabelconnectClient.connect({
+  serverUrl, token, mediaFactory: null, autoAnswer: false,
+  onError: e => console.error(e.code, e.message),
+});
+const stop = bc.subscribe(render);
+bc.sendSms("+15551234567", "On my way!");
+// When finished: stop(); await bc.close();
 ```
-
-This runs in **Node 20+** as well as the browser, with no WebRTC dependency.
-
-:::caution Reachability: `register()` still marks the agent WebRTC-reachable
-`register()` does two jobs — it loads the agent's reference data (presence options, caller-ID numbers,
-contacts, feature config) **and** marks the agent **WebRTC-reachable** on the backend so its call leg routes
-to this client. A control-only client has **no media leg to carry that audio**, so a call ringing here can't
-be answered — it rings at a client that can't carry audio and fails on answer. If this agent takes live calls,
-a call-taking control-only client **must** pair `register()` with **`setWebrtc(false)` + `setAgentNumber(...)`**
-(see below) to bridge calls to an external phone instead. If the agent never takes calls here — a pure
-wallboard, or an outbound-only automation whose audio lives elsewhere — you can leave it; no audio leg simply
-means no audio.
-:::
 
 ## When to use it
 
-- **Supervisor / wallboard dashboards** — subscribe to `AgentView` and render live call, presence, and queue
-  state without ever touching audio.
-- **Back-end services** — a Node process that reacts to state (logging, analytics, automations) or drives
-  intents (place calls, send SMS) on behalf of agents.
-- **CLI / tooling** — scripts that fetch history or contacts, set presence, or send SMS.
-- **Bring-your-own audio** — the call's audio is handled by a separate device or stack, and this client only
-  drives control + state.
+Use this mode for an agent's dashboard, messaging, presence, or automation. A token identifies
+one agent; this is not a team-wide observer API. [Go automation](../go/quickstart-control-only)
+has a different default: a silent WebRTC leg.
 
 ## What works without audio
 
-Everything except answering a call with in-browser audio:
+The state stream, non-media intents and unary fetches still work. `answerCall` needs media and
+reports `no_media` when none is configured. A `placeCall` intent can succeed, but a human still
+needs somewhere to hear the call.
 
-- ✅ Observe all state — calls, presence, SMS, conferences, wrap-up, config — via `subscribe`.
-- ✅ Non-audio intents — `setPresence`, `transfer`, `hangup`, `sendSms`, `markConversationRead`, recording
-  controls, conference management, etc.
-- ✅ Unary fetches — history, SMS threads, contacts.
-- ⚠️ **Audio answering** — there's no media leg, so this client won't produce mic/speaker audio for a call. It
-  still *sees* the ringing call in `AgentView`; it just can't carry the audio itself.
-- ⚠️ **Placing calls** still works as an intent, but the agent's own audio has to live elsewhere — turn WebRTC
-  off (`setWebrtc(false)`) so the backend bridges the call to the agent's external `setAgentNumber`.
+**Registration changes routing.** `register()` loads presence options, caller IDs, contacts and
+feature config and requests WebRTC reachability, even with an empty capabilities list or no media
+factory. For calls on an external phone, register, wait for the resulting deployment data, then set
+`setWebrtc(false)` and `setAgentNumber(number)`. Confirm both values in state before dialing.
+TypeScript sends are asynchronous; adjacent calls do not guarantee completion order.
+Repeat the routing setup after registering a replacement session.
 
-The omission is **silent by design**: a control-only client simply doesn't act on the WebRTC offer. If you need
-audio, supply a `mediaFactory` (the browser default, or your own `Media` implementation) instead of `null`.
+For a pure observer, avoid registration unless those reference data are needed; registration is
+not a passive read. If you do register, restore the intended audio route. With WebRTC off and no
+external number, the agent is unreachable.
 
-See [`ConnectOptions`](./api/index/interfaces/ConnectOptions) for the full set of connect options,
-[State & events](../concepts/state-and-events) for what the `subscribe` callback delivers, and the
-[Intents reference](../concepts/intents) for everything you can send. Doing the same from a Go service? See
-[Back-end automation (no audio)](../go/quickstart-control-only).
+See [where calls ring](../concepts/intents#session--identity),
+[client cleanup](./quickstart-client#cleanup), and [error handling](../guides/errors-and-reconnects).

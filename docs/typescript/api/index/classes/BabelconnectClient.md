@@ -58,6 +58,14 @@ invite fails.
 
 `string`
 
+###### callId
+
+`string`
+
+The call this addresses — only consulted when no conference is active
+yet and one is started around it. Omit it and the [activeCall](BabelconnectClient.md#activecall) is
+named.
+
 ###### displayAs
 
 `string`
@@ -431,10 +439,17 @@ Exit the current campaign (selector row or in-call).
 ### leaveConference()
 
 ```ts
-leaveConference(): void
+leaveConference(callId?): void
 ```
 
-Drop only the agent's own leg; the other members stay connected.
+Drop only the agent's own leg; the other members stay connected. `callId`
+names the leg to drop; omit it and the [activeCall](BabelconnectClient.md#activecall) is named.
+
+#### Parameters
+
+##### callId?
+
+`string`
 
 #### Returns
 
@@ -825,16 +840,23 @@ Turn the in-browser WebRTC phone on or off. With it off, set an agent number so 
 ### startConference()
 
 ```ts
-startConference(hold): void
+startConference(hold, callId?): void
 ```
 
-Open a conference around the current call. `hold` parks that call while you add members and consult.
+Open a conference around a call. `hold` parks that call while you add
+members and consult. `callId` names the call this addresses; omit it and
+the [activeCall](BabelconnectClient.md#activecall) is named, which is what the server assumed before
+the field existed.
 
 #### Parameters
 
 ##### hold
 
 `boolean` = `false`
+
+##### callId?
+
+`string`
 
 #### Returns
 

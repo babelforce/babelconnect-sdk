@@ -2,138 +2,243 @@
 title: Your first softphone
 sidebar_label: Your first softphone
 sidebar_position: 1
-description: From an empty project to placing and answering a real call in the browser — in about ten minutes.
+description: Build a complete TypeScript browser client that renders state, dials, answers on a click, and cleans up.
 ---
 
 # Your first softphone
 
-This tutorial takes you from nothing to a working browser softphone that can **place a call, answer an
-inbound call, and hang up** — with real WebRTC audio. It threads together the ideas covered in depth
-elsewhere (authentication, the state model, the intents); follow the links if you want the full story on any
-step. You'll write TypeScript, but the shape is identical in [Go](#the-same-in-go).
+Build a small browser phone with a dialer and one card per call. Incoming calls wait for an
+**Answer** click. Outgoing calls answer the agent's own leg automatically.
 
-**What you need:** a babelconnect-server origin and an agent login (username + password), Node 20+, and a
-browser. Total time: ~10 minutes.
+You need Node 22.12+, a modern browser, a microphone, a reachable babelconnect-server origin,
+and an agent bearer token. The account must allow calls and provide an outbound caller ID.
+Ask the deployment operator to allow `http://localhost:5173` in CORS. Microphone access needs
+HTTPS or localhost; a server alone is not a complete telephony deployment.
 
 ## 1. Install
 
 ```sh
+mkdir my-softphone
+cd my-softphone
+npm init -y
 npm install @babelforce/babelconnect-sdk
+npm install --save-dev typescript vite
+mkdir src
 ```
 
-The SDK is ESM-only and talks to a **single** babelconnect-server origin — both the gRPC-web API and the
-`/oauth/token` endpoint live there.
+Create `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"], "strict": true, "noEmit": true, "skipLibCheck": true
+  },
+  "include": ["src"]
+}
+```
 
 ## 2. Get a token
 
-The server authenticates with an OAuth2 password grant. The `passwordGrant` helper does the round-trip; in
-production you'd get the token from your own login instead (see [Authentication](../guides/authentication)).
+Obtain a short-lived test token using [Authentication](../guides/authentication).
+This local example accepts it in a password field and keeps it in memory. For a deployed app,
+connect your login flow; never bake tokens or account passwords into source.
 
-```ts
-import { passwordGrant } from "@babelforce/babelconnect-sdk";
+Create `index.html`:
 
-const serverUrl = "https://agent.example.com";          // your babelconnect-server origin
-const token = await passwordGrant({ serverUrl, user: "agent@acme.com", pass: "…" });
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My softphone</title>
+</head>
+<body>
+  <h1>My softphone</h1>
+  <form id="login">
+    <label>Server <input id="server" type="url" required placeholder="https://agent.example.com"></label>
+    <label>Token <input id="token" type="password" required autocomplete="off"></label>
+    <button id="connect">Connect</button>
+  </form>
+  <p id="status" role="status">Disconnected</p>
+  <p id="error" role="alert"></p>
+  <form id="dial">
+    <label>Number <input id="number" type="tel" required placeholder="+15551234567"></label>
+    <button id="call" disabled>Call</button>
+  </form>
+  <div id="calls"></div>
+  <button id="disconnect" disabled>Disconnect</button>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
 ```
-
-:::warning Don't ship credentials to the browser
-`passwordGrant` is perfect for this tutorial and for back-end use. In a real browser app, authenticate the
-agent server-side and hand the **token** to the page — never the password. [More on this →](../guides/authentication)
-:::
 
 ## 3. Connect and mirror state
 
-Open the client. It immediately starts mirroring the agent's **`AgentView`** — the single source of truth
-for everything on screen. You render from it; you never assemble state yourself.
+Create `src/main.ts`. This is the complete application; it defines every helper it uses.
 
 ```ts
-import { BabelconnectClient } from "@babelforce/babelconnect-sdk";
+import {
+  BabelconnectClient, CallDirection, CallLifecycle, CallSource, type AgentView,
+} from "@babelforce/babelconnect-sdk";
 
-const bc = BabelconnectClient.connect({ serverUrl, token });
+function element<T extends HTMLElement>(id: string): T {
+  const node = document.getElementById(id);
+  if (!node) throw new Error(`Missing element: ${id}`);
+  return node as T;
+}
+const login = element<HTMLFormElement>("login");
+const dial = element<HTMLFormElement>("dial");
+const server = element<HTMLInputElement>("server");
+const token = element<HTMLInputElement>("token");
+const number = element<HTMLInputElement>("number");
+const connect = element<HTMLButtonElement>("connect");
+const callButton = element<HTMLButtonElement>("call");
+const disconnect = element<HTMLButtonElement>("disconnect");
+const status = element("status");
+const error = element("error");
+const calls = element("calls");
+let bc: BabelconnectClient | undefined;
+let unsubscribe: (() => void) | undefined;
+let usable = false;
 
-bc.subscribe((view) => render(view)); // called on every state change — your UI is f(AgentView)
-bc.register();                         // announce reachability + arm the WebRTC audio path
+function report(message: string): void { error.textContent = message; }
+function button(label: string, action: () => void): HTMLButtonElement {
+  const node = document.createElement("button");
+  node.type = "button";
+  node.textContent = label;
+  node.onclick = action;
+  node.disabled = !usable;
+  return node;
+}
+function render(view: AgentView): void {
+  // subscribe() immediately supplies a possibly empty cache, before any network reply.
+  callButton.disabled = !usable || !view.config?.calls?.enabled || !view.agent?.displayAs;
+  if (usable) status.textContent = view.agent?.id
+    ? `${view.agent.name}: ${view.agent.presenceLabel || view.agent.presenceName}`
+    : "Connecting…";
+  calls.replaceChildren();
+  for (const call of view.activeCalls) {
+    const card = document.createElement("section");
+    const title = document.createElement("p");
+    const peer = call.direction === CallDirection.INBOUND ? call.from : call.to;
+    title.textContent = `${call.anonymous ? "Anonymous" : peer} — ${CallLifecycle[call.state]}`;
+    card.append(title);
+    const needsAnswer = call.state === CallLifecycle.RINGING &&
+      (call.direction !== CallDirection.OUTBOUND || call.source === CallSource.CALLBACK);
+    if (needsAnswer && call.webrtcOffer) {
+      card.append(button("Answer", () => { void bc?.answerCall(call.id).catch(e => report(String(e))); }));
+    }
+    card.append(button(call.state === CallLifecycle.RINGING ? "Reject" : "Hang up",
+      () => bc?.hangup(call.id)));
+    if (call.state === CallLifecycle.IN_PROGRESS || call.state === CallLifecycle.BRIDGED) {
+      card.append(button(call.muted ? "Unmute" : "Mute", () => bc?.mute(call.id, !call.muted)));
+    }
+    calls.append(card);
+  }
+}
+function connectionLost(message: string): void {
+  usable = false;
+  status.textContent = "Disconnected or stale — disconnect, then connect again";
+  report(message);
+  if (bc) render(bc.view);
+}
+async function close(): Promise<void> {
+  usable = false;
+  unsubscribe?.();
+  unsubscribe = undefined;
+  const previous = bc;
+  bc = undefined;
+  try { await previous?.close(); }
+  catch (e) { report(String(e)); }
+  finally {
+    calls.replaceChildren();
+    status.textContent = "Disconnected";
+    callButton.disabled = disconnect.disabled = true;
+    connect.disabled = false;
+  }
+}
+login.onsubmit = event => {
+  event.preventDefault();
+  if (bc) return;
+  report("");
+  usable = true;
+  connect.disabled = true;
+  disconnect.disabled = false;
+  try {
+    bc = BabelconnectClient.connect({
+      serverUrl: server.value.replace(/\/+$/, ""), token: token.value,
+      onError: e => e.code === "disconnected"
+        ? connectionLost(e.message)
+        : report(`${e.code}${e.callId ? ` (${e.callId})` : ""}: ${e.message}`),
+      onGap: () => connectionLost("State updates were missed."),
+    });
+    token.value = "";
+    unsubscribe = bc.subscribe(render);
+    bc.register();
+  } catch (e) { report(String(e)); void close(); }
+};
+dial.onsubmit = event => {
+  event.preventDefault();
+  if (bc && !callButton.disabled) { report(""); bc.placeCall(number.value.trim()); }
+};
+disconnect.onclick = () => { void close(); };
+window.addEventListener("pagehide", () => { void close(); });
 ```
 
-`render` runs on the **initial snapshot** and again on **every patch** thereafter. If that snapshot→patches
-model is new to you, read [State & events](../concepts/state-and-events) — it's the heart of how babelconnect
-works.
+Check and serve it:
+
+```sh
+npx tsc
+npx vite --host localhost --port 5173 --strictPort
+```
+
+Open `http://localhost:5173`, enter the server origin and token, then **Connect**. Registration
+loads feature settings and caller IDs and requests WebRTC reachability. The SDK queues early
+intents until the stream starts. Rendering only reads state; it never answers calls.
 
 ## 4. Place a call
 
-Sending an intent is one method call. You don't update any state — you ask, and the new state arrives on the
-stream:
-
-```ts
-bc.placeCall("+49301234567"); // dial out — your own leg auto-answers, audio over WebRTC
-```
-
-Watch your `render` fire: a new `CallState` shows up in `view.activeCalls`, moving through `RINGING` →
-`IN_PROGRESS` as the call connects. The browser negotiates the audio automatically from the offer on the
-ringing call.
+Enter an E.164 number and click **Call**. The SDK's default browser media handles the offer
+and auto-answers your own outbound leg. Grant microphone permission and check that both parties
+can hear each other. The Call button stays disabled until calls are enabled and `agent.displayAs`
+is populated; use a [caller-ID picker](../guides/recipes#outbound-dial-with-a-caller-id-picker)
+if the account requires a selection. The server may still reject dialing for presence or line status.
 
 ## 5. Answer an inbound call
 
-Inbound calls appear in `view.activeCalls` too, and they **don't** auto-answer — you accept or reject them
-explicitly. This is the **same subscriber from step 3**, now also acting on ringing inbound calls (keep one
-subscriber, not two):
-
-```ts
-import { CallLifecycle, CallDirection } from "@babelforce/babelconnect-sdk";
-
-bc.subscribe((view) => {
-  for (const call of view.activeCalls) {
-    if (call.state === CallLifecycle.RINGING && call.direction === CallDirection.INBOUND) {
-      bc.answerCall(call.id); // accept …
-      // bc.hangup(call.id);  // … or reject
-    }
-  }
-  render(view);
-});
-```
-
-(In a real UI you'd render an incoming-call card and let the agent click **Answer** — but the call is the
-same either way.)
+Call the agent from another phone. The card displays **Answer** and **Reject**; neither happens
+until you click. Scheduled outbound callbacks also need explicit acceptance. A ringing call without
+a WebRTC offer cannot be answered by this browser. See [where calls ring](../concepts/intents#session--identity).
 
 ## 6. During the call, and hanging up
 
-While a call is up, the same pattern drives everything — mute, hold, send DTMF, transfer:
-
-```ts
-bc.mute(call.id, true);          // mute your mic
-bc.sendDigits(call.id, "1");     // press 1 in an IVR
-bc.hangup(call.id);              // end the call
-```
-
-Each one is an intent; each result comes back as a patch that updates `view`. You've now built the whole
-loop: **render `AgentView`, send intents, render the new `AgentView`.** Everything else is more intents —
-the full list is the [Intents reference](../concepts/intents).
+**Mute** sends an intent; the next state update changes the label. **Hang up** ends the call.
+**Disconnect** detaches the renderer and awaits `close()` to release the stream and media.
+`pagehide` also starts cleanup, though browsers do not wait for asynchronous unload work.
+Closing does not revoke the token; see [Logout](../guides/authentication#logout).
 
 ## The same in Go
 
-The Go SDK is the same model with Go naming — `bcclient.Dial(...)`, `cli.Subscribe(...)`, `cli.PlaceCall(...)`,
-`cli.Answer(...)`. Start at the **[Go getting started](../go/getting-started)** guide, and see
-**[TypeScript vs Go](../guides/typescript-vs-go)** for the handful of behavioural differences (auto-answer
-default, disconnect signalling, media leg).
+Use the complete [Go terminal example](../go/quickstart-client). Check its availability and transport
+limits first; its default media sends silence rather than using a microphone.
 
 ## Troubleshooting your first call
 
-| Symptom | Likely cause |
+| Symptom | Check |
 |---|---|
-| **No audio on a connected call** | No media leg (control-only / no `mediaFactory`), the microphone was denied, or the browser blocked audio **autoplay** — pass the browser `mediaFactory`, grant mic access, and trigger answer/dial from a user gesture (a click) so playback is allowed. |
-| **An inbound call never rings in the browser** | You didn't `register()` (it arms the WebRTC path), or WebRTC is off (`agent.webrtcEnabled` is false) so the backend bridges the call to the agent's external number instead. |
-| **Nothing shows up in `view.activeCalls`** | `subscribe` wasn't attached before the call, or `calls` is disabled in `AgentView.config` for this deployment. |
-| **A command seems to do nothing** | Watch the `onError` callback — the server rejects invalid commands out-of-band (see [Errors & reconnects](../guides/errors-and-reconnects)). |
+| No sound | Microphone permission, HTTPS/localhost, autoplay policy, and reachable STUN/TURN. |
+| No incoming card | Registration, WebRTC routing and the agent's availability. |
+| Dial rejected | Read the displayed error; select an allowed caller ID and an available presence. |
+| Connection lost | Disconnect, obtain a fresh token if needed, and reconnect. This closes live media. |
 
-More symptoms — control-only audio, callbacks, reconnects, integration — are in the
-**[Troubleshooting guide](../guides/troubleshooting)**.
+The [troubleshooting guide](../guides/troubleshooting) covers each case. This example deliberately
+uses manual reconnection; it does not promise uninterrupted audio or automatic token refresh.
 
 ## Where to go next
 
-- **[State & events](../concepts/state-and-events)** — the snapshot/patch model, in depth.
-- **[Intents reference](../concepts/intents)** — every intent you can send, in both languages.
-- **[Recipes](../guides/recipes)** — copy-paste UI patterns (presence selector, call card, conversation list, …).
-- **[Glossary](../concepts/glossary)** — the core terms (AgentView, patch, wrap-up, …) in one place.
-- **[Control only (no audio)](../typescript/quickstart-control-only)** — dashboards, SMS, and back-end use without a media leg.
-- **[Embedding](../typescript/embedding)** — drop the prebuilt agent app into a CRM instead of building your own UI.
-- **[Errors & reconnects](../guides/errors-and-reconnects)** — make the session production-ready.
+[Recipes](../guides/recipes) adds presence, transfer, messaging and contacts.
+[Errors & reconnects](../guides/errors-and-reconnects) explains recovery limits.
+Use the [TypeScript API](../typescript/api/index.md) for method signatures or
+[embed the agent app](../typescript/embedding) to use its ready-made interface.

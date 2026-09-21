@@ -2,20 +2,13 @@
 title: Getting started
 sidebar_label: Getting started
 sidebar_position: 1
-description: Install @babelforce/babelconnect-sdk and choose between the programmatic client and the embeddable widget.
+description: Install the TypeScript SDK and choose a custom client, control-only integration, or embedded agent app.
 ---
 
 # TypeScript SDK
 
-The **TypeScript SDK for babelconnect** — build browser-based agent experiences (softphone, CTI,
-messaging) on top of a babelconnect-server origin. There are two ways to use it:
-
-- **Programmatic client** — a typed, server-authoritative client over **gRPC-web**. You get a live mirror
-  of the agent's state (`AgentView`), a typed intent API (`placeCall`, `answerCall`, `mute`, `transfer`,
-  `sendSms`, …), and an optional **WebRTC** audio leg so a pure-TypeScript app can place and answer real
-  calls in the browser.
-- **Embeddable widget** (`/embed`) — drop the prebuilt babelconnect agent app into your page via an
-  `<iframe>` and a `postMessage` bridge, and drive it (click-to-dial, prefill, tab routing) from your CRM.
+Use `@babelforce/babelconnect-sdk` to build your own browser interface around live agent state.
+**[Your first softphone](../tutorial/first-softphone)** is the complete setup and working example.
 
 ## Install
 
@@ -23,46 +16,33 @@ messaging) on top of a babelconnect-server origin. There are two ways to use it:
 npm install @babelforce/babelconnect-sdk
 ```
 
-ESM-only (`"type": "module"`) and side-effect-free, so bundlers tree-shake unused exports. Targets ES2022. Runs
-in modern browsers; Node 20+ for control-only (no-audio) use. Native WebRTC audio requires a browser, a
-**secure context** (HTTPS, or `localhost` in dev), and microphone permission — `getUserMedia` is unavailable
-over plain HTTP.
+The package is ESM-only, targets ES2022, and is side-effect-free for tree shaking. It runs in modern
+browsers and Node 20+ for control-only use. CommonJS callers use a dynamic import:
+`const { BabelconnectClient } = await import("@babelforce/babelconnect-sdk")`.
 
-In a **CommonJS** Node project you can't `require()` it (ESM-only) — load it with a dynamic import:
-`const { BabelconnectClient } = await import("@babelforce/babelconnect-sdk");`.
-
-:::info One origin, and CORS
-The SDK talks to a single **babelconnect-server** origin, which serves both the gRPC-web API and the
-`/oauth/token` endpoint. If your app is served from a **different** origin, that origin must be in the
-server's CORS allowlist — an empty allowlist permits all origins and is for development only.
-
-The server speaks **gRPC-web natively** — there's no separate Envoy or proxy to run (it wraps the gRPC server
-and handles the gRPC-web CORS preflight itself). Point the SDK at the server origin and you're done.
-:::
+Browser audio needs microphone permission and a secure context (HTTPS or localhost).
+The SDK speaks gRPC-web directly to the server; no separate protocol proxy is required.
+Token exchange uses the same origin's `/oauth/token`, but the
+[PKCE consent page](../guides/authentication#authorization-code--pkce) may use another origin.
+If your app has a different origin, add it to the server's CORS allowlist. An empty list allows
+all origins and is intended for development only.
 
 ## Which entry point?
 
-| Goal | Import | Guide |
+| Goal | Entry point | Guide |
 |---|---|---|
-| Place/answer calls from your own UI, with audio | `@babelforce/babelconnect-sdk` | [Programmatic client](./quickstart-client) |
-| Dashboards, SMS, presence — no audio | `@babelforce/babelconnect-sdk` (`mediaFactory: null`) | [Control only](./quickstart-control-only) |
-| Embed the prebuilt agent app in a CRM | `@babelforce/babelconnect-sdk/embed` | [Embedding](./embedding) |
-
-The full per-symbol reference is under **[API reference (TypeDoc)](./api/index.md)**. Using the Go SDK too?
-See **[TypeScript vs Go](../guides/typescript-vs-go)**.
+| Custom UI with browser audio | package root | [Tutorial](../tutorial/first-softphone) · [Client lifecycle](./quickstart-client) |
+| State, SMS or external-phone control | package root, `mediaFactory: null` | [Control only](./quickstart-control-only) |
+| Ready-made agent UI | `@babelforce/babelconnect-sdk/embed` | [Embedding](./embedding) |
 
 ## API surface at a glance
 
-| Area | Exports |
+| Area | Reference |
 |---|---|
-| Client | `BabelconnectClient`, `ConnectOptions` |
-| State | `StateCache`, plus the generated `babelconnect.v1` messages & enums (`AgentView`, `CallState`, `Command`, …) |
-| Auth | `passwordGrant`, `pkceChallenge`, `buildAuthorizeUrl`, `authorizationCodeGrant` |
-| Media | `BrowserWebrtcMedia`, `browserMediaFactory`, `Media`, `MediaFactory` |
-| Embed (`/embed`) | `BabelconnectEmbed`, `EmbedOptions` |
+| Connection and options | [BabelconnectClient](./api/index/classes/BabelconnectClient) · [ConnectOptions](./api/index/interfaces/ConnectOptions) |
+| State and intents | [State & events](../concepts/state-and-events) · [Intents](../concepts/intents) |
+| Login, PKCE, revocation | [Authentication](../guides/authentication) |
+| Custom WebRTC | [Media](./api/index/interfaces/Media) · [MediaFactory](./api/index/type-aliases/MediaFactory) |
+| Every export | [TypeScript API](./api/index.md) |
 
-`BabelconnectClient` intents cover calls (`placeCall`, `answerCall`, `hangup`, `mute`, `hold`, `sendDigits`,
-`transfer`), conferencing (`startConference`, `addConferenceMember`, …), recording (`startRecording`,
-`stopRecording`, `flagRecording`, …), wrap-up (`wrapUpExtend`, `wrapUpCancel`), messaging (`sendSms`,
-`markConversationRead`), presence/identity (`setPresence`, `setDisplayAs`, `setAgentNumber`, `setWebrtc`), and
-history/contacts fetches (`getHistory`, `getSmsThread`, `getPhonebook`).
+Porting a Go client? Read [TypeScript vs Go](../guides/typescript-vs-go) before relying on defaults.

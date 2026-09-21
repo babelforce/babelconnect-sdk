@@ -41,13 +41,35 @@ optional eventsVersion: string;
 ```
 
 The `agent.loaded`/`user.loaded` event-payload schema version.
-Omit for the app's current default (`"v3"` — just the top-level
-`agentId`, no legacy struct nesting). Pass `"v1"` to opt into the
+Omit for the current app default (`"v3"`): `agent.loaded` carries
+`{agentId}` and `user.loaded` has no payload. The legacy adapter
+normalizes both to `{agentId}`. Pass `"v1"` to opt into the
 legacy shape used by the previous embedded phone widget
 (`agent.loaded` → `{agentId, agent:{id,name,email,number}}`,
 `user.loaded` → `{agentId, user:{email}}`) for a host still matching
 CRM users by email or routing by number. See the Embedding guide,
 "Loaded event schema version".
+
+***
+
+### instanceId?
+
+```ts
+optional instanceId: string;
+```
+
+This mount's identity, echoed by the app on **every** app→host envelope
+(`{type:"bcConnect", name, data, instanceId}`) and reported as
+[BabelconnectEmbed.instanceId](../classes/BabelconnectEmbed.md#instanceid). Omit it and one is generated per
+mount. Supply your own when you want the id to mean something in your own
+system (a CRM tab id, a workspace id) — it is correlation only and grants
+nothing; trust still rests on the origin allowlist and the token.
+
+This is what lets a host with the app open in several browser tabs tell
+WHICH tab holds a live call — see "Multiple tabs and multiple embeds" in
+the Embedding guide, and `cti.call`'s `ownsMedia` / the
+`call.media_owner` event. Max 128 characters; a longer one is ignored by
+the app in favour of a generated id.
 
 ***
 

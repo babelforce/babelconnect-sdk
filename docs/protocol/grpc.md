@@ -5,8 +5,8 @@ description: The babelconnect.v1 gRPC contract — every message, enum, and the 
 ---
 
 The generated reference for the **`babelconnect.v1`** gRPC contract: every message, enum, and the
-`Agent` service. Both the TypeScript and Go SDKs re-export these exact types, so this doubles as the
-canonical data-model reference (`AgentView`, `CallState`, `Command`, …).
+`Agent` service. TypeScript exports the generated types; Go imports them from the protocol module.
+This is the canonical data-model reference (`AgentView`, `CallState`, `Command`, …).
 
 > **Where to start.** You'll normally use an [SDK](../intro) rather than read this end-to-end. The three
 > types to anchor on are [`AgentView`](#babelconnect-v1-AgentView) (the state you render),
@@ -205,7 +205,7 @@ login / email |
 | account_id | [string](#scalar-value-types) |  | customer / account id |
 | account_name | [string](#scalar-value-types) |  | account / company display name, when known |
 | line_blocked | [bool](#scalar-value-types) |  | Involuntary line block: the ACD/platform marked the agent busy / unreachable / declined (a recoverable state cleared via ResetLineStatus) — distinct from a chosen &#34;busy&#34; presence the agent (or sign-out-as-busy) selected. Drives the line-blocked banner &#43; Reset; a voluntary busy presence leaves this false. |
-| line_blocked_reason | [string](#scalar-value-types) |  | Why `line_blocked` is true, when the platform said (DEV-844): unreachable (the agent&#39;s own leg rang out or could not be reached — the ACD folds both into one state), busy, declined, or dnd. Empty when the line is not blocked. The same vocabulary as ConferenceMember.failure_reason: a client can say &#34;you missed a transfer invite; the line frees itself shortly&#34; instead of showing a bare block. |
+| line_blocked_reason | [string](#scalar-value-types) |  | Why `line_blocked` is true, when the platform said: unreachable (the agent&#39;s own leg rang out or could not be reached — the ACD folds both into one state), busy, declined, or dnd. Empty when the line is not blocked. The same vocabulary as ConferenceMember.failure_reason: a client can say &#34;you missed a transfer invite; the line frees itself shortly&#34; instead of showing a bare block. |
 | accounts | [Account](#babelconnect-v1-Account) | repeated | Accounts this agent may switch to without re-logging-in (agent-role only, resolved at auth). One is marked `current`. Drives the Account tab&#39;s switcher; empty/single ⇒ no picker. |
 | email | [string](#scalar-value-types) |  | The agent&#39;s own email — distinct from `username`, which is the *login* identity and may differ. Populated for the embedding bridge&#39;s legacy-shaped `agent.loaded` payload so host pages can match/route on it. |
 | sms_capable_numbers | [string](#scalar-value-types) | repeated | Subset of `available_numbers` the platform marks SMS-capable. Drives the SMS composer&#39;s From picker; empty/unknown ⇒ client falls back to `available_numbers`. |
@@ -335,7 +335,7 @@ CallState is one call as the server sees it. Replace-by-id on upsert.
 | recording_tags | [string](#scalar-value-types) | repeated |  |
 | recording_flagged | [bool](#scalar-value-types) |  |  |
 | ice_servers | [IceServer](#babelconnect-v1-IceServer) | repeated | STUN/TURN servers the client applies; for off-host NAT traversal |
-| can_transfer_to_application | [bool](#scalar-value-types) |  | can_transfer_to_application is server-computed: true for inbound calls and taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain outbound calls must not be offered application (IVR module) transfer targets — forwarding them into a queue module strands the agent (DEV-549/B2-526). Clients gate the &#34;App&#34; transfer-target segment on this flag instead of re-deriving the rule from direction/source themselves. |
+| can_transfer_to_application | [bool](#scalar-value-types) |  | can_transfer_to_application is server-computed: true for inbound calls and taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain outbound calls must not be offered application (IVR module) transfer targets — forwarding them into a queue module strands the agent. Clients gate the &#34;App&#34; transfer-target segment on this flag instead of re-deriving the rule from direction/source themselves. |
 
 
 
@@ -500,7 +500,7 @@ removed/failed out of the participant list).
 | on_hold | [bool](#scalar-value-types) |  | member is on hold |
 | agent_id | [string](#scalar-value-types) |  | agent UUID when the member is an agent |
 | number | [string](#scalar-value-types) |  | phone number when the member is an external party |
-| failure_reason | [string](#scalar-value-types) |  | Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the leg rang out), unreachable (it could not be reached — not registered / not logged in / unroutable number), busy, or declined. Empty while the member is pending/added, and for a reason the platform did not name. Derived from the invite leg&#39;s finishReason on the /conferences push; the same vocabulary as AgentInfo.line_blocked_reason. |
+| failure_reason | [string](#scalar-value-types) |  | Why a `failed` member is gone, when the platform said: no_answer (the leg rang out), unreachable (it could not be reached — not registered / not logged in / unroutable number), busy, or declined. Empty while the member is pending/added, and for a reason the platform did not name. Derived from the invite leg&#39;s finishReason on the /conferences push; the same vocabulary as AgentInfo.line_blocked_reason. |
 
 
 
@@ -572,7 +572,7 @@ FeatureAccount gates the Account tab and its sections.
 | enabled | [bool](#scalar-value-types) |  |  |
 | allow_device_switch | [bool](#scalar-value-types) |  | browser/telephone selector &#43; agent-number field |
 | show_status | [bool](#scalar-value-types) |  | the Status/About section |
-| allow_account_switch | [bool](#scalar-value-types) |  | the multi-account switcher (ACC-E2) |
+| allow_account_switch | [bool](#scalar-value-types) |  | the multi-account switcher |
 | allow_status_change | [bool](#scalar-value-types) |  | Agents may change their own presence via the status picker. When false the picker is locked: still visible, shows the current status, but not interactive. Defaults to allowed. |
 
 
@@ -798,8 +798,8 @@ host ICE candidates. Empty in the in-cluster/LAN case.
 | number | [string](#scalar-value-types) |  | agent&#39;s number, if any |
 | username | [string](#scalar-value-types) |  |  |
 | state | [AgentState](#babelconnect-v1-AgentState) |  | current presence |
-| account_name | [string](#scalar-value-types) |  | account / company display name, when known (ACC-E1) |
-| accounts | [Account](#babelconnect-v1-Account) | repeated | accounts this agent may switch to (ACC-E2) |
+| account_name | [string](#scalar-value-types) |  | account / company display name, when known |
+| accounts | [Account](#babelconnect-v1-Account) | repeated | accounts this agent may switch to |
 
 
 
@@ -1120,7 +1120,7 @@ bare Keepalive frame). The client echoes `seq` back in a Pong command; the serve
 measures round-trip time (RTT) from the reply and tracks per-session liveness.
 Like Keepalive it keeps the connection warm, carries no state, and does NOT
 advance `seq` — caches ignore it, and the reply is handled in the client&#39;s stream
-loop, not the state reducer. (APP-A5/CALL-M6.)
+loop, not the state reducer.
 
 
 | Field | Type | Label | Description |
@@ -1169,7 +1169,7 @@ loop, not the state reducer. (APP-A5/CALL-M6.)
 ### Pong {#babelconnect-v1-Pong}
 Pong replies to a server Ping (StateUpdate.ping), echoing its `seq` so the server
 can match it to the outstanding ping and compute RTT. Sent automatically by the
-SDK from its stream-receive loop — not a user intent. (APP-A5/CALL-M6.)
+SDK from its stream-receive loop — not a user intent.
 
 
 | Field | Type | Label | Description |
@@ -1776,6 +1776,6 @@ e.g. a &#34;phonebook&#34; section, but that is presentation only).
 | sfixed32 | Always four bytes. | int32 | int | int | int32 | int | integer | Bignum or Fixnum (as required) |
 | sfixed64 | Always eight bytes. | int64 | long | int/long | int64 | long | integer/string | Bignum |
 | bool |  | bool | boolean | boolean | bool | bool | boolean | TrueClass/FalseClass |
-| string | A string must always contain UTF-8 encoded or 7-bit ASCII text. | string | String | str/unicode | string | string | string | String (UTF-8) |
+| string | A string must always contain UTF-8 encoded or 7-bit ASCII text. | string | String | str/unicode | string | string | string | String |
 | bytes | May contain any arbitrary sequence of bytes. | string | ByteString | str | []byte | ByteString | string | String (ASCII-8BIT) |
 

@@ -54,7 +54,7 @@ OAuth scope (e.g. `"*"`).
 serverUrl: string;
 ```
 
-babelconnect-server origin (the same one used for gRPC-web); the authorize endpoint lives on the backend behind the same origin.
+OAuth consent origin serving `/oauth/authorize`; this can differ from the agent API origin, which does not proxy that GET endpoint.
 
 ***
 

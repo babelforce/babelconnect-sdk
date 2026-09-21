@@ -2,90 +2,54 @@
 title: Getting started
 sidebar_label: Getting started
 sidebar_position: 1
-description: Install babelconnect-sdk-go and open a server-authoritative session with typed intents and a pluggable media leg.
+description: Go SDK availability, transport limits, and entry points for terminal clients and services.
 ---
 
 # Go SDK
 
-The **Go SDK** for babelconnect-server — a server-authoritative "dumb renderer" client: it mirrors the
-agent's state and exposes typed intents over gRPC, with a pluggable WebRTC media leg. Use it for back-end and
-terminal apps — services, dashboards, bots, and CLIs that drive calls or react to state server-side.
+The Go client (`bcclient`) mirrors `AgentView`, sends typed intents, and supports pluggable
+WebRTC media. Use it for terminal tools and services.
 
 ## Install
 
-:::caution The published Go module is behind
-The module currently published at `github.com/babelforce/babelconnect-sdk-go` is **v0.1.0**
-(June 2026). It predates the Connect transport introduced in 0.13.0 and does not connect to
-current servers. A release matching the current version is planned; until it lands, use the
-[TypeScript SDK](../typescript/getting-started.md) or contact babelforce for early access to the
-current Go SDK. The API documented on these pages is the current one.
-:::
+These pages describe the current source API. The public `github.com/babelforce/babelconnect-sdk-go`
+release **v0.1.0** predates the Connect transport and cannot connect to current servers.
+Obtain a matching SDK and generated protocol module from babelforce before using these examples;
+`go get github.com/babelforce/babelconnect-sdk-go` alone does not supply that API.
 
-```sh
-go get github.com/babelforce/babelconnect-sdk-go
-```
-
-Module `github.com/babelforce/babelconnect-sdk-go`, package `bcclient`. Requires **Go 1.24+**. The default
-media leg is cgo-free, so a plain `go build` works anywhere — no C toolchain or system audio libraries.
+Current source requires **Go 1.25+**. Its module path is
+`github.com/babelforce/babelconnect-sdk-go` (package `bcclient`); generated messages come from
+`github.com/babelforce/babelconnect-proto/gen/go/babelconnect/v1`.
 
 ## What it does
 
-babelconnect-server is **state-authoritative**: it owns the per-agent `AgentView` and streams a snapshot +
-entity-level patches over the gRPC `Agent.Session`. This SDK:
+The client opens `Subscribe` and sends unary `Send` requests over **Connect / HTTP/1.1**.
+`Options.Addr` is `host:port`; the implementation prepends `http://`. It has no TLS option and
+cannot accept an HTTPS URL. Use a trusted local tunnel or explicitly trusted network; do not send
+production bearer tokens over an untrusted plaintext connection.
 
-- opens the session and keeps a **`StateCache`** mirror of the `AgentView`, applying snapshot/patches
-  mechanically — no domain logic, so your UI is a pure function of the state;
-- exposes typed **intent** senders (`PlaceCall`, `Answer`, `Hangup`, `Mute`, `Hold`, `SendDigits`,
-  `SetDisplayAs`, `SetPresence`, `SetWebrtc`, `SetAgentNumber`, `Transfer`, the conference, recording, and
-  wrap-up intents, and SMS `SendSms`/`SetConversationOpen`/`MarkConversationRead`) plus the unary fetches
-  `GetHistory`/`GetSmsThread`/`GetPhonebook`;
-- drives a pluggable **`Media`** leg (WebRTC). The default `SyntheticMediaFactory` is cgo-free — it answers
-  in PCMA, streams A-law silence, and counts inbound RTP (two-way media is verifiable, but nothing is
-  heard). Supply your own `Media` for real mic/speaker audio — no control/state code changes.
-
-Your UI binds to `Subscribe(...)` and dispatches intents. That's the whole contract.
+`Dial` opens the subscription but does not wait for the cache's first snapshot. Its context does
+not cancel the long-lived stream; explicitly call `Close`.
 
 ## Which entry point?
 
-| Goal | Default media | Guide |
-|---|---|---|
-| Place/answer calls with real audio | bring your own `MediaFactory` | [Programmatic client](./quickstart-client) |
-| A service, dashboard, bot, or CLI — no audio | cgo-free `SyntheticMediaFactory` (silent) | [Back-end automation](./quickstart-control-only) |
+| Goal | Guide |
+|---|---|
+| Dial, accept and reject from a terminal | [Programmatic client](./quickstart-client) |
+| Observe state, send SMS or exercise silent media | [Back-end automation](./quickstart-control-only) |
+| Hear microphone/speaker audio | [Supply a MediaFactory](./quickstart-control-only#adding-real-audio-later) |
 
-**Building a service, dashboard, or CLI?** You don't need a real audio leg — the default media leg is
-cgo-free and silent. Start at **[Back-end automation (no audio)](./quickstart-control-only)**.
-
-:::caution `Register("webrtc")`, not `Register()`
-Go's `Register(caps...)` is variadic with **no default** — calling `Register()` with no arguments leaves the
-agent **not WebRTC-reachable**, so pass `Register("webrtc")` explicitly. (TypeScript's `register()` defaults
-to `["webrtc"]`, so the two SDKs differ here.) See [TypeScript vs Go](../guides/typescript-vs-go) for the
-full list of behavioural differences.
-:::
+Default media is cgo-free WebRTC sending PCMA silence and counting received RTP. It needs no system
+audio libraries, but it is still a WebRTC stack. It does not produce audible mic/speaker audio.
 
 ## API reference
 
-The full per-symbol reference is published on **pkg.go.dev**:
-
-**[pkg.go.dev/github.com/babelforce/babelconnect-sdk-go](https://pkg.go.dev/github.com/babelforce/babelconnect-sdk-go)**
-
-Coming from the TypeScript SDK? See **[TypeScript vs Go](../guides/typescript-vs-go)** for the behavioural
-differences.
-
-The data types (`AgentView`, `CallState`, `Command`, …) come from the generated contract. The two imports the
-quickstart uses are the client package and the `bcv1` type alias:
-
-```go
-import (
-    "github.com/babelforce/babelconnect-sdk-go"                          // package bcclient
-    bcv1 "github.com/babelforce/babelconnect-proto/gen/go/babelconnect/v1"
-)
-```
-
-See the [gRPC / proto reference](../protocol/grpc) for every message and enum.
+[pkg.go.dev](https://pkg.go.dev/github.com/babelforce/babelconnect-sdk-go) describes the public release,
+which may differ from these pages. Use the supplied source's Go documentation for current signatures,
+the [protocol reference](../protocol/grpc) for messages, and
+[TypeScript vs Go](../guides/typescript-vs-go) for behavior differences.
 
 ## Next steps
 
-- **[Programmatic client (with audio)](./quickstart-client)** — the worked example: connect, mirror
-  `AgentView`, place a call, and handle inbound calls.
-- **[Back-end automation (no audio)](./quickstart-control-only)** — drive intents and observe state from a
-  service or CLI with the default silent media leg.
+Run the [terminal example](./quickstart-client), then add
+[authentication](../guides/authentication) and [recovery](../guides/errors-and-reconnects).

@@ -5,11 +5,9 @@ building agent experiences (softphone, CTI, messaging) on babelconnect.
 
 **Live site:** https://babelforce.github.io/babelconnect-sdk/
 
-It covers all the babelconnect SDKs:
-
-- **TypeScript SDK** — [`@babelforce/babelconnect-sdk`](https://www.npmjs.com/package/@babelforce/babelconnect-sdk) (npm)
-- **Go SDK** — [`github.com/babelforce/babelconnect-sdk-go`](https://pkg.go.dev/github.com/babelforce/babelconnect-sdk-go)
-- **Protocol** — the `babelconnect.v1` gRPC contract and its REST/OpenAPI projection
+Start with the [TypeScript softphone tutorial](https://babelforce.github.io/babelconnect-sdk/docs/tutorial/first-softphone),
+[embedding guide](https://babelforce.github.io/babelconnect-sdk/docs/typescript/embedding), or
+[Go availability notes](https://babelforce.github.io/babelconnect-sdk/docs/go/getting-started).
 
 Built with [Docusaurus](https://docusaurus.io/). The API references (TypeScript TypeDoc, the gRPC
 contract, and the OpenAPI/Redoc reference) are generated.

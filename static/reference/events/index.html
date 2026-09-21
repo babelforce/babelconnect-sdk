@@ -16,6 +16,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@asyncapi/react-component@2.6.5/styles/default.min.css" />
     <style>
       body { margin: 0; padding: 0; }
+      /* Let adjacent protocol badges wrap below a long server URL on phones. */
+      @media (max-width: 600px) {
+        #asyncapi strong.uppercase { display: inline-block; }
+      }
     </style>
   </head>
   <body>

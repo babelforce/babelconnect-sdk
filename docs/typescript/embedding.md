@@ -2,56 +2,53 @@
 title: Embedding the agent app
 sidebar_label: Embedding
 sidebar_position: 4
-description: Embed the prebuilt babelconnect agent app in your page and drive it over a postMessage bridge.
+description: Mount the agent app, pass tokens, and handle host commands and events.
 ---
 
 # Embedding the agent app
 
-Embed the prebuilt **babelconnect agent app** into your host page (e.g. a CRM) with one snippet, then
-drive it and react to it over a `postMessage` bridge. This is the host-developer guide; it's implemented by
-the SDK's `/embed` entry point on the host side.
-
-:::tip Embed or build your own?
-Embedding gives you the **whole agent UI** for the cost of one snippet — fastest if the prebuilt app fits.
-If you need a **custom UI** (your own call card, layout, or styling), use the
-[programmatic client](./quickstart-client) instead: same server, you render `AgentView` and send intents
-yourself. Both connect to the same babelconnect-server origin with the same token.
-:::
+Mount the ready-made agent app inside your CRM and drive it through the SDK's `/embed` entry point.
+For your own interface, start with the [TypeScript tutorial](../tutorial/first-softphone).
 
 ## 1. Drop it in
 
-```html
-<div id="bc" style="width: 380px; height: 640px"></div>
-<script type="module">
-  import { BabelconnectEmbed } from "@babelforce/babelconnect-sdk/embed";
+Install `@babelforce/babelconnect-sdk` and use this helper in a bundled TypeScript application.
+Pass a real container, the agent-app origin, and a token from your login:
 
-  const bc = BabelconnectEmbed.mount({
-    container: document.getElementById("bc"),
-    serverUrl: "https://agent.example.com", // your babelconnect-server origin
-    token: await getAgentToken(),            // your login → a bearer token
+```ts
+import { BabelconnectEmbed } from "@babelforce/babelconnect-sdk/embed";
+
+export function mountAgent(container: HTMLElement, serverUrl: string, token: string) {
+  const bc = BabelconnectEmbed.mount({ container, serverUrl, token });
+  bc.on("agent.loaded", () => {
+    bc.calls.dial("+15551234567", false); // pre-fill only, after login completes
   });
-
-  bc.on("agent.loaded", () => console.log("agent ready"));
-  bc.on("cti.call", ({ call }) => console.log("call", call.state, call.from, call.to));
-</script>
+  bc.on("cti.error", data => console.error("cti.error", data));
+  return bc; // call bc.dispose() when this view closes
+}
 ```
 
-`mount()` injects an `<iframe>` pointing at the babelconnect agent app served by babelconnect-server, and
-starts the bridge. The app talks only to babelconnect-server (gRPC-web + the `/oauth/token` proxy on that
-one origin). `mount()` also takes optional `session` / `context` (initial correlation, sent with the token),
-`theme` (your brand inside the iframe — see [3b](#3b-theme-the-app-your-brand-inside-the-iframe)),
-`path` (the app route, default `/`), and `className` (a CSS class for the iframe).
+`mount` injects an iframe. Set dimensions on its container, for example `width: 380px;
+max-width: 100%; height: 640px`. The iframe fills it; `className` and `bc.element` let you style it.
+Optional `path` defaults to `/`; `session`/`context` seed correlation; `theme` brands the app.
 
-**Sizing:** the iframe fills its container at `100%` × `100%`, so set the dimensions on the **container**
-element (as in the snippet above) — or style the iframe directly via `className` or `bc.element`. The agent app
-is a fixed-width panel, so a container around `380×640` suits it.
+The iframe permits `microphone; autoplay`. The host must also allow microphone use: if it sets
+Permissions-Policy or is itself framed, delegate microphone access to the app origin. Browser
+permission and autoplay rules still apply.
 
-:::note Microphone & autoplay
-The injected iframe carries `allow="microphone; autoplay"` so the embedded softphone can capture the agent's
-mic and play call audio. That only takes effect if the **host page** is itself permitted to use the
-microphone — if your page sets a `Permissions-Policy` (or is itself framed), delegate `microphone` to the
-babelconnect-server origin, or the agent will have a call with no audio.
-:::
+## 1b. Script tag (no bundler)
+
+Load `/embed/babelconnect-embed.iife.js` from a current app deployment, or copy
+`dist/web/babelconnect-embed.iife.js` from the npm package to your own assets:
+
+```html
+<script src="https://agent.example.com/embed/babelconnect-embed.iife.js"></script>
+```
+
+It defines `window.BabelconnectEmbed` with the same mount API. Use that global instead of the
+import above; supply the container and token from your host's login code. A browser cannot resolve
+the npm bare import by itself. The server-served bundle uses `Cache-Control: no-cache` for
+revalidation; the npm `/embed` entry remains ESM. The bundle's origin may differ from the iframe's.
 
 ## 2. Token handoff (security)
 
@@ -61,7 +58,7 @@ the handshake:
 
 ```text
 app → host:  { type: "bcConnect", name: "ready" }
-host → app:  { type: "connect", module: "auth", name: "auth.set", args: { token, session?, context? } }
+host → app:  { type: "connect", module: "auth", name: "auth.set", args: { token, session?, context?, eventsVersion? } }
 host → app:  { type: "connect", module: "app", name: "app.setTheme", args: { …theme } }   ← only if you gave mount() a theme
 app → host:  { type: "bcConnect", name: "agent.loaded", data: { agentId, … } }
 ```
@@ -78,10 +75,16 @@ mount; to refresh, use the SDK's authentication group:
 bc.auth.set({ token: newToken });
 ```
 
-Both ends validate `event.origin`. In production, configure your babelconnect-server so that its **CSP
-`frame-ancestors`** and **CORS allowlist** name only your host origin(s) — this is what restricts who may
-frame the app and which origins the bridge will accept messages from (and target). If left open, the bridge
-stays permissive. (See the [security checklist](../guides/authentication#security-checklist) for the full list.)
+The SDK checks the app origin, iframe source when present, and any supplied `instanceId`.
+The app validates the host message origin. Configure these separately:
+
+| Setting | Purpose |
+|---|---|
+| `BC_EMBED_ORIGINS` | Host origins allowed to exchange messages; falls back to `BC_CORS_ORIGINS` when unset. A framed app with no message allowlist fails closed. |
+| `BC_FRAME_ANCESTORS` | CSP framing permission; the chart defaults to `'self'`, so add the host origin. An explicit empty setting permits all framing. |
+| `BC_CORS_ORIGINS` | Cross-origin API access; independent of framing permission. |
+
+See [Authentication](../guides/authentication#security-checklist) for token handling.
 
 ## 3. Drive the app (host → app)
 
@@ -92,15 +95,14 @@ exception: the SDK re-sends the merged theme at every `ready`, so an early call 
 | Call | Effect |
 |---|---|
 | `bc.calls.dial(number, dial = true)` | place a call (or `dial=false` to only pre-fill the dialer) with the agent's display-as + your `session` |
-| `bc.session.set({ number?, smsBody?, … })` | attach session correlation; a `number` pre-fills a new SMS (`to` + `smsBody`/`body`) and switches to the messaging tab |
+| `bc.session.set({ number?, smsBody?, … })` | replace session correlation; a `number` pre-fills a new SMS (`to` + `smsBody`/`body`) and switches to the messaging tab |
 | `bc.context.set({ … })` | merge into the persisted shared context carried onto subsequent calls/SMS |
 | `bc.app.setTab("phone" \| "messaging" \| "phonebook" \| "history" \| "account" \| "outbound")` | switch the active tab (`"chat"`→`"messaging"` and `"contacts"`→`"phonebook"` are accepted as aliases; an unknown name is ignored, and a tab the deployment has disabled falls back to the first visible tab) |
 | `bc.app.setTheme({ … })` | brand the app with your own tokens, mid-session and without a reload — see [3b. Theme the app](#3b-theme-the-app-your-brand-inside-the-iframe) |
 
-**`session` vs `context`:** both are correlation maps merged onto the calls and SMS the agent sends from the
-embed. `context` is the **persistent** layer (it sticks across interactions); `session` is the
-**per-interaction** layer and **overrides `context`** on key clashes. Choose by how long the data should ride
-along.
+`context` persists across interactions; `session` describes the current interaction and overrides
+context on key clashes. The merged map accompanies calls and SMS. Numeric tabs `0`–`3` mean phone,
+messaging, history and outbound; out-of-range indices are ignored.
 
 :::note Feature config is per deployment
 Which surfaces the app shows is server-driven per deployment/account. Read the agent's effective config from
@@ -111,34 +113,9 @@ gRPC reference.
 
 ## 3b. Theme the app (your brand inside the iframe)
 
-The embedded app can wear **your** brand instead of the deployment's. Pass `theme` to `mount()`, or change
-it later with `bc.app.setTheme()` — both take the same [`EmbedTheme`](./api/embed/interfaces/EmbedTheme)
-token set:
-
-```ts
-const bc = BabelconnectEmbed.mount({
-  container: document.getElementById("bc"),
-  serverUrl: "https://agent.example.com",
-  token: await getAgentToken(),
-  theme: {
-    brandName: "Acme CRM",                         // tab title + the logo's accessible label
-    logoUrl: "https://crm.example/acme-logo.svg",  // https: only, rendered as-is
-    accentColor: "#112233",                        // primary buttons and call actions
-    mode: "system",                                // "light" | "dark" | "system"
-  },
-});
-
-bc.on("cti.error", ({ code, message }) => {
-  if (code === "theme_rejected") console.warn(message); // a token the app refused — see below
-});
-
-// later, mid-session — no reload, no interruption to a live call:
-bc.app.setTheme({ mode: "dark" });
-```
-
-The theme rides the same `ready` handshake as the token (the SDK posts `app.setTheme` right after
-`auth.set`), so the sign-in screen is already branded — there is nothing to wait for, and unlike
-`calls.dial`, a `setTheme()` issued before the app is ready is not lost.
+Pass an [EmbedTheme](./api/embed/interfaces/EmbedTheme) to `mount`, or call
+`bc.app.setTheme({ mode: "dark" })` later. The SDK sends it after `auth.set` on every `ready`,
+including when set before startup. Subscribe to `cti.error` for `theme_rejected`.
 
 ### Tokens
 
@@ -159,78 +136,39 @@ never refused — a token added in a later SDK is always safe to send to an olde
 
 ### Precedence — one rule, applied per token
 
-For **each token independently**, the app shows:
-
-1. the value **you** sent, if it accepted it; otherwise
-2. the value the **deployment** configured — its server-side brand: product name, logo and accent colour
-   (`BC_BRAND_NAME` / `BC_BRAND_LOGO_URL` / `BC_BRAND_COLOR` on babelconnect-server); otherwise
-3. the **built-in default** from the table.
-
-A token the app refused counts as not sent. `mode`, `primaryColor`, `surfaceColor` and `cornerRadius` have
-no deployment layer, so step 2 is skipped for them (for `mode`, the agent's own choice is what step 3
-means). No `theme` at all — or `theme: {}` — renders exactly the deployment's brand.
+Each accepted host token overrides the deployment value, then the built-in default. Deployment
+branding covers only name, logo and accent; `mode` falls back to the agent's stored preference.
+No theme (or `{}`) leaves the deployment's brand. The Account help link is deployment-owned.
 
 ### Refused values: `cti.error` with `code: "theme_rejected"`
 
-The app validates each token and refuses, **by name**, anything outside the formats in the table: a colour
-that is not 6 hex digits (or 8 with an `FF` alpha), a `logoUrl` that is not `https:` (or has no host), a `mode` outside the three
-names, a `cornerRadius` below `0`, above `32` or not a number, a `brandName` that is blank or longer than
-64 characters, or any token of the wrong JSON type. You get **one** event per payload, naming every refused
-token:
-
-```json
-{
-  "code": "theme_rejected",
-  "message": "app.setTheme: ignored malformed token(s) accentColor, logoUrl — the deployment brand stays in force for them"
-}
-```
-
-The refused token(s) fall back per the precedence rule — the deployment's value, else the default — and
-every accepted sibling in the same payload still applies. Nothing is thrown and the session is untouched.
-A well-formed `logoUrl` that then **fails to load** is a different case: the app quietly shows the built-in
-mark instead, with no `cti.error`.
+Wrong types or values outside the table produce one `theme_rejected` event naming every refused
+token. Accepted siblings still apply; refused tokens fall back to deployment/default values.
+Unknown keys are silently ignored. A valid logo URL that fails to load shows the built-in mark
+without an error. The SDK suppresses rejected tokens on later ready re-sends until you set them again.
 
 ### `setTheme()` mid-session
 
-`bc.app.setTheme({ … })` **merges**: the SDK overlays the tokens you pass onto the theme currently in effect
-and posts the whole merged set, so `setTheme({ mode: "dark" })` changes the mode and leaves your logo and
-colours in place. Pass `null` for a token to drop it back to the deployment's value
-(`setTheme({ logoUrl: null })`); leave a token out to keep it as it is.
-
-**What changes, in place and without a reload:** the tab title, the logo on the sign-in screen and in the
-header, every colour role, the corner radius and the light/dark mode — including a screen that is already
-open under an active call.
-
-**What does not change:** the agent's session and state stream (no reconnect), an active call and its
-audio, the token handoff (no second `ready` / `agent.loaded`), the agent's own stored light/dark preference
-(your `mode` overrides it while set and it comes back when you clear it), the deployment's help link, and
-the iframe element itself — its size, border and placement stay yours (see `bc.element` and the `resized`
-event).
+`setTheme` merges: omitted tokens stay, supplied tokens replace, and `null` resets a token to its
+fallback. Changes apply to open screens without reconnecting or interrupting audio. They don't
+change the stored user preference, deployment help link, or iframe size/placement.
 
 ### Persistence and reloads
 
-The app **persists nothing** about the theme. The SDK keeps the merged current theme — whatever `mount()`
-was given, updated by every `setTheme()` — and re-sends it on every `ready`, the same way it re-sends the
-bearer token. So:
-
-- an **iframe reload** (the app boots again inside the same `BabelconnectEmbed` instance) keeps your
-  branding, with nothing to do on your side;
-- a **host page reload** starts over: pass `theme` to `mount()` again, or call `setTheme()` after mounting;
-- a host that **stops sending** a theme gets the deployment's brand back on the next load — nothing lingers.
-
-If you drive the bridge with raw `postMessage` instead of the SDK, re-post the full token set after
-**every** `ready` yourself:
+The app does not persist a theme. The SDK remembers the merged theme and re-sends it on iframe
+reload; a host-page reload must supply it again. If you use raw `postMessage`, send the full set
+after every `ready`:
 
 ```text
-host → app:  { type: "connect", module: "app", name: "app.setTheme",
-               args: { brandName?, logoUrl?, accentColor?, mode?, primaryColor?, surfaceColor?, cornerRadius? } }
+{ type: "connect", module: "app", name: "app.setTheme",
+  args: { brandName?, logoUrl?, accentColor?, mode?, primaryColor?, surfaceColor?, cornerRadius? } }
 ```
 
 ## 4. React to the app (app → host)
 
 ```ts
-bc.on("cti.call", ({ call }) => crm.logCall(call));        // {id,state,type,from,to} on every transition
-bc.on("cti.error", ({ code, message }) => toast(message)); // recoverable problems (e.g. missing display-as, a refused theme token)
+bc.on("cti.call", data => crm.logCall(data));             // {call:{id,state,type,from,to,ownsMedia}}
+bc.on("cti.error", data => crm.showError(data));          // {code,message}: e.g. missing caller ID
 bc.on("cti.message", (data) => crm.screenPop(data));       // screen-pop forwarded from the platform
 bc.on("cti.iframe", (data) => crm.openIframe(data));
 bc.on("cti.outbound.lead", (data) => crm.showLead(data));
@@ -244,6 +182,9 @@ dropped; it degrades to a generic screen-pop until the app adds first-class supp
 recognized screen-pop carries no `data.kind`, so its presence on a `cti.message` event tells you it
 was a forward-compat fallback.
 
+Event data has TypeScript type `unknown`: narrow it before reading fields, according to the
+deployed app's schema. The `crm` functions above are host-provided handlers.
+
 `on()` returns an unsubscribe function. `bc.element` is the injected `<iframe>` (reach for it to style or
 resize it), and `bc.dispose()` removes it and stops listening — tearing down the embedded app and releasing
 its microphone, so call it when your component unmounts.
@@ -251,16 +192,50 @@ its microphone, so call it when your component unmounts.
 :::note Which events fire depends on the app
 The SDK relays whatever the embedded app posts, so the **forwarded** events above
 (`cti.error` / `cti.message` / `cti.iframe` / `cti.outbound.lead`) only arrive if the deployed agent-app
-version emits them. The lifecycle events `agent.loaded` / `user.loaded` always fire on ready, and `cti.call`
+version emits them. After authentication, `agent.loaded` waits for a nonempty agent ID; `user.loaded` is emitted
+without waiting for that snapshot. `cti.call`
 is gated by `config.cti.emitCallEvents` — don't assume the rest are present without confirming against your
 deployment.
 :::
 
-The `cti.call` payload is `{ call: { id, state, type, from, to } }`, emitted once per state **transition** —
-`state` is the lifecycle lowercased (`ringing`, `in_progress`, `bridged`, `completed`, `failed`) and `type` is
-`inbound` / `outbound`. It's gated by the deployment's **`config.cti.emitCallEvents`** — a deployment can turn
-host call-event emission off, so don't assume it always fires. (`agent.loaded` / `user.loaded` always fire on
-ready.)
+`cti.call` carries `{ call: { id, state, type, from, to, ownsMedia } }`. State is a lowercase
+lifecycle (`ringing`, `in_progress`, `bridged`, `completed`, `failed`); type is inbound/outbound.
+Emission follows state or media-ownership changes and requires `config.cti.emitCallEvents`.
+
+### Loaded event schema version
+
+Unset and unknown `eventsVersion` use the current app's minimal shape: `agent.loaded` carries
+`{ agentId }`; `user.loaded` has no payload. The legacy adapter below normalizes both to `{ agentId }`.
+Opt into `eventsVersion: "v1"` only when your host needs the older agent/user data:
+`agent.loaded` adds `agent: { id, name, email, number }`; `user.loaded` adds `user: { email }`.
+Set it at mount. Changing it through `auth.set` takes effect on the next ready handshake, not on
+already-emitted live-session events. The agent email belongs to the agent; the user email identifies
+the login, and they can differ. The opt-in does not add account details or user roles.
+
+### Multiple tabs and multiple embeds
+
+Each mount has an `instanceId` (generated if omitted, at most 128 characters when supplied).
+It is correlation, not authorization. The listener's second argument carries envelope metadata;
+older apps may omit its ID. `cti.call.ownsMedia` identifies the instance with audio, and
+`call.media_owner` reports `{ callId, instanceId, ownsMedia }` when ownership changes. Shared call
+visibility does not grant each mount an audio leg.
+
+The current web app guards one live session per agent across instances on the app's origin.
+A second instance shows **Use here instead** before connecting. `session.guard` reports
+`{ state, instanceId }`, with `holder`, `blocked` or `released`; its guard ID is distinct from the
+SDK mount ID. This coordination does not span browser profiles, different browsers or native apps.
+Taking over closes the previous media leg: it is not seamless audio transfer.
+
+While an instance owns a call, it registers a browser close guard. A prompt needs a prior user
+gesture inside that iframe; a click only in your CRM does not arm it. The browser chooses the text,
+and crashes/force-quits bypass it. A host can also register its own guard from `call.media_owner`.
+The app's desktop ring notifications are disabled inside an iframe; the host handles attention.
+
+### Resizing
+
+`resized` reports app dimensions. Avoid feedback loops: update container dimensions only when they
+change, bound them to your layout, and don't add the same padding on every event. You can also
+keep a fixed-height container. `bc.dispose()` removes the iframe and listeners when your view closes.
 
 ## 5. Use the v2 API with a legacy app
 

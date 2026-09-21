@@ -26,6 +26,7 @@
 - [MIC\_IN\_USE](variables/MIC_IN_USE.md)
 - [MIC\_NOT\_FOUND](variables/MIC_NOT_FOUND.md)
 - [MIC\_PERMISSION\_DENIED](variables/MIC_PERMISSION_DENIED.md)
+- [SDK\_VERSION](variables/SDK_VERSION.md)
 
 ## Functions
 

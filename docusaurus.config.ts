@@ -8,7 +8,7 @@ import pkg from './package.json';
 
 const config: Config = {
   title: 'babelconnect SDKs',
-  tagline: 'Build agent experiences on babelconnect — TypeScript, Go, and the gRPC/REST contract',
+  tagline: 'Your interface. Live agent state. Calls with browser audio.',
   favicon: 'img/favicon.ico',
 
   future: {
@@ -87,6 +87,7 @@ const config: Config = {
           label: 'Docs',
         },
         {to: '/docs/typescript/getting-started', label: 'TypeScript', position: 'left'},
+        {to: '/docs/typescript/embedding', label: 'Embed', position: 'left'},
         {to: '/docs/go/getting-started', label: 'Go', position: 'left'},
         {to: 'pathname:///reference/rest/', label: 'REST API', position: 'left'},
         {to: 'pathname:///reference/events/', label: 'Events API', position: 'left'},
@@ -126,7 +127,7 @@ const config: Config = {
           title: 'SDKs',
           items: [
             {label: 'TypeScript (npm)', href: 'https://www.npmjs.com/package/@babelforce/babelconnect-sdk'},
-            {label: 'Go (pkg.go.dev)', href: 'https://pkg.go.dev/github.com/babelforce/babelconnect-sdk-go'},
+            {label: 'Go (availability)', to: '/docs/go/getting-started'},
             {label: 'Proto contract', href: 'https://github.com/babelforce/babelconnect-proto'},
           ],
         },

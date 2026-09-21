@@ -13,12 +13,6 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Concepts',
-      collapsed: false,
-      items: ['concepts/state-and-events', 'concepts/intents', 'concepts/glossary'],
-    },
-    {
-      type: 'category',
       label: 'Guides',
       collapsed: false,
       items: ['guides/authentication', 'guides/errors-and-reconnects', 'guides/recipes', 'guides/typescript-vs-go', 'guides/troubleshooting'],
@@ -45,6 +39,12 @@ const sidebars: SidebarsConfig = {
       label: 'Go SDK',
       collapsed: false,
       items: ['go/getting-started', 'go/quickstart-client', 'go/quickstart-control-only'],
+    },
+    {
+      type: 'category',
+      label: 'Concepts',
+      collapsed: true,
+      items: ['concepts/state-and-events', 'concepts/intents', 'concepts/glossary'],
     },
     {
       type: 'category',

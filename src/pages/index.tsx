@@ -20,13 +20,13 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/intro">
-            Get started →
+            to="/docs/tutorial/first-softphone">
+            Build a softphone →
           </Link>
           <Link
             className="button button--outline button--secondary button--lg"
-            to="/docs/typescript/getting-started">
-            TypeScript
+            to="/docs/typescript/embedding">
+            Embed the app
           </Link>
           <Link
             className="button button--outline button--secondary button--lg"
@@ -44,7 +44,7 @@ export default function Home(): ReactNode {
   return (
     <Layout
       title={siteConfig.title}
-      description="SDKs and the gRPC/REST contract for building agent experiences on babelconnect — TypeScript, Go, and an embeddable widget.">
+      description="Build a custom TypeScript softphone, embed the agent app, or explore the Go SDK and protocol.">
       <HomepageHeader />
       <main>
         <HomepageFeatures />

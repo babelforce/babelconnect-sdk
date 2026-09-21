@@ -15,12 +15,12 @@ is a pure function of it (`UI = f(AgentView)`). You render it; you never assembl
 [State & events](./state-and-events).
 
 ### Snapshot
-The **full `AgentView`** the server sends once, when the control stream opens. Everything after it is a
-[patch](#patch). See [the stream](./state-and-events#the-stream-snapshot-then-patches).
+The **full `AgentView`** the server sends once, when the control stream opens. State changes after it arrive as
+[patches](#patch); errors and liveness messages have separate roles. See [the stream](./state-and-events#the-stream-snapshot-then-patches).
 
 ### Patch
 One **entity-level delta** folded into `AgentView` (a `oneof` of ten — `callUpsert`, `wrapUp`, `smsUpsert`, …).
-Upserts replace by id; removes carry just the key. See [the patch types](./state-and-events#the-patch-types).
+Calls/conferences upsert by id; SMS by peer. Removes carry the same key. See [the patch types](./state-and-events#the-patch-types).
 
 ### Intent
 A **typed command** you send (`placeCall`, `mute`, `transfer`, `sendSms`, …). The server reduces it and the
@@ -36,12 +36,12 @@ A **monotonic sequence number** on every state update. A gap means a patch was m
 [resubscribe](../guides/errors-and-reconnects#2-sequence-gaps-ongap) for a fresh snapshot.
 
 ### Control plane / media plane
-**Control** is gRPC(-web) — the state stream and your intents. **Media** is WebRTC — the call audio,
+**Control** uses Connect or gRPC-web — the state stream and your intents. **Media** is WebRTC — the call audio,
 negotiated separately. They travel independently; see [the intro](../intro#control-and-audio-travel-on-separate-planes).
 
 ### Control-only
-Running the client **without a media leg** (`mediaFactory: null` in TS, the synthetic leg in Go) — for
-dashboards, SMS, presence, and back-end automation. See
+Running without browser audio: TS `mediaFactory: null` disables media; Go's default synthetic leg
+still negotiates WebRTC but sends silence. Useful for dashboards, SMS and automation. See
 [Control only](../typescript/quickstart-control-only).
 
 ### Register

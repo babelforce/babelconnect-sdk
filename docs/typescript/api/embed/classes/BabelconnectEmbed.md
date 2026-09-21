@@ -199,6 +199,25 @@ The underlying iframe (e.g. to adjust sizing).
 
 `HTMLIFrameElement`
 
+***
+
+### instanceId
+
+#### Get Signature
+
+```ts
+get instanceId(): string
+```
+
+This mount's identity — [EmbedOptions.instanceId](../interfaces/EmbedOptions.md#instanceid) when you supplied
+one, else the id generated at mount. The app echoes it on every event, so
+a host with several embeds (or several tabs) can attribute every message
+and every `ownsMedia` flag to a specific one.
+
+##### Returns
+
+`string`
+
 ## Methods
 
 ### dispose()
