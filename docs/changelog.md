@@ -10,6 +10,15 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.31.5 — 2026-09-21
+
+- Build a custom TypeScript softphone from one complete tutorial covering state rendering,
+  dialing, explicit inbound answering, errors and cleanup.
+- Shorter SDK guides clarify authentication, registration, reconnect and media behavior,
+  with clearer embedding instructions and Go package availability notes.
+- Easier navigation and refreshed API references, with a mobile layout fix for the Events reference.
+  Runtime APIs and behavior are unchanged.
+
 ## 0.31.4 — 2026-09-21
 
 - Transferring an agent's outbound call to another agent now leaves the receiving agent's call
