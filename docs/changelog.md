@@ -10,6 +10,16 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.32.0 — 2026-09-23
+
+- The Go SDK's synthetic media backend can now send an audible 440 Hz tone for the life of a call
+  (`SyntheticMediaOptions{SendTone: true}`), and hand every inbound audio packet to a callback
+  (`SyntheticMediaOptions{OnInboundAudio: …}`). Previously the leg sent constant silence and discarded
+  everything it received, so a call driven from the Go SDK could not be measured at either end. Both
+  options are off by default and the default media leg behaves exactly as before.
+- Everything else in this release is internal test and verification tooling. No other runtime API
+  or behavior changed.
+
 ## 0.31.5 — 2026-09-21
 
 - Build a custom TypeScript softphone from one complete tutorial covering state rendering,
