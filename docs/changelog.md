@@ -10,6 +10,23 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.33.0 — 2026-09-23
+
+- **Transferring a call back and forth no longer blocks further transfers.** If agent A transferred a
+  call to agent B and B transferred it back, every later transfer by A failed for the rest of that
+  session. Transfers now recover and continue in the conference the call is already in.
+- **A call that has returned to two parties is shown as a normal call again.** When a transfer was
+  cancelled or the colleague did not pick up, the call stayed on screen as a conference and listed a
+  participant who never joined.
+- **A transferred outbound call shows the customer's number.** An agent receiving such a call saw an
+  internal extension as the number called. Where the platform does not report a customer number, the
+  field is now left empty rather than showing the wrong one.
+- **The in-call keypad tells you when a key press was not sent.** Refusals were previously silent, in
+  both the app and the server logs, so the cause could not be established. The app now explains the
+  refusal in your own language, and the server records it.
+- **Keypad digits are no longer written to server logs.** Numbers an agent types into an automated menu —
+  card numbers, PINs — were recorded in diagnostic logs. Only the count of digits is now recorded.
+
 ## 0.32.0 — 2026-09-23
 
 - The Go SDK's synthetic media backend can now send an audible 440 Hz tone for the life of a call
