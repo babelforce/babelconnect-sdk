@@ -10,6 +10,29 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.34.0 — 2026-09-24
+
+- **A colleague who has become unavailable can no longer be added to a call.** The forwarding and
+  add-participant lists were checked when they were opened and not again, so a colleague who went busy
+  in the meantime could still be picked — and the call rang them. Both are now re-checked at the moment
+  you confirm, and an unavailable colleague is refused with a message saying so. This also means a
+  colleague who is busy or in wrap-up can no longer be added to a call at all; that is deliberate.
+- **Keypad digits reach automated menus more reliably.** Each digit of a burst is now sent as a
+  distinct event with the pause between digits that the telephony standards require. Previously
+  consecutive digits could be indistinguishable to the receiving system, which was free to treat the
+  later ones as repeats of the first.
+- **Typing on the keypad while a call is on hold now tells you the digits were not sent.** It
+  previously reported success and sent nothing.
+- **A withheld caller is shown as withheld, and an unknown number as unknown.** The two were
+  distinguished on the call card but not in the conference participant list, which showed the English
+  word "Anonymous" whatever your language and whichever case applied. Both now read correctly in
+  German, French, Spanish and English.
+- **A call's caller and called number are read from the customer's side of the call**, so a
+  transferred call shows the customer rather than an internal extension.
+- **Extending wrap-up offers only the time you can actually be granted.** After a capped refusal the
+  menu still listed every option, so the next choice was refused as well. It now offers what remains,
+  and keeps that accurate as you use it.
+
 ## 0.33.0 — 2026-09-23
 
 - **Transferring a call back and forth no longer blocks further transfers.** If agent A transferred a
