@@ -10,6 +10,19 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.34.1 — 2026-09-24
+
+- **Typing a very long sequence on the keypad is now refused instead of played.** While keypad digits
+  are being sent, your own microphone is off the air toward the caller — that is how the telephony
+  standard requires digits to be sent, and it has always been so. What was missing was a limit: a long
+  enough sequence could keep you silent for far longer than anyone would expect. Sequences of up to 64
+  digits are sent as before; a longer one is refused and nothing is sent, rather than part of it.
+- **Sending two keypad sequences at once no longer mixes their digits together.** If a second sequence
+  began before the first had finished, the two could arrive at the far end interleaved — `12` and
+  `345678` arriving as `31425678`. They now follow one another. This affects applications built on the
+  SDKs that send several digits in one call; the agent app sends one digit per key press and was never
+  affected.
+
 ## 0.34.0 — 2026-09-24
 
 - **A colleague who has become unavailable can no longer be added to a call.** The forwarding and
