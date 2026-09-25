@@ -10,6 +10,11 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.35.1 — 2026-09-25
+
+- No change you can observe: 0.35.0 republished so that every artifact of it is available. The
+  SDKs and the app behave exactly as described under 0.35.0.
+
 ## 0.35.0 — 2026-09-25
 
 - **An agent whose app closes stops being offered calls, and is available again when they come
@@ -18,7 +23,8 @@ navbar is the release these pages describe.
   caller could cycle between such agents without reaching anyone.
   - An agent who is gone for more than 15 seconds is now paused. If a call was up, the pause waits
     for the call's reconnect window instead.
-  - When they come back, their previous status is restored.
+  - When they come back, within 12 hours and without a server update in between, their previous
+    status is restored.
   - A pause the agent chose themselves is never changed.
 - **Signing out waits until the "busy" status has been saved.** Signing out could finish before the
   status change reached the platform, leaving the agent offered calls after they had left. The app
