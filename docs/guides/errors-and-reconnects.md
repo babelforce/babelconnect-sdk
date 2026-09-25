@@ -28,6 +28,8 @@ can return a missing-call error; media failures use the error callback. Unary da
 |---|---|---|
 | `disconnected` | TS | The subscription threw a transport/stream error. A clean end is not reported. |
 | `send_failed` | TS | A unary command could not be sent. Its outcome may be uncertain. |
+| `unauthenticated` | TS | The server refused the token on the subscription, a command or a data fetch. Reported once; the client is then closed and `onUnauthenticated` is called. The same happens for the server's [`unauthenticated`](../protocol/error-codes) error. |
+| `not_an_agent` | TS | The token is valid but its user holds no agent role; `message` names the user. Handled like `unauthenticated`: reported once, the client closed, `onUnauthenticated` called. Signing in again as the same user does not help. |
 | `no_media` | TS | Answer attempted with `mediaFactory: null`. |
 | `mic_not_found`, `mic_permission_denied`, `mic_in_use` | TS | Microphone absent, denied, or occupied. |
 | `media_answer_failed` | Both | Media negotiation failed; carries the call ID. |
@@ -66,7 +68,8 @@ idle where possible, and show the audio interruption if a mid-call recovery is u
 empty before any network reply. That first callback is not proof of connection. Both SDKs return
 cloned state; snapshots expose no separate public "connected" flag.
 
-TS reports a thrown stream failure as `disconnected`; a clean stream end is silent. Go's receive
+TS reports a stream refused as unauthenticated as `unauthenticated` and ends the session (see the
+table above); any other thrown stream failure is `disconnected`; a clean stream end is silent. Go's receive
 loop ends without a disconnect callback. A failed send indicates a problem, but a successful send
 doesn't prove the subscription is alive. An idle agent may produce no state patches, and transport
 heartbeats do not call renderers: silence alone is not a reliable disconnect detector.

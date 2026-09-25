@@ -484,9 +484,12 @@ finishes or the agent&#39;s own member leaves.
 
 ### ConferenceMember {#babelconnect-v1-ConferenceMember}
 ConferenceMember is one participant. `display` is the resolved label (agent
-name, else the caller/dialed number, else &#34;Anonymous&#34;). `state` drives the UI:
-pending = ringing, added = live, removing/removed/failed = gone (clients filter
-removed/failed out of the participant list).
+name, else the agent&#39;s number, else the caller/dialed number) and is EMPTY when
+the platform named the member none of those — the server does not word the
+empty case, `display_reason` says why it is empty and the client words
+it. `state` drives the UI: pending = ringing, added = live,
+removing/removed/failed = gone (clients filter removed/failed out of the
+participant list).
 
 
 | Field | Type | Label | Description |
@@ -501,6 +504,11 @@ removed/failed out of the participant list).
 | agent_id | [string](#scalar-value-types) |  | agent UUID when the member is an agent |
 | number | [string](#scalar-value-types) |  | phone number when the member is an external party |
 | failure_reason | [string](#scalar-value-types) |  | Why a `failed` member is gone, when the platform said: no_answer (the leg rang out), unreachable (it could not be reached — not registered / not logged in / unroutable number), busy, or declined. Empty while the member is pending/added, and for a reason the platform did not name. Derived from the invite leg&#39;s finishReason on the /conferences push; the same vocabulary as AgentInfo.line_blocked_reason. |
+| display_reason | [string](#scalar-value-types) |  | Why `display` is empty, when it is — a CODE the client words in the agent&#39;s own language, never a label the server picked. Nothing else the server sends an agent is a human-readable English string: every refusal and every label is a code the client looks up (`failure_reason` above, AgentInfo.line_blocked_reason, the command refusal codes), and this member&#39;s label was the one exception. It read &#34;Anonymous&#34;, in English, to every agent in every locale.
+
+ anonymous the platform said this member&#39;s leg WITHHELD its caller id — the same claim CallState.anonymous carries, and the same leg it is read off (the customer leg of the call this conference was built around). unknown_number nothing named this leg at all: no agent name, no agent number, no leg number. The platform simply did not report one.
+
+Empty whenever `display` is non-empty — a member that has a label needs no reason — and empty too when the server cannot tell the two apart. The split is the one the call card makes (`commonAnonymous` vs `commonUnknownNumber`); a client that folds it back into one word reintroduces the defect, because a withheld number is a statement about the caller and an absent one is a statement about this platform. |
 
 
 
@@ -1744,7 +1752,7 @@ e.g. a &#34;phonebook&#34; section, but that is presentation only).
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | Authenticate | [AuthenticateRequest](#babelconnect-v1-AuthenticateRequest) | [Identity](#babelconnect-v1-Identity) | Authenticate validates the caller&#39;s bearer token and returns the resolved agent identity (id, account, presence). |
-| Subscribe | [SubscribeRequest](#babelconnect-v1-SubscribeRequest) | [StateUpdate](#babelconnect-v1-StateUpdate) stream | Subscribe &#43; Send are the control stream, split into its server→client and client→server halves — the one shape every client uses (RPC-A4 retired the earlier bidi `Session` RPC, which needed HTTP/2 end-to-end and couldn&#39;t ride gRPC-web or a plain HTTP/1.1 ingress). Subscribe is the server→client half (StateUpdate: one snapshot on open, then entity-level patches; UI = f(AgentView)). Send is the client→server half (one Command per unary call). Together they key to the agent&#39;s one state store. Command rejections arrive as an Error on the Subscribe stream, never on Send&#39;s reply. |
+| Subscribe | [SubscribeRequest](#babelconnect-v1-SubscribeRequest) | [StateUpdate](#babelconnect-v1-StateUpdate) stream | Subscribe &#43; Send are the control stream, split into its server→client and client→server halves — the one shape every client uses (it replaced an earlier bidi `Session` RPC, which needed HTTP/2 end-to-end and couldn&#39;t ride gRPC-web or a plain HTTP/1.1 ingress). Subscribe is the server→client half (StateUpdate: one snapshot on open, then entity-level patches; UI = f(AgentView)). Send is the client→server half (one Command per unary call). Together they key to the agent&#39;s one state store. Command rejections arrive as an Error on the Subscribe stream, never on Send&#39;s reply. |
 | Send | [Command](#babelconnect-v1-Command) | [Ack](#babelconnect-v1-Ack) |  |
 | GetHistory | [HistoryRequest](#babelconnect-v1-HistoryRequest) | [HistoryResponse](#babelconnect-v1-HistoryResponse) | GetHistory returns the agent&#39;s past calls (the History tab). A unary query — history is on-demand reference data, not part of the live AgentView snapshot. |
 | GetSmsThread | [SmsThreadRequest](#babelconnect-v1-SmsThreadRequest) | [SmsThreadResponse](#babelconnect-v1-SmsThreadResponse) | GetSmsThread returns the messages of one SMS conversation (the chat thread). A unary query like GetHistory — the live AgentView carries only the SmsConversation summary; the full thread is fetched on demand. conversation_id is a query param (it can be a peer phone number when no conversation id is available), so this stays distinct from the POST /v1/agent/sms send. |

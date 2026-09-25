@@ -3,7 +3,7 @@
 A mounted embed. Use the verb groups ([auth](BabelconnectEmbed.md#auth), [calls](BabelconnectEmbed.md#calls),
 [session](BabelconnectEmbed.md#session), [context](BabelconnectEmbed.md#context), [app](BabelconnectEmbed.md#app)) to drive the app, and
 [on](BabelconnectEmbed.md#on) to receive app→host events (`agent.loaded`, `cti.call`,
-`cti.error`, …).
+`cti.error`, `auth.rejected` — see [AuthRejectedEvent](../interfaces/AuthRejectedEvent.md), …).
 
 ## Properties
 

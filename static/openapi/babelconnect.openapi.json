@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Babelconnect Agent API",
-    "version": "0.34.1",
+    "version": "0.35.0",
     "description": "Control-plane contract for **babelconnect-server** — the single API surface every\nBabelconnect SDK (Go, TypeScript, Dart; later Python) targets.\n\nThis document is generated from the protobuf source of truth\n(`babelconnect-proto/proto/babelconnect/v1/babelconnect.proto`) and describes the\n**request/response plane**: the `Agent` gRPC service (native HTTP/2 + gRPC-web) and\nthe REST/JSON endpoints mapped from it. The server→client **event plane** — the\n`StateUpdate` push stream delivered over `Session`/`Subscribe` — is documented\nseparately in the AsyncAPI spec (`docs/asyncapi/babelconnect.asyncapi.yaml`).\n\n**Auth:** clients obtain an OAuth2 bearer token (password grant via `POST /oauth/token`,\nor the `/auth/sso/*` SSO flow) and send it as `authorization: Bearer \u003ctoken\u003e` gRPC\nmetadata on every call — or as the `Authorization` header on the REST/JSON endpoints.\n"
   },
   "servers": [
@@ -210,7 +210,7 @@
           "lineBlockedReason": {
             "type": "string",
             "title": "line_blocked_reason",
-            "description": "Why `line_blocked` is true, when the platform said (DEV-844): unreachable (the\n agent's own leg rang out or could not be reached — the ACD folds both into one\n state), busy, declined, or dnd. Empty when the line is not blocked. The same\n vocabulary as ConferenceMember.failure_reason: a client can say \"you missed a\n transfer invite; the line frees itself shortly\" instead of showing a bare block. (proto string)"
+            "description": "Why `line_blocked` is true, when the platform said: unreachable (the\n agent's own leg rang out or could not be reached — the ACD folds both into one\n state), busy, declined, or dnd. Empty when the line is not blocked. The same\n vocabulary as ConferenceMember.failure_reason: a client can say \"you missed a\n transfer invite; the line frees itself shortly\" instead of showing a bare block. (proto string)"
           },
           "accounts": {
             "type": "array",
@@ -576,7 +576,7 @@
           "canTransferToApplication": {
             "type": "boolean",
             "title": "can_transfer_to_application",
-            "description": "can_transfer_to_application is server-computed: true for inbound calls and\n taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain\n outbound calls must not be offered application (IVR module) transfer\n targets — forwarding them into a queue module strands the agent\n (DEV-549/B2-526). Clients gate the \"App\" transfer-target segment on this\n flag instead of re-deriving the rule from direction/source themselves. (proto bool)"
+            "description": "can_transfer_to_application is server-computed: true for inbound calls and\n taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain\n outbound calls must not be offered application (IVR module) transfer\n targets — forwarding them into a queue module strands the agent.\n Clients gate the \"App\" transfer-target segment on this\n flag instead of re-deriving the rule from direction/source themselves. (proto bool)"
           }
         },
         "title": "CallState",
@@ -1305,12 +1305,17 @@
           "failureReason": {
             "type": "string",
             "title": "failure_reason",
-            "description": "Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the\n leg rang out), unreachable (it could not be reached — not registered / not\n logged in / unroutable number), busy, or declined. Empty while the member is\n pending/added, and for a reason the platform did not name. Derived from the\n invite leg's finishReason on the /conferences push; the same vocabulary as\n AgentInfo.line_blocked_reason. (proto string)"
+            "description": "Why a `failed` member is gone, when the platform said: no_answer (the\n leg rang out), unreachable (it could not be reached — not registered / not\n logged in / unroutable number), busy, or declined. Empty while the member is\n pending/added, and for a reason the platform did not name. Derived from the\n invite leg's finishReason on the /conferences push; the same vocabulary as\n AgentInfo.line_blocked_reason. (proto string)"
+          },
+          "displayReason": {
+            "type": "string",
+            "title": "display_reason",
+            "description": "Why `display` is empty, when it is — a CODE the client words in the\n agent's own language, never a label the server picked. Nothing else the server\n sends an agent is a human-readable English string: every refusal and every\n label is a code the client looks up (`failure_reason` above,\n AgentInfo.line_blocked_reason, the command refusal codes), and this member's\n label was the one exception. It read \"Anonymous\", in English, to every agent\n in every locale.\n\n   anonymous       the platform said this member's leg WITHHELD its caller id\n                   — the same claim CallState.anonymous carries, and the same\n                   leg it is read off (the customer leg of the call this\n                   conference was built around).\n   unknown_number  nothing named this leg at all: no agent name, no agent\n                   number, no leg number. The platform simply did not report\n                   one.\n\n Empty whenever `display` is non-empty — a member that has a label needs no\n reason — and empty too when the server cannot tell the two apart. The split is\n the one the call card makes (`commonAnonymous` vs\n `commonUnknownNumber`); a client that folds it back into one word reintroduces\n the defect, because a withheld number is a statement about the caller and an\n absent one is a statement about this platform. (proto string)"
           }
         },
         "title": "ConferenceMember",
         "additionalProperties": false,
-        "description": "ConferenceMember is one participant. `display` is the resolved label (agent\n name, else the caller/dialed number, else \"Anonymous\"). `state` drives the UI:\n pending = ringing, added = live, removing/removed/failed = gone (clients filter\n removed/failed out of the participant list)."
+        "description": "ConferenceMember is one participant. `display` is the resolved label (agent\n name, else the agent's number, else the caller/dialed number) and is EMPTY when\n the platform named the member none of those — the server does not word the\n empty case, `display_reason` says why it is empty and the client words\n it. `state` drives the UI: pending = ringing, added = live,\n removing/removed/failed = gone (clients filter removed/failed out of the\n participant list)."
       },
       "babelconnect.v1.DisposeCall": {
         "type": "object",
@@ -1385,7 +1390,7 @@
           "allowAccountSwitch": {
             "type": "boolean",
             "title": "allow_account_switch",
-            "description": "the multi-account switcher (ACC-E2) (proto bool)"
+            "description": "the multi-account switcher (proto bool)"
           },
           "allowStatusChange": {
             "type": "boolean",
@@ -1650,7 +1655,7 @@
           "accountName": {
             "type": "string",
             "title": "account_name",
-            "description": "account / company display name, when known (ACC-E1) (proto string)"
+            "description": "account / company display name, when known (proto string)"
           },
           "accounts": {
             "type": "array",
@@ -1658,7 +1663,7 @@
               "$ref": "#/components/schemas/babelconnect.v1.Account"
             },
             "title": "accounts",
-            "description": "accounts this agent may switch to (ACC-E2) (proto babelconnect.v1.Account)"
+            "description": "accounts this agent may switch to (proto babelconnect.v1.Account)"
           }
         },
         "title": "Identity",
@@ -2137,7 +2142,7 @@
         },
         "title": "Ping",
         "additionalProperties": false,
-        "description": "Ping is a liveness probe the server sends on the heartbeat tick (replacing the\n bare Keepalive frame). The client echoes `seq` back in a Pong command; the server\n measures round-trip time (RTT) from the reply and tracks per-session liveness.\n Like Keepalive it keeps the connection warm, carries no state, and does NOT\n advance `seq` — caches ignore it, and the reply is handled in the client's stream\n loop, not the state reducer. (APP-A5/CALL-M6.)"
+        "description": "Ping is a liveness probe the server sends on the heartbeat tick (replacing the\n bare Keepalive frame). The client echoes `seq` back in a Pong command; the server\n measures round-trip time (RTT) from the reply and tracks per-session liveness.\n Like Keepalive it keeps the connection warm, carries no state, and does NOT\n advance `seq` — caches ignore it, and the reply is handled in the client's stream\n loop, not the state reducer."
       },
       "babelconnect.v1.PlaceCall": {
         "type": "object",
@@ -2208,7 +2213,7 @@
         },
         "title": "Pong",
         "additionalProperties": false,
-        "description": "Pong replies to a server Ping (StateUpdate.ping), echoing its `seq` so the server\n can match it to the outstanding ping and compute RTT. Sent automatically by the\n SDK from its stream-receive loop — not a user intent. (APP-A5/CALL-M6.)"
+        "description": "Pong replies to a server Ping (StateUpdate.ping), echoing its `seq` so the server\n can match it to the outstanding ping and compute RTT. Sent automatically by the\n SDK from its stream-receive loop — not a user intent."
       },
       "babelconnect.v1.PresenceOption": {
         "type": "object",
@@ -3339,7 +3344,7 @@
           "babelconnect.v1.Agent"
         ],
         "summary": "Subscribe",
-        "description": "Subscribe + Send are the control stream, split into its server→client and\n client→server halves — the one shape every client uses (RPC-A4 retired the\n earlier bidi `Session` RPC, which needed HTTP/2 end-to-end and couldn't\n ride gRPC-web or a plain HTTP/1.1 ingress). Subscribe is the server→client\n half (StateUpdate: one snapshot on open, then entity-level patches; UI =\n f(AgentView)). Send is the client→server half (one Command per unary\n call). Together they key to the agent's one state store. Command\n rejections arrive as an Error on the Subscribe stream, never on Send's\n reply.",
+        "description": "Subscribe + Send are the control stream, split into its server→client and\n client→server halves — the one shape every client uses (it replaced an\n earlier bidi `Session` RPC, which needed HTTP/2 end-to-end and couldn't\n ride gRPC-web or a plain HTTP/1.1 ingress). Subscribe is the server→client\n half (StateUpdate: one snapshot on open, then entity-level patches; UI =\n f(AgentView)). Send is the client→server half (one Command per unary\n call). Together they key to the agent's one state store. Command\n rejections arrive as an Error on the Subscribe stream, never on Send's\n reply.",
         "operationId": "babelconnect.v1.Agent.Subscribe",
         "parameters": [
           {

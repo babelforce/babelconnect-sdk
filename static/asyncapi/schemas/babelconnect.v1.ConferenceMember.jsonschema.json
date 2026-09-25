@@ -2,7 +2,7 @@
   "$id": "babelconnect.v1.ConferenceMember.jsonschema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "ConferenceMember is one participant. `display` is the resolved label (agent\n name, else the caller/dialed number, else \"Anonymous\"). `state` drives the UI:\n pending = ringing, added = live, removing/removed/failed = gone (clients filter\n removed/failed out of the participant list).",
+  "description": "ConferenceMember is one participant. `display` is the resolved label (agent\n name, else the agent's number, else the caller/dialed number) and is EMPTY when\n the platform named the member none of those — the server does not word the\n empty case, `display_reason` says why it is empty and the client words\n it. `state` drives the UI: pending = ringing, added = live,\n removing/removed/failed = gone (clients filter removed/failed out of the\n participant list).",
   "patternProperties": {
     "^(agent_id)$": {
       "default": "",
@@ -12,9 +12,15 @@
       "default": "",
       "type": "string"
     },
+    "^(display_reason)$": {
+      "default": "",
+      "description": "anonymous       the platform said this member's leg WITHHELD its caller id\n                   — the same claim CallState.anonymous carries, and the same\n                   leg it is read off (the customer leg of the call this\n                   conference was built around).\n   unknown_number  nothing named this leg at all: no agent name, no agent\n                   number, no leg number. The platform simply did not report\n                   one.\n\n Empty whenever `display` is non-empty — a member that has a label needs no\n reason — and empty too when the server cannot tell the two apart. The split is\n the one the call card makes (`commonAnonymous` vs\n `commonUnknownNumber`); a client that folds it back into one word reintroduces\n the defect, because a withheld number is a statement about the caller and an\n absent one is a statement about this platform.",
+      "title": "Why `display` is empty, when it is — a CODE the client words in the\n agent's own language, never a label the server picked. Nothing else the server\n sends an agent is a human-readable English string: every refusal and every\n label is a code the client looks up (`failure_reason` above,\n AgentInfo.line_blocked_reason, the command refusal codes), and this member's\n label was the one exception. It read \"Anonymous\", in English, to every agent\n in every locale.",
+      "type": "string"
+    },
     "^(failure_reason)$": {
       "default": "",
-      "description": "Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the\n leg rang out), unreachable (it could not be reached — not registered / not\n logged in / unroutable number), busy, or declined. Empty while the member is\n pending/added, and for a reason the platform did not name. Derived from the\n invite leg's finishReason on the /conferences push; the same vocabulary as\n AgentInfo.line_blocked_reason.",
+      "description": "Why a `failed` member is gone, when the platform said: no_answer (the\n leg rang out), unreachable (it could not be reached — not registered / not\n logged in / unroutable number), busy, or declined. Empty while the member is\n pending/added, and for a reason the platform did not name. Derived from the\n invite leg's finishReason on the /conferences push; the same vocabulary as\n AgentInfo.line_blocked_reason.",
       "type": "string"
     },
     "^(is_me)$": {
@@ -39,9 +45,15 @@
       "default": "",
       "type": "string"
     },
+    "displayReason": {
+      "default": "",
+      "description": "anonymous       the platform said this member's leg WITHHELD its caller id\n                   — the same claim CallState.anonymous carries, and the same\n                   leg it is read off (the customer leg of the call this\n                   conference was built around).\n   unknown_number  nothing named this leg at all: no agent name, no agent\n                   number, no leg number. The platform simply did not report\n                   one.\n\n Empty whenever `display` is non-empty — a member that has a label needs no\n reason — and empty too when the server cannot tell the two apart. The split is\n the one the call card makes (`commonAnonymous` vs\n `commonUnknownNumber`); a client that folds it back into one word reintroduces\n the defect, because a withheld number is a statement about the caller and an\n absent one is a statement about this platform.",
+      "title": "Why `display` is empty, when it is — a CODE the client words in the\n agent's own language, never a label the server picked. Nothing else the server\n sends an agent is a human-readable English string: every refusal and every\n label is a code the client looks up (`failure_reason` above,\n AgentInfo.line_blocked_reason, the command refusal codes), and this member's\n label was the one exception. It read \"Anonymous\", in English, to every agent\n in every locale.",
+      "type": "string"
+    },
     "failureReason": {
       "default": "",
-      "description": "Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the\n leg rang out), unreachable (it could not be reached — not registered / not\n logged in / unroutable number), busy, or declined. Empty while the member is\n pending/added, and for a reason the platform did not name. Derived from the\n invite leg's finishReason on the /conferences push; the same vocabulary as\n AgentInfo.line_blocked_reason.",
+      "description": "Why a `failed` member is gone, when the platform said: no_answer (the\n leg rang out), unreachable (it could not be reached — not registered / not\n logged in / unroutable number), busy, or declined. Empty while the member is\n pending/added, and for a reason the platform did not name. Derived from the\n invite leg's finishReason on the /conferences push; the same vocabulary as\n AgentInfo.line_blocked_reason.",
       "type": "string"
     },
     "id": {

@@ -47,7 +47,7 @@
     },
     "^(line_blocked_reason)$": {
       "default": "",
-      "description": "Why `line_blocked` is true, when the platform said (DEV-844): unreachable (the\n agent's own leg rang out or could not be reached — the ACD folds both into one\n state), busy, declined, or dnd. Empty when the line is not blocked. The same\n vocabulary as ConferenceMember.failure_reason: a client can say \"you missed a\n transfer invite; the line frees itself shortly\" instead of showing a bare block.",
+      "description": "Why `line_blocked` is true, when the platform said: unreachable (the\n agent's own leg rang out or could not be reached — the ACD folds both into one\n state), busy, declined, or dnd. Empty when the line is not blocked. The same\n vocabulary as ConferenceMember.failure_reason: a client can say \"you missed a\n transfer invite; the line frees itself shortly\" instead of showing a bare block.",
       "type": "string"
     },
     "^(presence_label)$": {
@@ -137,7 +137,7 @@
     },
     "lineBlockedReason": {
       "default": "",
-      "description": "Why `line_blocked` is true, when the platform said (DEV-844): unreachable (the\n agent's own leg rang out or could not be reached — the ACD folds both into one\n state), busy, declined, or dnd. Empty when the line is not blocked. The same\n vocabulary as ConferenceMember.failure_reason: a client can say \"you missed a\n transfer invite; the line frees itself shortly\" instead of showing a bare block.",
+      "description": "Why `line_blocked` is true, when the platform said: unreachable (the\n agent's own leg rang out or could not be reached — the ACD folds both into one\n state), busy, declined, or dnd. Empty when the line is not blocked. The same\n vocabulary as ConferenceMember.failure_reason: a client can say \"you missed a\n transfer invite; the line frees itself shortly\" instead of showing a bare block.",
       "type": "string"
     },
     "name": {

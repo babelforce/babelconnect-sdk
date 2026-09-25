@@ -6,7 +6,7 @@
   "patternProperties": {
     "^(can_transfer_to_application)$": {
       "default": false,
-      "description": "can_transfer_to_application is server-computed: true for inbound calls and\n taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain\n outbound calls must not be offered application (IVR module) transfer\n targets — forwarding them into a queue module strands the agent\n (DEV-549/B2-526). Clients gate the \"App\" transfer-target segment on this\n flag instead of re-deriving the rule from direction/source themselves.",
+      "description": "can_transfer_to_application is server-computed: true for inbound calls and\n taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain\n outbound calls must not be offered application (IVR module) transfer\n targets — forwarding them into a queue module strands the agent.\n Clients gate the \"App\" transfer-target segment on this\n flag instead of re-deriving the rule from direction/source themselves.",
       "type": "boolean"
     },
     "^(established_at)$": {
@@ -61,7 +61,7 @@
     },
     "canTransferToApplication": {
       "default": false,
-      "description": "can_transfer_to_application is server-computed: true for inbound calls and\n taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain\n outbound calls must not be offered application (IVR module) transfer\n targets — forwarding them into a queue module strands the agent\n (DEV-549/B2-526). Clients gate the \"App\" transfer-target segment on this\n flag instead of re-deriving the rule from direction/source themselves.",
+      "description": "can_transfer_to_application is server-computed: true for inbound calls and\n taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain\n outbound calls must not be offered application (IVR module) transfer\n targets — forwarding them into a queue module strands the agent.\n Clients gate the \"App\" transfer-target segment on this\n flag instead of re-deriving the rule from direction/source themselves.",
       "type": "boolean"
     },
     "direction": {

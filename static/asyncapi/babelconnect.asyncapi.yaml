@@ -9,7 +9,7 @@
 asyncapi: 3.0.0
 info:
   title: Babelconnect Agent — Event Plane
-  version: 0.34.1
+  version: 0.35.0
   description: |
     The **server-authoritative push stream** every Babelconnect SDK consumes. On the
     `Agent.Subscribe` (server-streaming) RPC the server emits a single message
@@ -38,7 +38,7 @@ info:
     **Transport note:** AsyncAPI has no native Connect/gRPC-web binding; the `https`
     protocol below denotes the server's single listener, which serves the Connect
     protocol (every native SDK client — Go, Dart) and gRPC-web (the browser/TypeScript
-    SDK) off the same origin (RPC-A2/A3/A4). The same `StateUpdate` payload flows on
+    SDK) off the same origin. The same `StateUpdate` payload flows on
     both.
   contact:
     name: Babelconnect
@@ -169,8 +169,8 @@ components:
                       can_transfer_to_application is server-computed: true for inbound calls and
                        taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain
                        outbound calls must not be offered application (IVR module) transfer
-                       targets — forwarding them into a queue module strands the agent
-                       (DEV-549/B2-526). Clients gate the "App" transfer-target segment on this
+                       targets — forwarding them into a queue module strands the agent.
+                       Clients gate the "App" transfer-target segment on this
                        flag instead of re-deriving the rule from direction/source themselves.
                     type: boolean
                   ^(established_at)$:
@@ -232,8 +232,8 @@ components:
                       can_transfer_to_application is server-computed: true for inbound calls and
                        taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain
                        outbound calls must not be offered application (IVR module) transfer
-                       targets — forwarding them into a queue module strands the agent
-                       (DEV-549/B2-526). Clients gate the "App" transfer-target segment on this
+                       targets — forwarding them into a queue module strands the agent.
+                       Clients gate the "App" transfer-target segment on this
                        flag instead of re-deriving the rule from direction/source themselves.
                     type: boolean
                   direction:
@@ -383,9 +383,12 @@ components:
                       additionalProperties: false
                       description: |-
                         ConferenceMember is one participant. `display` is the resolved label (agent
-                         name, else the caller/dialed number, else "Anonymous"). `state` drives the UI:
-                         pending = ringing, added = live, removing/removed/failed = gone (clients filter
-                         removed/failed out of the participant list).
+                         name, else the agent's number, else the caller/dialed number) and is EMPTY when
+                         the platform named the member none of those — the server does not word the
+                         empty case, `display_reason` says why it is empty and the client words
+                         it. `state` drives the UI: pending = ringing, added = live,
+                         removing/removed/failed = gone (clients filter removed/failed out of the
+                         participant list).
                       patternProperties:
                         ^(agent_id)$:
                           default: ''
@@ -393,10 +396,36 @@ components:
                         ^(call_id)$:
                           default: ''
                           type: string
+                        ^(display_reason)$:
+                          default: ''
+                          description: |-
+                            anonymous       the platform said this member's leg WITHHELD its caller id
+                                               — the same claim CallState.anonymous carries, and the same
+                                               leg it is read off (the customer leg of the call this
+                                               conference was built around).
+                               unknown_number  nothing named this leg at all: no agent name, no agent
+                                               number, no leg number. The platform simply did not report
+                                               one.
+
+                             Empty whenever `display` is non-empty — a member that has a label needs no
+                             reason — and empty too when the server cannot tell the two apart. The split is
+                             the one the call card makes (`commonAnonymous` vs
+                             `commonUnknownNumber`); a client that folds it back into one word reintroduces
+                             the defect, because a withheld number is a statement about the caller and an
+                             absent one is a statement about this platform.
+                          title: |-
+                            Why `display` is empty, when it is — a CODE the client words in the
+                             agent's own language, never a label the server picked. Nothing else the server
+                             sends an agent is a human-readable English string: every refusal and every
+                             label is a code the client looks up (`failure_reason` above,
+                             AgentInfo.line_blocked_reason, the command refusal codes), and this member's
+                             label was the one exception. It read "Anonymous", in English, to every agent
+                             in every locale.
+                          type: string
                         ^(failure_reason)$:
                           default: ''
                           description: |-
-                            Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the
+                            Why a `failed` member is gone, when the platform said: no_answer (the
                              leg rang out), unreachable (it could not be reached — not registered / not
                              logged in / unroutable number), busy, or declined. Empty while the member is
                              pending/added, and for a reason the platform did not name. Derived from the
@@ -419,10 +448,36 @@ components:
                         display:
                           default: ''
                           type: string
+                        displayReason:
+                          default: ''
+                          description: |-
+                            anonymous       the platform said this member's leg WITHHELD its caller id
+                                               — the same claim CallState.anonymous carries, and the same
+                                               leg it is read off (the customer leg of the call this
+                                               conference was built around).
+                               unknown_number  nothing named this leg at all: no agent name, no agent
+                                               number, no leg number. The platform simply did not report
+                                               one.
+
+                             Empty whenever `display` is non-empty — a member that has a label needs no
+                             reason — and empty too when the server cannot tell the two apart. The split is
+                             the one the call card makes (`commonAnonymous` vs
+                             `commonUnknownNumber`); a client that folds it back into one word reintroduces
+                             the defect, because a withheld number is a statement about the caller and an
+                             absent one is a statement about this platform.
+                          title: |-
+                            Why `display` is empty, when it is — a CODE the client words in the
+                             agent's own language, never a label the server picked. Nothing else the server
+                             sends an agent is a human-readable English string: every refusal and every
+                             label is a code the client looks up (`failure_reason` above,
+                             AgentInfo.line_blocked_reason, the command refusal codes), and this member's
+                             label was the one exception. It read "Anonymous", in English, to every agent
+                             in every locale.
+                          type: string
                         failureReason:
                           default: ''
                           description: |-
-                            Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the
+                            Why a `failed` member is gone, when the platform said: no_answer (the
                              leg rang out), unreachable (it could not be reached — not registered / not
                              logged in / unroutable number), busy, or declined. Empty while the member is
                              pending/added, and for a reason the platform did not name. Derived from the
@@ -823,7 +878,7 @@ components:
                   ^(line_blocked_reason)$:
                     default: ''
                     description: |-
-                      Why `line_blocked` is true, when the platform said (DEV-844): unreachable (the
+                      Why `line_blocked` is true, when the platform said: unreachable (the
                        agent's own leg rang out or could not be reached — the ACD folds both into one
                        state), busy, declined, or dnd. Empty when the line is not blocked. The same
                        vocabulary as ConferenceMember.failure_reason: a client can say "you missed a
@@ -1139,7 +1194,7 @@ components:
                   lineBlockedReason:
                     default: ''
                     description: |-
-                      Why `line_blocked` is true, when the platform said (DEV-844): unreachable (the
+                      Why `line_blocked` is true, when the platform said: unreachable (the
                        agent's own leg rang out or could not be reached — the ACD folds both into one
                        state), busy, declined, or dnd. Empty when the line is not blocked. The same
                        vocabulary as ConferenceMember.failure_reason: a client can say "you missed a
@@ -1250,8 +1305,8 @@ components:
                       can_transfer_to_application is server-computed: true for inbound calls and
                        taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain
                        outbound calls must not be offered application (IVR module) transfer
-                       targets — forwarding them into a queue module strands the agent
-                       (DEV-549/B2-526). Clients gate the "App" transfer-target segment on this
+                       targets — forwarding them into a queue module strands the agent.
+                       Clients gate the "App" transfer-target segment on this
                        flag instead of re-deriving the rule from direction/source themselves.
                     type: boolean
                   ^(established_at)$:
@@ -1313,8 +1368,8 @@ components:
                       can_transfer_to_application is server-computed: true for inbound calls and
                        taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain
                        outbound calls must not be offered application (IVR module) transfer
-                       targets — forwarding them into a queue module strands the agent
-                       (DEV-549/B2-526). Clients gate the "App" transfer-target segment on this
+                       targets — forwarding them into a queue module strands the agent.
+                       Clients gate the "App" transfer-target segment on this
                        flag instead of re-deriving the rule from direction/source themselves.
                     type: boolean
                   direction:
@@ -1464,9 +1519,12 @@ components:
                       additionalProperties: false
                       description: |-
                         ConferenceMember is one participant. `display` is the resolved label (agent
-                         name, else the caller/dialed number, else "Anonymous"). `state` drives the UI:
-                         pending = ringing, added = live, removing/removed/failed = gone (clients filter
-                         removed/failed out of the participant list).
+                         name, else the agent's number, else the caller/dialed number) and is EMPTY when
+                         the platform named the member none of those — the server does not word the
+                         empty case, `display_reason` says why it is empty and the client words
+                         it. `state` drives the UI: pending = ringing, added = live,
+                         removing/removed/failed = gone (clients filter removed/failed out of the
+                         participant list).
                       patternProperties:
                         ^(agent_id)$:
                           default: ''
@@ -1474,10 +1532,36 @@ components:
                         ^(call_id)$:
                           default: ''
                           type: string
+                        ^(display_reason)$:
+                          default: ''
+                          description: |-
+                            anonymous       the platform said this member's leg WITHHELD its caller id
+                                               — the same claim CallState.anonymous carries, and the same
+                                               leg it is read off (the customer leg of the call this
+                                               conference was built around).
+                               unknown_number  nothing named this leg at all: no agent name, no agent
+                                               number, no leg number. The platform simply did not report
+                                               one.
+
+                             Empty whenever `display` is non-empty — a member that has a label needs no
+                             reason — and empty too when the server cannot tell the two apart. The split is
+                             the one the call card makes (`commonAnonymous` vs
+                             `commonUnknownNumber`); a client that folds it back into one word reintroduces
+                             the defect, because a withheld number is a statement about the caller and an
+                             absent one is a statement about this platform.
+                          title: |-
+                            Why `display` is empty, when it is — a CODE the client words in the
+                             agent's own language, never a label the server picked. Nothing else the server
+                             sends an agent is a human-readable English string: every refusal and every
+                             label is a code the client looks up (`failure_reason` above,
+                             AgentInfo.line_blocked_reason, the command refusal codes), and this member's
+                             label was the one exception. It read "Anonymous", in English, to every agent
+                             in every locale.
+                          type: string
                         ^(failure_reason)$:
                           default: ''
                           description: |-
-                            Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the
+                            Why a `failed` member is gone, when the platform said: no_answer (the
                              leg rang out), unreachable (it could not be reached — not registered / not
                              logged in / unroutable number), busy, or declined. Empty while the member is
                              pending/added, and for a reason the platform did not name. Derived from the
@@ -1500,10 +1584,36 @@ components:
                         display:
                           default: ''
                           type: string
+                        displayReason:
+                          default: ''
+                          description: |-
+                            anonymous       the platform said this member's leg WITHHELD its caller id
+                                               — the same claim CallState.anonymous carries, and the same
+                                               leg it is read off (the customer leg of the call this
+                                               conference was built around).
+                               unknown_number  nothing named this leg at all: no agent name, no agent
+                                               number, no leg number. The platform simply did not report
+                                               one.
+
+                             Empty whenever `display` is non-empty — a member that has a label needs no
+                             reason — and empty too when the server cannot tell the two apart. The split is
+                             the one the call card makes (`commonAnonymous` vs
+                             `commonUnknownNumber`); a client that folds it back into one word reintroduces
+                             the defect, because a withheld number is a statement about the caller and an
+                             absent one is a statement about this platform.
+                          title: |-
+                            Why `display` is empty, when it is — a CODE the client words in the
+                             agent's own language, never a label the server picked. Nothing else the server
+                             sends an agent is a human-readable English string: every refusal and every
+                             label is a code the client looks up (`failure_reason` above,
+                             AgentInfo.line_blocked_reason, the command refusal codes), and this member's
+                             label was the one exception. It read "Anonymous", in English, to every agent
+                             in every locale.
+                          type: string
                         failureReason:
                           default: ''
                           description: |-
-                            Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the
+                            Why a `failed` member is gone, when the platform said: no_answer (the
                              leg rang out), unreachable (it could not be reached — not registered / not
                              logged in / unroutable number), busy, or declined. Empty while the member is
                              pending/added, and for a reason the platform did not name. Derived from the
@@ -1864,7 +1974,7 @@ components:
                measures round-trip time (RTT) from the reply and tracks per-session liveness.
                Like Keepalive it keeps the connection warm, carries no state, and does NOT
                advance `seq` — caches ignore it, and the reply is handled in the client's stream
-               loop, not the state reducer. (APP-A5/CALL-M6.)
+               loop, not the state reducer.
             properties:
               seq:
                 anyOf:
@@ -1903,8 +2013,8 @@ components:
                         can_transfer_to_application is server-computed: true for inbound calls and
                          taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain
                          outbound calls must not be offered application (IVR module) transfer
-                         targets — forwarding them into a queue module strands the agent
-                         (DEV-549/B2-526). Clients gate the "App" transfer-target segment on this
+                         targets — forwarding them into a queue module strands the agent.
+                         Clients gate the "App" transfer-target segment on this
                          flag instead of re-deriving the rule from direction/source themselves.
                       type: boolean
                     ^(established_at)$:
@@ -1966,8 +2076,8 @@ components:
                         can_transfer_to_application is server-computed: true for inbound calls and
                          taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain
                          outbound calls must not be offered application (IVR module) transfer
-                         targets — forwarding them into a queue module strands the agent
-                         (DEV-549/B2-526). Clients gate the "App" transfer-target segment on this
+                         targets — forwarding them into a queue module strands the agent.
+                         Clients gate the "App" transfer-target segment on this
                          flag instead of re-deriving the rule from direction/source themselves.
                       type: boolean
                     direction:
@@ -2145,8 +2255,8 @@ components:
                         can_transfer_to_application is server-computed: true for inbound calls and
                          taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain
                          outbound calls must not be offered application (IVR module) transfer
-                         targets — forwarding them into a queue module strands the agent
-                         (DEV-549/B2-526). Clients gate the "App" transfer-target segment on this
+                         targets — forwarding them into a queue module strands the agent.
+                         Clients gate the "App" transfer-target segment on this
                          flag instead of re-deriving the rule from direction/source themselves.
                       type: boolean
                     ^(established_at)$:
@@ -2208,8 +2318,8 @@ components:
                         can_transfer_to_application is server-computed: true for inbound calls and
                          taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain
                          outbound calls must not be offered application (IVR module) transfer
-                         targets — forwarding them into a queue module strands the agent
-                         (DEV-549/B2-526). Clients gate the "App" transfer-target segment on this
+                         targets — forwarding them into a queue module strands the agent.
+                         Clients gate the "App" transfer-target segment on this
                          flag instead of re-deriving the rule from direction/source themselves.
                       type: boolean
                     direction:
@@ -2564,7 +2674,7 @@ components:
                   ^(line_blocked_reason)$:
                     default: ''
                     description: |-
-                      Why `line_blocked` is true, when the platform said (DEV-844): unreachable (the
+                      Why `line_blocked` is true, when the platform said: unreachable (the
                        agent's own leg rang out or could not be reached — the ACD folds both into one
                        state), busy, declined, or dnd. Empty when the line is not blocked. The same
                        vocabulary as ConferenceMember.failure_reason: a client can say "you missed a
@@ -2880,7 +2990,7 @@ components:
                   lineBlockedReason:
                     default: ''
                     description: |-
-                      Why `line_blocked` is true, when the platform said (DEV-844): unreachable (the
+                      Why `line_blocked` is true, when the platform said: unreachable (the
                        agent's own leg rang out or could not be reached — the ACD folds both into one
                        state), busy, declined, or dnd. Empty when the line is not blocked. The same
                        vocabulary as ConferenceMember.failure_reason: a client can say "you missed a
@@ -3009,9 +3119,12 @@ components:
                         additionalProperties: false
                         description: |-
                           ConferenceMember is one participant. `display` is the resolved label (agent
-                           name, else the caller/dialed number, else "Anonymous"). `state` drives the UI:
-                           pending = ringing, added = live, removing/removed/failed = gone (clients filter
-                           removed/failed out of the participant list).
+                           name, else the agent's number, else the caller/dialed number) and is EMPTY when
+                           the platform named the member none of those — the server does not word the
+                           empty case, `display_reason` says why it is empty and the client words
+                           it. `state` drives the UI: pending = ringing, added = live,
+                           removing/removed/failed = gone (clients filter removed/failed out of the
+                           participant list).
                         patternProperties:
                           ^(agent_id)$:
                             default: ''
@@ -3019,10 +3132,36 @@ components:
                           ^(call_id)$:
                             default: ''
                             type: string
+                          ^(display_reason)$:
+                            default: ''
+                            description: |-
+                              anonymous       the platform said this member's leg WITHHELD its caller id
+                                                 — the same claim CallState.anonymous carries, and the same
+                                                 leg it is read off (the customer leg of the call this
+                                                 conference was built around).
+                                 unknown_number  nothing named this leg at all: no agent name, no agent
+                                                 number, no leg number. The platform simply did not report
+                                                 one.
+
+                               Empty whenever `display` is non-empty — a member that has a label needs no
+                               reason — and empty too when the server cannot tell the two apart. The split is
+                               the one the call card makes (`commonAnonymous` vs
+                               `commonUnknownNumber`); a client that folds it back into one word reintroduces
+                               the defect, because a withheld number is a statement about the caller and an
+                               absent one is a statement about this platform.
+                            title: |-
+                              Why `display` is empty, when it is — a CODE the client words in the
+                               agent's own language, never a label the server picked. Nothing else the server
+                               sends an agent is a human-readable English string: every refusal and every
+                               label is a code the client looks up (`failure_reason` above,
+                               AgentInfo.line_blocked_reason, the command refusal codes), and this member's
+                               label was the one exception. It read "Anonymous", in English, to every agent
+                               in every locale.
+                            type: string
                           ^(failure_reason)$:
                             default: ''
                             description: |-
-                              Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the
+                              Why a `failed` member is gone, when the platform said: no_answer (the
                                leg rang out), unreachable (it could not be reached — not registered / not
                                logged in / unroutable number), busy, or declined. Empty while the member is
                                pending/added, and for a reason the platform did not name. Derived from the
@@ -3045,10 +3184,36 @@ components:
                           display:
                             default: ''
                             type: string
+                          displayReason:
+                            default: ''
+                            description: |-
+                              anonymous       the platform said this member's leg WITHHELD its caller id
+                                                 — the same claim CallState.anonymous carries, and the same
+                                                 leg it is read off (the customer leg of the call this
+                                                 conference was built around).
+                                 unknown_number  nothing named this leg at all: no agent name, no agent
+                                                 number, no leg number. The platform simply did not report
+                                                 one.
+
+                               Empty whenever `display` is non-empty — a member that has a label needs no
+                               reason — and empty too when the server cannot tell the two apart. The split is
+                               the one the call card makes (`commonAnonymous` vs
+                               `commonUnknownNumber`); a client that folds it back into one word reintroduces
+                               the defect, because a withheld number is a statement about the caller and an
+                               absent one is a statement about this platform.
+                            title: |-
+                              Why `display` is empty, when it is — a CODE the client words in the
+                               agent's own language, never a label the server picked. Nothing else the server
+                               sends an agent is a human-readable English string: every refusal and every
+                               label is a code the client looks up (`failure_reason` above,
+                               AgentInfo.line_blocked_reason, the command refusal codes), and this member's
+                               label was the one exception. It read "Anonymous", in English, to every agent
+                               in every locale.
+                            type: string
                           failureReason:
                             default: ''
                             description: |-
-                              Why a `failed` member is gone, when the platform said (DEV-844): no_answer (the
+                              Why a `failed` member is gone, when the platform said: no_answer (the
                                leg rang out), unreachable (it could not be reached — not registered / not
                                logged in / unroutable number), busy, or declined. Empty while the member is
                                pending/added, and for a reason the platform did not name. Derived from the

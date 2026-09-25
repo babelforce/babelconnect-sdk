@@ -198,6 +198,22 @@ is gated by `config.cti.emitCallEvents` — don't assume the rest are present wi
 deployment.
 :::
 
+### When the token is rejected: `auth.rejected`
+
+```ts
+bc.on("auth.rejected", (data) => crm.requireLogin(data)); // {code, message}
+```
+
+If the platform stops accepting the token you handed over — it expired, or the same sign-in was used
+somewhere else — the app signs the agent out, and the SDK raises `auth.rejected` with
+`{ code, message }`. `code` is `unauthenticated` (the token was refused) or `not_an_agent` (the
+token is valid, but its user has no agent set up — signing in again as the same user does not help).
+It fires at most once per session, right after the `cti.error` that carries the same code, which
+still arrives unchanged. Obtain a fresh token for the agent, then **remount the widget** with it
+(`bc.dispose()`, then a new `BabelconnectEmbed.mount({ …, token })`): the app is still finishing
+its sign-out when the event arrives, and a token handed to it with `auth.set` during that time is
+lost. Earlier SDK versions delivered only the `cti.error`.
+
 `cti.call` carries `{ call: { id, state, type, from, to, ownsMedia } }`. State is a lowercase
 lifecycle (`ringing`, `in_progress`, `bridged`, `completed`, `failed`); type is inbound/outbound.
 Emission follows state or media-ownership changes and requires `config.cti.emitCallEvents`.

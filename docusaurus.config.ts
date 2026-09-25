@@ -1,7 +1,7 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
-// The site's version = the release stamped by scripts/set-version.py (SRE-A9); shown in the navbar.
+// The site's version = the release stamped at release time; shown in the navbar.
 import pkg from './package.json';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)

@@ -136,11 +136,13 @@ hint defaults to `access_token` (Go also sends a client ID, default `babelconnec
 
 Revocation is best-effort: helpers accept non-2xx responses and only report transport/request
 errors. An unknown token may also return 200; success is not proof it was active.
-Always finish local cleanup even if revocation fails:
+Close the client first, then revoke: a command still in flight when the revoke lands is refused as
+`unauthenticated`, and a client you have already closed does not report that as a session end.
+Revocation failing must not stop the sign-out:
 
 ```ts
-try { await revokeToken({ serverUrl, token }); }
-finally { await bc.close(); }
+await bc.close();
+try { await revokeToken({ serverUrl, token }); } catch { /* best-effort */ }
 ```
 
 ## Security checklist

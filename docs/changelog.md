@@ -10,6 +10,51 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.35.0 — 2026-09-25
+
+- **An agent whose app closes stops being offered calls, and is available again when they come
+  back.** Before, an agent whose app closed (the tab was shut, the laptop slept, the network dropped)
+  stayed "available". The queue went on offering them calls that nobody could answer, and a waiting
+  caller could cycle between such agents without reaching anyone.
+  - An agent who is gone for more than 15 seconds is now paused. If a call was up, the pause waits
+    for the call's reconnect window instead.
+  - When they come back, their previous status is restored.
+  - A pause the agent chose themselves is never changed.
+- **Signing out waits until the "busy" status has been saved.** Signing out could finish before the
+  status change reached the platform, leaving the agent offered calls after they had left. The app
+  now waits, for a few seconds at most, before it signs out.
+- **Extending wrap-up sends one request per tap.** Tapping an extension repeatedly while the first
+  was still being answered could send a burst of requests, each refused. The extension controls now
+  wait for the answer.
+- **Removing the last tag from a recording works.** It used to fail with an error, and the tags were
+  not saved.
+- **A colleague added to a call sees the customer's number.** They were rung from "anonymous".
+- **A refused "add participant" no longer leaves the caller on hold.**
+- **A keypad character that is not a phone key is refused instead of sent as `0`.** Only 0-9, `*`,
+  `#` and A-D can be sent as tones. Any other character now refuses the whole sequence with the new
+  code `unsupported_digit`, and nothing is sent. Before, such a character went out as the tone `0`.
+- **Error messages say which step failed and never show a raw error page.** "Nothing was changed"
+  now appears only where it is true.
+- **A sign-in the platform no longer accepts is reported as `unauthenticated` everywhere.** Before,
+  some lists (the SMS thread, the phonebook, outbound campaigns and disposition codes) came back
+  empty instead.
+  - An outage of the platform is no longer reported as a rejected sign-in.
+  - Those four lists now report an outage as an error instead of an empty list.
+- **The TypeScript SDK now ends a session whose sign-in is no longer accepted, and tells you so.**
+  - When the platform stops accepting an agent's token (it expired, or the same sign-in was used
+    somewhere else), every command fails with `unauthenticated`.
+  - The client reports that once to `onError`, closes itself, and calls the new `onUnauthenticated`
+    callback. There you sign the agent in again and create a new client.
+  - **This changes behaviour:** an integration that branches on a command's own `<intent>_failed`
+    code sees `unauthenticated` in its place, and the client stops running after it.
+  - The same applies when the token is refused on the connection itself, on a command or on a data
+    fetch. Before, those were reported as `disconnected` or `send_failed`.
+  - A client you closed yourself is never told this. When signing out, close the client before
+    revoking its token.
+- **The embed SDK raises `auth.rejected` when the embedded app's sign-in is no longer accepted.**
+  The event carries `{ code, message }`, where `code` is `unauthenticated` or `not_an_agent`. Get a
+  new token and remount the widget with it.
+
 ## 0.34.1 — 2026-09-24
 
 - **Typing a very long sequence on the keypad is now refused instead of played.** While keypad digits

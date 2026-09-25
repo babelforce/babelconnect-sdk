@@ -8,6 +8,7 @@
 
 ## Interfaces
 
+- [AuthRejectedEvent](interfaces/AuthRejectedEvent.md)
 - [AuthSetArgs](interfaces/AuthSetArgs.md)
 - [CtiCallEvent](interfaces/CtiCallEvent.md)
 - [EmbedEventMeta](interfaces/EmbedEventMeta.md)
