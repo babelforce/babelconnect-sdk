@@ -10,6 +10,11 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.35.2 — 2026-09-25
+
+- No change you can observe: 0.35.0 republished once more so that every artifact of it is
+  available.
+
 ## 0.35.1 — 2026-09-25
 
 - No change you can observe: 0.35.0 republished so that every artifact of it is available. The
