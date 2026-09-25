@@ -10,6 +10,20 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.35.3 — 2026-09-25
+
+- **The SMS thread no longer hangs when the platform has a problem.** If loading a conversation,
+  loading older messages or a live refresh fails, the thread shows the error with a "Retry now"
+  button. Messages already on screen stay. The disposition form does the same instead of showing an
+  empty list.
+- **An agent whose app closed is paused as "busy".** When the server pauses an agent whose app went
+  away, it now uses "busy", as signing out does, not the first pause reason the account lists. The
+  server acts only on a status it could read. If it could not read the agent's status, it still
+  pauses them but does not restore them automatically afterwards.
+- **Recording tags stay visible.** Tags the agent sets on a recording no longer disappear from the
+  app a moment later. After a reload the app shows the recording that is running and its tags, and
+  no longer shows a stopped recording as running.
+
 ## 0.35.2 — 2026-09-25
 
 - No change you can observe: 0.35.0 republished once more so that every artifact of it is
