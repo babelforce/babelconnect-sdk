@@ -10,6 +10,15 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.38.0 — 2026-09-26
+
+- **Nobody is left on hold when an agent leaves a call.** When an agent hangs up, leaves a
+  conference or completes a transfer, anyone they had put on hold is taken off hold first,
+  including when the app is closed during the call. If that cannot be done, the agent is told the
+  party may still be on hold.
+- **Taking someone off hold twice is no longer reported as an error.**
+- **Live updates recover from connection problems on every transport,** not only the default one.
+
 ## 0.37.0 — 2026-09-26
 
 - **A caller transferred to a colleague is no longer left on hold.** When a transfer completed
