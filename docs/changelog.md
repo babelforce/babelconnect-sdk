@@ -10,6 +10,19 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.37.0 — 2026-09-26
+
+- **A caller transferred to a colleague is no longer left on hold.** When a transfer completed
+  while the caller was still joining the colleague's call, the caller could stay on hold. The
+  transferring agent's call now stays up until the caller has joined and is off hold, normally a
+  fraction of a second. If the caller cannot be taken off hold, the agent is told.
+- **The app keeps receiving live updates after a connection drop.** If the server's link for live
+  updates dropped, calls and status stopped updating until the agent signed in again. The link now
+  reconnects by itself and the app catches up.
+- **The agent's line status and status follow every change more reliably.** A line state or status
+  changed without a live update now shows within a minute, and a status set in another app shows
+  within about two seconds.
+
 ## 0.36.0 — 2026-09-26
 
 - **The agent's status follows every change, whoever made it.** A status set by a supervisor, in
