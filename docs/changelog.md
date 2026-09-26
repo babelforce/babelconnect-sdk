@@ -10,6 +10,15 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.39.0 — 2026-09-26
+
+- **Each browser tab is told apart exactly.** The first snapshot of a subscription now carries a
+  `sessionId`, which the SDKs send back with every command and use to resume after a reload. A
+  reload always gets its own call back, and a second or duplicated tab never takes another tab's
+  call. The TypeScript, Dart and Go SDKs do this for you; a command from a tab whose session has
+  ended is refused with the new `session_gone` code, from which the SDKs recover on their own.
+  Integrations that do not send the id keep working as before.
+
 ## 0.38.1 — 2026-09-26
 
 - **Each browser tab keeps its own call.** With the app open in two tabs, the tab that answered a

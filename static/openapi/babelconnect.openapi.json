@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Babelconnect Agent API",
-    "version": "0.38.1",
+    "version": "0.39.0",
     "description": "Control-plane contract for **babelconnect-server** — the single API surface every\nBabelconnect SDK (Go, TypeScript, Dart; later Python) targets.\n\nThis document is generated from the protobuf source of truth\n(`babelconnect-proto/proto/babelconnect/v1/babelconnect.proto`) and describes the\n**request/response plane**: the `Agent` gRPC service (native HTTP/2 + gRPC-web) and\nthe REST/JSON endpoints mapped from it. The server→client **event plane** — the\n`StateUpdate` push stream delivered over `Session`/`Subscribe` — is documented\nseparately in the AsyncAPI spec (`docs/asyncapi/babelconnect.asyncapi.yaml`).\n\n**Auth:** clients obtain an OAuth2 bearer token (password grant via `POST /oauth/token`,\nor the `/auth/sso/*` SSO flow) and send it as `authorization: Bearer \u003ctoken\u003e` gRPC\nmetadata on every call — or as the `Authorization` header on the REST/JSON endpoints.\n"
   },
   "servers": [
@@ -298,6 +298,11 @@
             "title": "config",
             "description": "which surfaces this deployment/account shows (proto babelconnect.v1.AppConfig)",
             "$ref": "#/components/schemas/babelconnect.v1.AppConfig"
+          },
+          "sessionId": {
+            "type": "string",
+            "title": "session_id",
+            "description": "The id of the Subscribe stream this view is delivered on, set on the stream's\n first frame (the snapshot). Two windows of one agent signed in with the same\n token each get their own. Echo it as `Command.session_id` on every Send so\n the command reaches this window's session, and pass it as\n `SubscribeRequest.resume_session_id` when this window subscribes again.\n Empty on a view that belongs to no stream (GetState). (proto string)"
           }
         },
         "title": "AgentView",
@@ -723,495 +728,508 @@
       },
       "babelconnect.v1.Command": {
         "type": "object",
-        "oneOf": [
+        "allOf": [
           {
-            "type": "object",
             "properties": {
-              "addConferenceMember": {
+              "sessionId": {
+                "type": "string",
+                "title": "session_id",
+                "description": "The `AgentView.session_id` of the stream the sending window holds. With it\n the command goes to exactly that stream's session; if that stream has ended\n the Send is refused (FAILED_PRECONDITION, `session_gone`) and nothing runs —\n resubscribe and resend with the new id. Without it (optional; older clients)\n the server routes the command itself. Outside the oneof; new command arms\n continue at 37. (proto string)"
+              }
+            }
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "addConferenceMember": {
+                    "title": "add_conference_member",
+                    "description": "invite an agent or number (proto babelconnect.v1.AddConferenceMember)",
+                    "$ref": "#/components/schemas/babelconnect.v1.AddConferenceMember"
+                  }
+                },
                 "title": "add_conference_member",
-                "description": "invite an agent or number (proto babelconnect.v1.AddConferenceMember)",
-                "$ref": "#/components/schemas/babelconnect.v1.AddConferenceMember"
-              }
-            },
-            "title": "add_conference_member",
-            "required": [
-              "addConferenceMember"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "answer": {
+                "required": [
+                  "addConferenceMember"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "answer": {
+                    "title": "answer",
+                    "description": "SDP answer to a RINGING CallState (proto babelconnect.v1.AnswerCall)",
+                    "$ref": "#/components/schemas/babelconnect.v1.AnswerCall"
+                  }
+                },
                 "title": "answer",
-                "description": "SDP answer to a RINGING CallState (proto babelconnect.v1.AnswerCall)",
-                "$ref": "#/components/schemas/babelconnect.v1.AnswerCall"
-              }
-            },
-            "title": "answer",
-            "required": [
-              "answer"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "disposeCall": {
+                "required": [
+                  "answer"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "disposeCall": {
+                    "title": "dispose_call",
+                    "description": "record the call outcome, optionally with a callback (OBDC1/OBDC2) (proto babelconnect.v1.DisposeCall)",
+                    "$ref": "#/components/schemas/babelconnect.v1.DisposeCall"
+                  }
+                },
                 "title": "dispose_call",
-                "description": "record the call outcome, optionally with a callback (OBDC1/OBDC2) (proto babelconnect.v1.DisposeCall)",
-                "$ref": "#/components/schemas/babelconnect.v1.DisposeCall"
-              }
-            },
-            "title": "dispose_call",
-            "required": [
-              "disposeCall"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "dtmf": {
+                "required": [
+                  "disposeCall"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "dtmf": {
+                    "title": "dtmf",
+                    "description": "(proto babelconnect.v1.SendDigits)",
+                    "$ref": "#/components/schemas/babelconnect.v1.SendDigits"
+                  }
+                },
                 "title": "dtmf",
-                "description": "(proto babelconnect.v1.SendDigits)",
-                "$ref": "#/components/schemas/babelconnect.v1.SendDigits"
-              }
-            },
-            "title": "dtmf",
-            "required": [
-              "dtmf"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "endCampaignCall": {
+                "required": [
+                  "dtmf"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "endCampaignCall": {
+                    "title": "end_campaign_call",
+                    "description": "Outbound-dialer call/disposition controls (OBDB2/OBDC1/OBDC2 follow-up). end the live campaign call (OBDB2) (proto babelconnect.v1.EndCampaignCall)",
+                    "$ref": "#/components/schemas/babelconnect.v1.EndCampaignCall"
+                  }
+                },
                 "title": "end_campaign_call",
-                "description": "Outbound-dialer call/disposition controls (OBDB2/OBDC1/OBDC2 follow-up). end the live campaign call (OBDB2) (proto babelconnect.v1.EndCampaignCall)",
-                "$ref": "#/components/schemas/babelconnect.v1.EndCampaignCall"
-              }
-            },
-            "title": "end_campaign_call",
-            "required": [
-              "endCampaignCall"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "endConference": {
+                "required": [
+                  "endCampaignCall"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "endConference": {
+                    "title": "end_conference",
+                    "description": "moderator ends the whole conference (proto babelconnect.v1.EndConference)",
+                    "$ref": "#/components/schemas/babelconnect.v1.EndConference"
+                  }
+                },
                 "title": "end_conference",
-                "description": "moderator ends the whole conference (proto babelconnect.v1.EndConference)",
-                "$ref": "#/components/schemas/babelconnect.v1.EndConference"
-              }
-            },
-            "title": "end_conference",
-            "required": [
-              "endConference"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "flagRecording": {
+                "required": [
+                  "endConference"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "flagRecording": {
+                    "title": "flag_recording",
+                    "description": "toggle the \"flagged\" tag on the recording (proto babelconnect.v1.FlagRecording)",
+                    "$ref": "#/components/schemas/babelconnect.v1.FlagRecording"
+                  }
+                },
                 "title": "flag_recording",
-                "description": "toggle the \"flagged\" tag on the recording (proto babelconnect.v1.FlagRecording)",
-                "$ref": "#/components/schemas/babelconnect.v1.FlagRecording"
-              }
-            },
-            "title": "flag_recording",
-            "required": [
-              "flagRecording"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "hangup": {
+                "required": [
+                  "flagRecording"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "hangup": {
+                    "title": "hangup",
+                    "description": "(proto babelconnect.v1.Hangup)",
+                    "$ref": "#/components/schemas/babelconnect.v1.Hangup"
+                  }
+                },
                 "title": "hangup",
-                "description": "(proto babelconnect.v1.Hangup)",
-                "$ref": "#/components/schemas/babelconnect.v1.Hangup"
-              }
-            },
-            "title": "hangup",
-            "required": [
-              "hangup"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "hold": {
+                "required": [
+                  "hangup"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "hold": {
+                    "title": "hold",
+                    "description": "(proto babelconnect.v1.Hold)",
+                    "$ref": "#/components/schemas/babelconnect.v1.Hold"
+                  }
+                },
                 "title": "hold",
-                "description": "(proto babelconnect.v1.Hold)",
-                "$ref": "#/components/schemas/babelconnect.v1.Hold"
-              }
-            },
-            "title": "hold",
-            "required": [
-              "hold"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "holdConferenceMember": {
+                "required": [
+                  "hold"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "holdConferenceMember": {
+                    "title": "hold_conference_member",
+                    "description": "moderator holds/unholds a member (proto babelconnect.v1.HoldConferenceMember)",
+                    "$ref": "#/components/schemas/babelconnect.v1.HoldConferenceMember"
+                  }
+                },
                 "title": "hold_conference_member",
-                "description": "moderator holds/unholds a member (proto babelconnect.v1.HoldConferenceMember)",
-                "$ref": "#/components/schemas/babelconnect.v1.HoldConferenceMember"
-              }
-            },
-            "title": "hold_conference_member",
-            "required": [
-              "holdConferenceMember"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "joinCampaign": {
+                "required": [
+                  "holdConferenceMember"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "joinCampaign": {
+                    "title": "join_campaign",
+                    "description": "Outbound-dialer campaign controls (OBDA1–3 CORE). enter a campaign (the picker's \"Enter\") (proto babelconnect.v1.JoinCampaign)",
+                    "$ref": "#/components/schemas/babelconnect.v1.JoinCampaign"
+                  }
+                },
                 "title": "join_campaign",
-                "description": "Outbound-dialer campaign controls (OBDA1–3 CORE). enter a campaign (the picker's \"Enter\") (proto babelconnect.v1.JoinCampaign)",
-                "$ref": "#/components/schemas/babelconnect.v1.JoinCampaign"
-              }
-            },
-            "title": "join_campaign",
-            "required": [
-              "joinCampaign"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "kickConferenceMember": {
+                "required": [
+                  "joinCampaign"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kickConferenceMember": {
+                    "title": "kick_conference_member",
+                    "description": "moderator removes a member (proto babelconnect.v1.KickConferenceMember)",
+                    "$ref": "#/components/schemas/babelconnect.v1.KickConferenceMember"
+                  }
+                },
                 "title": "kick_conference_member",
-                "description": "moderator removes a member (proto babelconnect.v1.KickConferenceMember)",
-                "$ref": "#/components/schemas/babelconnect.v1.KickConferenceMember"
-              }
-            },
-            "title": "kick_conference_member",
-            "required": [
-              "kickConferenceMember"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "leaveCampaign": {
+                "required": [
+                  "kickConferenceMember"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "leaveCampaign": {
+                    "title": "leave_campaign",
+                    "description": "leave the campaign (selector row or in-call) (proto babelconnect.v1.LeaveCampaign)",
+                    "$ref": "#/components/schemas/babelconnect.v1.LeaveCampaign"
+                  }
+                },
                 "title": "leave_campaign",
-                "description": "leave the campaign (selector row or in-call) (proto babelconnect.v1.LeaveCampaign)",
-                "$ref": "#/components/schemas/babelconnect.v1.LeaveCampaign"
-              }
-            },
-            "title": "leave_campaign",
-            "required": [
-              "leaveCampaign"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "leaveConference": {
+                "required": [
+                  "leaveCampaign"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "leaveConference": {
+                    "title": "leave_conference",
+                    "description": "hang up only my own leg (proto babelconnect.v1.LeaveConference)",
+                    "$ref": "#/components/schemas/babelconnect.v1.LeaveConference"
+                  }
+                },
                 "title": "leave_conference",
-                "description": "hang up only my own leg (proto babelconnect.v1.LeaveConference)",
-                "$ref": "#/components/schemas/babelconnect.v1.LeaveConference"
-              }
-            },
-            "title": "leave_conference",
-            "required": [
-              "leaveConference"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "markConversationRead": {
+                "required": [
+                  "leaveConference"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "markConversationRead": {
+                    "title": "mark_conversation_read",
+                    "description": "clear unread on an SMS conversation (proto babelconnect.v1.MarkConversationRead)",
+                    "$ref": "#/components/schemas/babelconnect.v1.MarkConversationRead"
+                  }
+                },
                 "title": "mark_conversation_read",
-                "description": "clear unread on an SMS conversation (proto babelconnect.v1.MarkConversationRead)",
-                "$ref": "#/components/schemas/babelconnect.v1.MarkConversationRead"
-              }
-            },
-            "title": "mark_conversation_read",
-            "required": [
-              "markConversationRead"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "mute": {
+                "required": [
+                  "markConversationRead"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "mute": {
+                    "title": "mute",
+                    "description": "(proto babelconnect.v1.Mute)",
+                    "$ref": "#/components/schemas/babelconnect.v1.Mute"
+                  }
+                },
                 "title": "mute",
-                "description": "(proto babelconnect.v1.Mute)",
-                "$ref": "#/components/schemas/babelconnect.v1.Mute"
-              }
-            },
-            "title": "mute",
-            "required": [
-              "mute"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "muteConferenceMember": {
+                "required": [
+                  "mute"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "muteConferenceMember": {
+                    "title": "mute_conference_member",
+                    "description": "moderator mutes/unmutes a member (proto babelconnect.v1.MuteConferenceMember)",
+                    "$ref": "#/components/schemas/babelconnect.v1.MuteConferenceMember"
+                  }
+                },
                 "title": "mute_conference_member",
-                "description": "moderator mutes/unmutes a member (proto babelconnect.v1.MuteConferenceMember)",
-                "$ref": "#/components/schemas/babelconnect.v1.MuteConferenceMember"
-              }
-            },
-            "title": "mute_conference_member",
-            "required": [
-              "muteConferenceMember"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "pauseCampaign": {
+                "required": [
+                  "muteConferenceMember"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "pauseCampaign": {
+                    "title": "pause_campaign",
+                    "description": "pause (on=true) / resume (on=false) the campaign (proto babelconnect.v1.PauseCampaign)",
+                    "$ref": "#/components/schemas/babelconnect.v1.PauseCampaign"
+                  }
+                },
                 "title": "pause_campaign",
-                "description": "pause (on=true) / resume (on=false) the campaign (proto babelconnect.v1.PauseCampaign)",
-                "$ref": "#/components/schemas/babelconnect.v1.PauseCampaign"
-              }
-            },
-            "title": "pause_campaign",
-            "required": [
-              "pauseCampaign"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "placeCall": {
+                "required": [
+                  "pauseCampaign"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "placeCall": {
+                    "title": "place_call",
+                    "description": "place an outbound call (proto babelconnect.v1.PlaceCall)",
+                    "$ref": "#/components/schemas/babelconnect.v1.PlaceCall"
+                  }
+                },
                 "title": "place_call",
-                "description": "place an outbound call (proto babelconnect.v1.PlaceCall)",
-                "$ref": "#/components/schemas/babelconnect.v1.PlaceCall"
-              }
-            },
-            "title": "place_call",
-            "required": [
-              "placeCall"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "pong": {
+                "required": [
+                  "placeCall"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "pong": {
+                    "title": "pong",
+                    "description": "reply to a server Ping (liveness + RTT); echoes Ping.seq (proto babelconnect.v1.Pong)",
+                    "$ref": "#/components/schemas/babelconnect.v1.Pong"
+                  }
+                },
                 "title": "pong",
-                "description": "reply to a server Ping (liveness + RTT); echoes Ping.seq (proto babelconnect.v1.Pong)",
-                "$ref": "#/components/schemas/babelconnect.v1.Pong"
-              }
-            },
-            "title": "pong",
-            "required": [
-              "pong"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "register": {
+                "required": [
+                  "pong"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "register": {
+                    "title": "register",
+                    "description": "announce reachability for this session (proto babelconnect.v1.Register)",
+                    "$ref": "#/components/schemas/babelconnect.v1.Register"
+                  }
+                },
                 "title": "register",
-                "description": "announce reachability for this session (proto babelconnect.v1.Register)",
-                "$ref": "#/components/schemas/babelconnect.v1.Register"
-              }
-            },
-            "title": "register",
-            "required": [
-              "register"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "resetLineStatus": {
+                "required": [
+                  "register"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "resetLineStatus": {
+                    "title": "reset_line_status",
+                    "description": "clear a blocked line (busy/unreachable) (proto babelconnect.v1.ResetLineStatus)",
+                    "$ref": "#/components/schemas/babelconnect.v1.ResetLineStatus"
+                  }
+                },
                 "title": "reset_line_status",
-                "description": "clear a blocked line (busy/unreachable) (proto babelconnect.v1.ResetLineStatus)",
-                "$ref": "#/components/schemas/babelconnect.v1.ResetLineStatus"
-              }
-            },
-            "title": "reset_line_status",
-            "required": [
-              "resetLineStatus"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "sendSms": {
+                "required": [
+                  "resetLineStatus"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "sendSms": {
+                    "title": "send_sms",
+                    "description": "send an SMS (same as the SendSms RPC) (proto babelconnect.v1.SendSmsRequest)",
+                    "$ref": "#/components/schemas/babelconnect.v1.SendSmsRequest"
+                  }
+                },
                 "title": "send_sms",
-                "description": "send an SMS (same as the SendSms RPC) (proto babelconnect.v1.SendSmsRequest)",
-                "$ref": "#/components/schemas/babelconnect.v1.SendSmsRequest"
-              }
-            },
-            "title": "send_sms",
-            "required": [
-              "sendSms"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "setAgentNumber": {
+                "required": [
+                  "sendSms"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "setAgentNumber": {
+                    "title": "set_agent_number",
+                    "description": "the external-telephone number to bridge to (proto babelconnect.v1.SetAgentNumber)",
+                    "$ref": "#/components/schemas/babelconnect.v1.SetAgentNumber"
+                  }
+                },
                 "title": "set_agent_number",
-                "description": "the external-telephone number to bridge to (proto babelconnect.v1.SetAgentNumber)",
-                "$ref": "#/components/schemas/babelconnect.v1.SetAgentNumber"
-              }
-            },
-            "title": "set_agent_number",
-            "required": [
-              "setAgentNumber"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "setConversationOpen": {
+                "required": [
+                  "setAgentNumber"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "setConversationOpen": {
+                    "title": "set_conversation_open",
+                    "description": "open/close (resolve) an SMS conversation (proto babelconnect.v1.SetConversationOpen)",
+                    "$ref": "#/components/schemas/babelconnect.v1.SetConversationOpen"
+                  }
+                },
                 "title": "set_conversation_open",
-                "description": "open/close (resolve) an SMS conversation (proto babelconnect.v1.SetConversationOpen)",
-                "$ref": "#/components/schemas/babelconnect.v1.SetConversationOpen"
-              }
-            },
-            "title": "set_conversation_open",
-            "required": [
-              "setConversationOpen"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "setDisplayAs": {
+                "required": [
+                  "setConversationOpen"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "setDisplayAs": {
+                    "title": "set_display_as",
+                    "description": "(proto babelconnect.v1.SetDisplayAs)",
+                    "$ref": "#/components/schemas/babelconnect.v1.SetDisplayAs"
+                  }
+                },
                 "title": "set_display_as",
-                "description": "(proto babelconnect.v1.SetDisplayAs)",
-                "$ref": "#/components/schemas/babelconnect.v1.SetDisplayAs"
-              }
-            },
-            "title": "set_display_as",
-            "required": [
-              "setDisplayAs"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "setPresence": {
+                "required": [
+                  "setDisplayAs"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "setPresence": {
+                    "title": "set_presence",
+                    "description": "switch the agent's presence (selector) (proto babelconnect.v1.SetPresence)",
+                    "$ref": "#/components/schemas/babelconnect.v1.SetPresence"
+                  }
+                },
                 "title": "set_presence",
-                "description": "switch the agent's presence (selector) (proto babelconnect.v1.SetPresence)",
-                "$ref": "#/components/schemas/babelconnect.v1.SetPresence"
-              }
-            },
-            "title": "set_presence",
-            "required": [
-              "setPresence"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "setRecordingTags": {
+                "required": [
+                  "setPresence"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "setRecordingTags": {
+                    "title": "set_recording_tags",
+                    "description": "(proto babelconnect.v1.SetRecordingTags)",
+                    "$ref": "#/components/schemas/babelconnect.v1.SetRecordingTags"
+                  }
+                },
                 "title": "set_recording_tags",
-                "description": "(proto babelconnect.v1.SetRecordingTags)",
-                "$ref": "#/components/schemas/babelconnect.v1.SetRecordingTags"
-              }
-            },
-            "title": "set_recording_tags",
-            "required": [
-              "setRecordingTags"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "setWebrtc": {
+                "required": [
+                  "setRecordingTags"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "setWebrtc": {
+                    "title": "set_webrtc",
+                    "description": "browser phone (webrtc) on/off (proto babelconnect.v1.SetWebrtc)",
+                    "$ref": "#/components/schemas/babelconnect.v1.SetWebrtc"
+                  }
+                },
                 "title": "set_webrtc",
-                "description": "browser phone (webrtc) on/off (proto babelconnect.v1.SetWebrtc)",
-                "$ref": "#/components/schemas/babelconnect.v1.SetWebrtc"
-              }
-            },
-            "title": "set_webrtc",
-            "required": [
-              "setWebrtc"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "startConference": {
+                "required": [
+                  "setWebrtc"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "startConference": {
+                    "title": "start_conference",
+                    "description": "open a conference around the current call (proto babelconnect.v1.StartConference)",
+                    "$ref": "#/components/schemas/babelconnect.v1.StartConference"
+                  }
+                },
                 "title": "start_conference",
-                "description": "open a conference around the current call (proto babelconnect.v1.StartConference)",
-                "$ref": "#/components/schemas/babelconnect.v1.StartConference"
-              }
-            },
-            "title": "start_conference",
-            "required": [
-              "startConference"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "startRecording": {
+                "required": [
+                  "startConference"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "startRecording": {
+                    "title": "start_recording",
+                    "description": "(proto babelconnect.v1.StartRecording)",
+                    "$ref": "#/components/schemas/babelconnect.v1.StartRecording"
+                  }
+                },
                 "title": "start_recording",
-                "description": "(proto babelconnect.v1.StartRecording)",
-                "$ref": "#/components/schemas/babelconnect.v1.StartRecording"
-              }
-            },
-            "title": "start_recording",
-            "required": [
-              "startRecording"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "stopRecording": {
+                "required": [
+                  "startRecording"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "stopRecording": {
+                    "title": "stop_recording",
+                    "description": "(proto babelconnect.v1.StopRecording)",
+                    "$ref": "#/components/schemas/babelconnect.v1.StopRecording"
+                  }
+                },
                 "title": "stop_recording",
-                "description": "(proto babelconnect.v1.StopRecording)",
-                "$ref": "#/components/schemas/babelconnect.v1.StopRecording"
-              }
-            },
-            "title": "stop_recording",
-            "required": [
-              "stopRecording"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "transfer": {
+                "required": [
+                  "stopRecording"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "transfer": {
+                    "title": "transfer",
+                    "description": "(proto babelconnect.v1.Transfer)",
+                    "$ref": "#/components/schemas/babelconnect.v1.Transfer"
+                  }
+                },
                 "title": "transfer",
-                "description": "(proto babelconnect.v1.Transfer)",
-                "$ref": "#/components/schemas/babelconnect.v1.Transfer"
-              }
-            },
-            "title": "transfer",
-            "required": [
-              "transfer"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "wrapUpCancel": {
+                "required": [
+                  "transfer"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "wrapUpCancel": {
+                    "title": "wrap_up_cancel",
+                    "description": "end after-call-work early (proto babelconnect.v1.WrapUpCancel)",
+                    "$ref": "#/components/schemas/babelconnect.v1.WrapUpCancel"
+                  }
+                },
                 "title": "wrap_up_cancel",
-                "description": "end after-call-work early (proto babelconnect.v1.WrapUpCancel)",
-                "$ref": "#/components/schemas/babelconnect.v1.WrapUpCancel"
-              }
-            },
-            "title": "wrap_up_cancel",
-            "required": [
-              "wrapUpCancel"
-            ]
-          },
-          {
-            "type": "object",
-            "properties": {
-              "wrapUpExtend": {
+                "required": [
+                  "wrapUpCancel"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "wrapUpExtend": {
+                    "title": "wrap_up_extend",
+                    "description": "add time to the after-call-work countdown (proto babelconnect.v1.WrapUpExtend)",
+                    "$ref": "#/components/schemas/babelconnect.v1.WrapUpExtend"
+                  }
+                },
                 "title": "wrap_up_extend",
-                "description": "add time to the after-call-work countdown (proto babelconnect.v1.WrapUpExtend)",
-                "$ref": "#/components/schemas/babelconnect.v1.WrapUpExtend"
+                "required": [
+                  "wrapUpExtend"
+                ]
               }
-            },
-            "title": "wrap_up_extend",
-            "required": [
-              "wrapUpExtend"
             ]
           }
         ],
@@ -2695,9 +2713,16 @@
       },
       "babelconnect.v1.SubscribeRequest": {
         "type": "object",
+        "properties": {
+          "resumeSessionId": {
+            "type": "string",
+            "title": "resume_session_id",
+            "description": "The `AgentView.session_id` of the stream this client had before — the same\n window re-subscribing after a page reload or a reconnect. Empty for a window\n that is opening for the first time. It is how the server tells a window's\n own reload from another window: its calls go to the stream that names it,\n and to a window that names none only after a few seconds without a reload.\n Keep it per window (in a browser, per tab — never shared storage every tab\n reads). Optional: a client that omits it gets the pre-session-id behavior. (proto string)"
+          }
+        },
         "title": "SubscribeRequest",
         "additionalProperties": false,
-        "description": "SubscribeRequest opens the StateUpdate stream for the authenticated agent (the\n bearer token rides in \"authorization\" metadata, like every call). Empty today;\n reserved for future subscription filters."
+        "description": "SubscribeRequest opens the StateUpdate stream for the authenticated agent (the\n bearer token rides in \"authorization\" metadata, like every call)."
       },
       "babelconnect.v1.Transfer": {
         "type": "object",

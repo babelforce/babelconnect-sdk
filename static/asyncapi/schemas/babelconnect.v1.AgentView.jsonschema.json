@@ -10,6 +10,11 @@
       },
       "type": "array"
     },
+    "^(session_id)$": {
+      "default": "",
+      "description": "The id of the Subscribe stream this view is delivered on, set on the stream's\n first frame (the snapshot). Two windows of one agent signed in with the same\n token each get their own. Echo it as `Command.session_id` on every Send so\n the command reaches this window's session, and pass it as\n `SubscribeRequest.resume_session_id` when this window subscribes again.\n Empty on a view that belongs to no stream (GetState).",
+      "type": "string"
+    },
     "^(wrap_up)$": {
       "$ref": "babelconnect.v1.WrapUpStatus.jsonschema.json"
     }
@@ -32,6 +37,11 @@
     },
     "config": {
       "$ref": "babelconnect.v1.AppConfig.jsonschema.json"
+    },
+    "sessionId": {
+      "default": "",
+      "description": "The id of the Subscribe stream this view is delivered on, set on the stream's\n first frame (the snapshot). Two windows of one agent signed in with the same\n token each get their own. Echo it as `Command.session_id` on every Send so\n the command reaches this window's session, and pass it as\n `SubscribeRequest.resume_session_id` when this window subscribes again.\n Empty on a view that belongs to no stream (GetState).",
+      "type": "string"
     },
     "sms": {
       "items": {

@@ -108,6 +108,31 @@ role — signing in again as the same user will not help, and `message` names th
 
 ***
 
+### persistSessionId?
+
+```ts
+optional persistSessionId: boolean;
+```
+
+Keep [BabelconnectClient.sessionId](../classes/BabelconnectClient.md#sessionid) in the page's `sessionStorage` (default `true` where it
+exists) and resume from it on the next connect — so a page reload gets its own calls back.
+`sessionStorage` is per tab, so two tabs never share an id. Two clients in ONE tab (two frames of
+the same origin) share it: give all but one `persistSessionId: false`.
+
+***
+
+### resumeSessionId?
+
+```ts
+optional resumeSessionId: string;
+```
+
+The [BabelconnectClient.sessionId](../classes/BabelconnectClient.md#sessionid) of this window's previous stream, when this client is the
+same window connecting again. The server hands the calls that stream held to this one — and never
+to another window of the same agent. Overrides the id kept in `sessionStorage`.
+
+***
+
 ### serverUrl
 
 ```ts

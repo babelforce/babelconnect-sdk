@@ -9,7 +9,7 @@
 asyncapi: 3.0.0
 info:
   title: Babelconnect Agent — Event Plane
-  version: 0.38.1
+  version: 0.39.0
   description: |
     The **server-authoritative push stream** every Babelconnect SDK consumes. On the
     `Agent.Subscribe` (server-streaming) RPC the server emits a single message
@@ -2195,6 +2195,16 @@ components:
                   title: Call State
                   type: object
                 type: array
+              ^(session_id)$:
+                default: ''
+                description: |-
+                  The id of the Subscribe stream this view is delivered on, set on the stream's
+                   first frame (the snapshot). Two windows of one agent signed in with the same
+                   token each get their own. Echo it as `Command.session_id` on every Send so
+                   the command reaches this window's session, and pass it as
+                   `SubscribeRequest.resume_session_id` when this window subscribes again.
+                   Empty on a view that belongs to no stream (GetState).
+                type: string
               ^(wrap_up)$:
                 $id: babelconnect.v1.WrapUpStatus.jsonschema.json
                 $schema: https://json-schema.org/draft/2020-12/schema
@@ -3404,6 +3414,16 @@ components:
                     type: string
                 title: App Config
                 type: object
+              sessionId:
+                default: ''
+                description: |-
+                  The id of the Subscribe stream this view is delivered on, set on the stream's
+                   first frame (the snapshot). Two windows of one agent signed in with the same
+                   token each get their own. Echo it as `Command.session_id` on every Send so
+                   the command reaches this window's session, and pass it as
+                   `SubscribeRequest.resume_session_id` when this window subscribes again.
+                   Empty on a view that belongs to no stream (GetState).
+                type: string
               sms:
                 items:
                   $id: babelconnect.v1.SmsConversation.jsonschema.json

@@ -7,6 +7,24 @@ intent senders, and drives a pluggable WebRTC [Media](../interfaces/Media.md) le
 
 ## Accessors
 
+### sessionId
+
+#### Get Signature
+
+```ts
+get sessionId(): string
+```
+
+The id of this client's Subscribe stream, from its first frame (`AgentView.sessionId`); empty until
+then, and against a server that does not send one. Every intent carries it, so it reaches this
+window's session and no other window's.
+
+##### Returns
+
+`string`
+
+***
+
 ### view
 
 #### Get Signature

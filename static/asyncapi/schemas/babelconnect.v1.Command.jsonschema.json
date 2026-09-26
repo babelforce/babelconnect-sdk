@@ -53,6 +53,11 @@
     "^(send_sms)$": {
       "$ref": "babelconnect.v1.SendSmsRequest.jsonschema.json"
     },
+    "^(session_id)$": {
+      "default": "",
+      "description": "The `AgentView.session_id` of the stream the sending window holds. With it\n the command goes to exactly that stream's session; if that stream has ended\n the Send is refused (FAILED_PRECONDITION, `session_gone`) and nothing runs —\n resubscribe and resend with the new id. Without it (optional; older clients)\n the server routes the command itself. Outside the oneof; new command arms\n continue at 37.",
+      "type": "string"
+    },
     "^(set_agent_number)$": {
       "$ref": "babelconnect.v1.SetAgentNumber.jsonschema.json"
     },
@@ -158,6 +163,11 @@
     },
     "sendSms": {
       "$ref": "babelconnect.v1.SendSmsRequest.jsonschema.json"
+    },
+    "sessionId": {
+      "default": "",
+      "description": "The `AgentView.session_id` of the stream the sending window holds. With it\n the command goes to exactly that stream's session; if that stream has ended\n the Send is refused (FAILED_PRECONDITION, `session_gone`) and nothing runs —\n resubscribe and resend with the new id. Without it (optional; older clients)\n the server routes the command itself. Outside the oneof; new command arms\n continue at 37.",
+      "type": "string"
     },
     "setAgentNumber": {
       "$ref": "babelconnect.v1.SetAgentNumber.jsonschema.json"

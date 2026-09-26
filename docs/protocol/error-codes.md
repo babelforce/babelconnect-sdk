@@ -59,6 +59,16 @@ In the **`callId?`** column: **✓** = always carries one · **—** = never · 
 | `unauthenticated` | the platform **rejected this session's bearer** (HTTP 401) on a command the agent gave. It is not a refusal of that command: the token is no longer accepted, so every later command fails the same way. Usual causes are the same sign-in being used somewhere else — the embedded widget, another tab, another device — and a session that simply expired. Sent in place of the command's own `<intent>_failed` code, whichever command it was. | *sometimes* — it echoes the `callId` of a call-scoped command; empty otherwise | **sign out and sign in again**, through your normal sign-out path. **The TypeScript SDK acts on it for you**: it reports the frame to `onError` once, closes the client, and then calls `onUnauthenticated` — sign the agent in again there and create a new client. When you embed the app, it signs the agent out itself and `BabelconnectEmbed` raises [`auth.rejected`](../typescript/embedding#4-react-to-the-app-app--host) on your page. **This changes what an integration sees:** one that branches on the command's own `<intent>_failed` code receives `unauthenticated` in its place, and the TypeScript client is closed afterwards rather than left running (see [Errors & reconnects](../guides/errors-and-reconnects#3-disconnects--token-expiry--reconnect-with-backoff)). The Go SDK passes it to `OnError` unchanged and does not act on it: handle the code yourself there. Do not retry the command and do not keep the session up: nothing it sends will be accepted. The platform did not carry out the command, but the server may already have acted on its own side: a hangup ends the agent's audio whatever the platform answers. The message tells the agent their command had no effect only for a command where both sides are unchanged. |
 | `unknown_command` | the server has no handler for that command — normally a client built against a **newer** contract than the deployed server | — | check the server version against your SDK version; the feature isn't deployed. Nothing to retry. |
 
+### Refused by `Send` itself
+
+One code is not an `Error` frame: it is the **`Send` call's own refusal**, a `FAILED_PRECONDITION` status
+whose message starts with the code. It concerns the stream the command names, and that stream is gone, so
+there is no stream left to carry a frame.
+
+| `code` | When it is sent | `callId`? | What to do |
+|---|---|---|---|
+| `session_gone` | the command carried a `sessionId` that names no live stream on your bearer — the stream that `AgentView.sessionId` came from has ended (a reload, a dropped connection), or the id belongs to a stream opened with another token. A command **without** a `sessionId` is never refused this way. | — | **nothing ran.** Subscribe again — naming the old id as `resumeSessionId` — take the new `sessionId` from the new stream's first snapshot, and resend. **The SDKs do this for you** — Dart, TypeScript and Go alike: on this refusal they subscribe again naming the old id, replay the last `register`, and resend the refused command **once** under the new id; a second refusal of the same command is reported — `send_failed` in Dart and TypeScript, the returned error in Go. |
+
 ## Outbound & answering
 
 | `code` | When it is sent | `callId`? | What to do |

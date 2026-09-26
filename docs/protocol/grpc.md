@@ -230,6 +230,7 @@ snapshot carries the whole view; patches carry entity-level deltas.
 | sms | [SmsConversation](#babelconnect-v1-SmsConversation) | repeated | SMS thread summaries (full history on demand) |
 | conferences | [Conference](#babelconnect-v1-Conference) | repeated | active multi-party conferences (usually 0 or 1) |
 | config | [AppConfig](#babelconnect-v1-AppConfig) |  | which surfaces this deployment/account shows |
+| session_id | [string](#scalar-value-types) |  | The id of the Subscribe stream this view is delivered on, set on the stream&#39;s first frame (the snapshot). Two windows of one agent signed in with the same token each get their own. Echo it as `Command.session_id` on every Send so the command reaches this window&#39;s session, and pass it as `SubscribeRequest.resume_session_id` when this window subscribes again. Empty on a view that belongs to no stream (GetState). |
 
 
 
@@ -453,6 +454,7 @@ enter a campaign (the picker&#39;s &#34;Enter&#34;) |
 
 end the live campaign call (OBDB2) |
 | dispose_call | [DisposeCall](#babelconnect-v1-DisposeCall) |  | record the call outcome, optionally with a callback (OBDC1/OBDC2) |
+| session_id | [string](#scalar-value-types) |  | The `AgentView.session_id` of the stream the sending window holds. With it the command goes to exactly that stream&#39;s session; if that stream has ended the Send is refused (FAILED_PRECONDITION, `session_gone`) and nothing runs — resubscribe and resend with the new id. Without it (optional; older clients) the server routes the command itself. Outside the oneof; new command arms continue at 37. |
 
 
 
@@ -1516,8 +1518,12 @@ StopRecording ends the call&#39;s active recording.
 
 ### SubscribeRequest {#babelconnect-v1-SubscribeRequest}
 SubscribeRequest opens the StateUpdate stream for the authenticated agent (the
-bearer token rides in &#34;authorization&#34; metadata, like every call). Empty today;
-reserved for future subscription filters.
+bearer token rides in &#34;authorization&#34; metadata, like every call).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| resume_session_id | [string](#scalar-value-types) |  | The `AgentView.session_id` of the stream this client had before — the same window re-subscribing after a page reload or a reconnect. Empty for a window that is opening for the first time. It is how the server tells a window&#39;s own reload from another window: its calls go to the stream that names it, and to a window that names none only after a few seconds without a reload. Keep it per window (in a browser, per tab — never shared storage every tab reads). Optional: a client that omits it gets the pre-session-id behavior. |
 
 
 
