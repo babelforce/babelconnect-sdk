@@ -10,6 +10,13 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.38.1 — 2026-09-26
+
+- **Each browser tab keeps its own call.** With the app open in two tabs, the tab that answered a
+  call keeps it, also across a reload; the other tab is told the call belongs to another window.
+  Settings changed in one tab show in the other straight away.
+- **No false "they may still be on hold" message when a caller joins a conference slowly.**
+
 ## 0.38.0 — 2026-09-26
 
 - **Nobody is left on hold when an agent leaves a call.** When an agent hangs up, leaves a
