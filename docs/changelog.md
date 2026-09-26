@@ -10,6 +10,20 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.36.0 — 2026-09-26
+
+- **The agent's status follows every change, whoever made it.** A status set by a supervisor, in
+  another window of the same agent, or in an older version of the app now shows in the app within
+  a second. A status change the platform did not announce shows within a minute. No SDK or
+  integration change is needed.
+- **The agent's state is taken from the platform, not guessed from status names.** Any status the
+  account marks as available reads as available; "busy" reads as busy; any other unavailable
+  status reads as paused, also right after login. A custom status whose name happened to be
+  "break", "away", "ready", "idle", "dnd" or "offline" may now read differently than before; it
+  follows the account's own available flag.
+- **An incoming call keeps ringing until it is answered or ends**, so the agent can always decline
+  it.
+
 ## 0.35.3 — 2026-09-25
 
 - **The SMS thread no longer hangs when the platform has a problem.** If loading a conversation,
