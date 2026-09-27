@@ -10,6 +10,13 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.43.0 — 2026-09-27
+
+- **The update banner waits until you are free.** It no longer appears during a call or wrap-up,
+  and one already showing steps aside when a call arrives.
+- **Flagging a recording and tagging it no longer undo each other.**
+- **A malformed call offer from the phone network no longer interrupts service.**
+
 ## 0.42.0 — 2026-09-27
 
 - Nothing you can observe changed. This release tightens how the server checks the platform it
