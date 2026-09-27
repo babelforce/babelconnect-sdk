@@ -10,6 +10,10 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.41.1 — 2026-09-27
+
+- Nothing you can observe changed. This release publishes everything listed under 0.41.0.
+
 ## 0.41.0 — 2026-09-27
 
 - **Reloading the app during a call keeps the audio.** The reloaded window gets a fresh audio
