@@ -10,6 +10,15 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.40.0 — 2026-09-27
+
+- **SMS threads arrive open.** A new message no longer shows its conversation as resolved.
+- **An ended call reports how it ended** (completed or failed), and whether it was answered is kept
+  after it ends.
+- **The account-switch setting follows your configuration** when it turns every option off.
+- **A CTI message sent with empty data carries no data** instead of the text `null`.
+- **Go SDK:** `Client.Done()` and `Client.Err()` tell you when the subscription has ended.
+
 ## 0.39.0 — 2026-09-26
 
 - **Each browser tab is told apart exactly.** The first snapshot of a subscription now carries a
