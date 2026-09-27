@@ -1,5 +1,5 @@
 # Variable: SDK\_VERSION
 
 ```ts
-const SDK_VERSION: "0.40.0" = "0.40.0";
+const SDK_VERSION: "0.41.0" = "0.41.0";
 ```

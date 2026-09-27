@@ -10,6 +10,18 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.41.0 — 2026-09-27
+
+- **Reloading the app during a call keeps the audio.** The reloaded window gets a fresh audio
+  connection on the same call without ringing, and a call that was still ringing can be answered
+  from the new window. The TypeScript, Dart and Go SDKs do this for you.
+- **Wrap-up shows even when the platform cannot say how long it has left**: "Wrap-up" with Cancel
+  and no countdown. If ending it early gets no clear answer, the message says so, and the screen
+  follows the platform.
+- **Ending a conference that has already ended succeeds** instead of reporting an error.
+- **Go SDK:** `Client.MediaStats(callID)` reports live call-quality figures: packets and bytes each
+  way, jitter, packet loss and round-trip time.
+
 ## 0.40.0 — 2026-09-27
 
 - **SMS threads arrive open.** A new message no longer shows its conversation as resolved.
