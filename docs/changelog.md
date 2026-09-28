@@ -10,6 +10,12 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.44.0 — 2026-09-28
+
+- **Calls and status updates keep arriving after a brief backend restart.** The app used to stop
+  receiving them for up to two minutes when a push service was restarted mid-session; it now
+  reconnects within seconds.
+
 ## 0.43.0 — 2026-09-27
 
 - **The update banner waits until you are free.** It no longer appears during a call or wrap-up,
