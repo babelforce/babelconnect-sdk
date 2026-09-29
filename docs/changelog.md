@@ -10,6 +10,17 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.45.1 — 2026-09-29
+
+- No change you can observe: 0.45.0 republished so that every artifact of it is available. The
+  SDKs and the app behave exactly as described under 0.45.0.
+
+## 0.45.0 — 2026-09-29
+
+- **Recording tags you set are no longer undone by a delayed update**, even when the phone system's
+  clock and the app server's clock disagree.
+- **Campaign figures disappear as soon as you leave the campaign's idle state** instead of lingering.
+
 ## 0.44.0 — 2026-09-28
 
 - **Calls and status updates keep arriving after a brief backend restart.** The app used to stop
