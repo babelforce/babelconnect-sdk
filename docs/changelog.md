@@ -10,6 +10,23 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.46.0 — 2026-10-11
+
+- **Holding your own call in a conference no longer plays hold music to everyone else.** With two or
+  more other participants, holding your own call is refused with the new reason
+  `call_in_conference`; taking it off hold is always accepted. A conference with one other
+  participant still holds as before.
+- **A hold you placed before a consult is lifted once the conference forms**; the customer stays
+  parked by the conference.
+- **A moderator who drops off the network gives parked participants back**, as leaving the
+  conference deliberately already did.
+- **A refused conference action names its reason.** Holding, muting or removing a participant, or
+  ending the conference, now reports `not_moderator`, `member_not_found`, `member_not_live`,
+  `conference_already_finished` or `member_is_me` instead of `conference_failed`. Holding a
+  participant who is already on hold succeeds.
+- **The Helm chart exposes the app through the Gateway API by default** when ingress is enabled;
+  set `gateway.enabled: false` to keep an Ingress on a cluster without a Gateway.
+
 ## 0.45.1 — 2026-09-29
 
 - No change you can observe: 0.45.0 republished so that every artifact of it is available. The
