@@ -136,7 +136,24 @@ no member muted flag to use for a toggle. Provide explicit Mute/Unmute actions.
 `addConferenceMember({ agentId })` or `addConferenceMember({ number })` adds exactly one target.
 Show member display/state/failure labels and a badge for `isMe`; `conf.state` can indicate ending
 until removal. `endConference()` ends it for everyone; `leaveConference()` drops your own leg.
-Use [in-call controls](#in-call-controls) for your own mute/hold during a conference.
+For yourself during a conference, use **Mute**, not Hold: Hold on your own call plays hold music
+into the conference, so the server refuses it with `call_in_conference` while two or more other
+participants are joining or joined. To park the customer, the moderator holds their member with
+`holdConferenceMember`. If you held your call before adding someone, the server takes that hold off
+once the conference has two or more other participants (`onHold` turns false); a customer parked by
+the conference stays parked.
+
+Member controls are allowed exactly when `conf.iAmModerator && !member.isMe &&
+member.state === "added" && conf.state === "created"`; only the moderator may hold, mute or remove a
+member. A refused member action carries its own code: `not_moderator`, `member_not_found`,
+`member_not_live`, `conference_already_finished` or `member_is_me` (see [error codes](../protocol/error-codes)).
+A member's `onHold` reaches every agent in the conference. When the moderator parks an agent, that
+agent's own (`isMe`) member shows `onHold: true` while their `CallState.onHold` stays false: that field
+only reflects Hold on their own call. When the moderator hangs up, leaves or completes a warm transfer,
+members they parked are taken off hold first, and the platform passes moderation to a remaining agent
+(whose `iAmModerator` turns true). If the moderator's line drops instead, parked members are taken off
+hold when no other agent remains; when one does, it becomes moderator and sees them with `onHold: true`,
+so offer it the unhold.
 
 ## A call-history list
 

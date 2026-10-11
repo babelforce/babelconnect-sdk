@@ -148,7 +148,11 @@ removes the conference. `leaveConference` drops only your own leg.
 | Member `callId` | Member's call leg; your own member corresponds to your `CallState.id`. |
 
 Conference and member states are free-form strings, not typed enums. The agent's own call remains
-in `activeCalls`: use call commands for your own mute/hold/hangup and conference commands for members.
+in `activeCalls`: use call commands for your own mute/hangup and conference commands for members.
+Own-call Hold is refused (`call_in_conference`) while the call's conference has two or more other
+members joining or joined, because it would play hold music into the conference; use Mute.
+`CallState.onHold` is only ever Hold on your own call. A member parked by the moderator shows on that
+member's `onHold`, including your own `isMe` member when the moderator parks you.
 See the [conference recipe](../guides/recipes#a-conference-panel).
 
 ## Wrap-up, end to end
