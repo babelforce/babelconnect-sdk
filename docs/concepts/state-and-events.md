@@ -165,8 +165,10 @@ account's wrap-up settings for this call's direction, and they are what the comm
 while `canCancel` is false is refused with `wrap_up_cancel_not_enabled`, and an extend while `canExtend` is
 false with `wrap_up_extend_capped` and an empty `message`. The settings are read again with every
 wrap-up, so a changed setting applies from the next one. If they cannot be read at all, both flags
-are false and both commands are refused; an account whose wrap-up settings were never saved has every
-flag false.
+are false and both commands are refused. An account whose wrap-up settings were never saved shows
+`canCancel: true` and `canExtend: false`, which is what the platform does for it. Cancel is enforced only for
+accounts that have saved their wrap-up settings; save them (even unchanged) to enforce. A manager's "Clear"
+deletes the saved settings, so the manager UI then shows cancel off while the agent may cancel.
 
 ## Consuming it
 
