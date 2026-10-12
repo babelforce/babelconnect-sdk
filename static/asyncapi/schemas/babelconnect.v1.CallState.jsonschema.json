@@ -52,6 +52,11 @@
     "^(webrtc_offer)$": {
       "default": "",
       "type": "string"
+    },
+    "^(webrtc_reoffer)$": {
+      "default": "",
+      "description": "webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is\n already answered. The server sets it when a session takes over an answered\n call from another one (a reloaded window reclaiming it from the call grace\n window, or a takeover hand-off), because the previous window's peer\n connection is gone. A client that holds no media for the call answers it\n with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer\n setting; a client that already holds a leg for the call ignores it. Cleared\n once answered, or after about 30s unanswered (the server then releases the\n leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer.",
+      "type": "string"
     }
   },
   "properties": {
@@ -201,6 +206,11 @@
     },
     "webrtcOffer": {
       "default": "",
+      "type": "string"
+    },
+    "webrtcReoffer": {
+      "default": "",
+      "description": "webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is\n already answered. The server sets it when a session takes over an answered\n call from another one (a reloaded window reclaiming it from the call grace\n window, or a takeover hand-off), because the previous window's peer\n connection is gone. A client that holds no media for the call answers it\n with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer\n setting; a client that already holds a leg for the call ignores it. Cleared\n once answered, or after about 30s unanswered (the server then releases the\n leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer.",
       "type": "string"
     }
   },

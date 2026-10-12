@@ -337,6 +337,7 @@ CallState is one call as the server sees it. Replace-by-id on upsert.
 | recording_flagged | [bool](#scalar-value-types) |  |  |
 | ice_servers | [IceServer](#babelconnect-v1-IceServer) | repeated | STUN/TURN servers the client applies; for off-host NAT traversal |
 | can_transfer_to_application | [bool](#scalar-value-types) |  | can_transfer_to_application is server-computed: true for inbound calls and taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain outbound calls must not be offered application (IVR module) transfer targets — forwarding them into a queue module strands the agent. Clients gate the &#34;App&#34; transfer-target segment on this flag instead of re-deriving the rule from direction/source themselves. |
+| webrtc_reoffer | [string](#scalar-value-types) |  | webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is already answered. The server sets it when a session takes over an answered call from another one (a reloaded window reclaiming it from the call grace window, or a takeover hand-off), because the previous window&#39;s peer connection is gone. A client that holds no media for the call answers it with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer setting; a client that already holds a leg for the call ignores it. Cleared once answered, or after about 30s unanswered (the server then releases the leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer. |
 
 
 
@@ -566,6 +567,7 @@ EndConference tears down the whole conference (moderator only).
 | code | [string](#scalar-value-types) |  |  |
 | message | [string](#scalar-value-types) |  |  |
 | call_id | [string](#scalar-value-types) |  | optional: the call the rejected command targeted |
+| command | [string](#scalar-value-types) |  | The Command arm this Error answers, by its field name in Command&#39;s oneof (`place_call`, `hold`, `answer`, `dtmf`, …), so a client with two commands in flight can tell which one failed. Empty when no command caused it. The SDKs fill it on their own `send_failed` too. Additive: an older client skips the unknown field. |
 
 
 
@@ -1634,6 +1636,12 @@ WrapUpExtend adds time to the agent&#39;s after-call-work countdown.
 ### WrapUpStatus {#babelconnect-v1-WrapUpStatus}
 WrapUpStatus is the after-call-work countdown.
 
+`countdown_unknown` is set on an active wrap-up whose countdown the platform
+could not give: the agent is in wrap-up, `remaining_seconds` is 0 and means
+nothing, and a client renders the wrap-up without a countdown. Unset (the
+default, and all an older server sends) means `remaining_seconds` is the
+countdown.
+
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
@@ -1642,6 +1650,7 @@ WrapUpStatus is the after-call-work countdown.
 | last_call_type | [string](#scalar-value-types) |  |  |
 | can_cancel | [bool](#scalar-value-types) |  |  |
 | can_extend | [bool](#scalar-value-types) |  |  |
+| countdown_unknown | [bool](#scalar-value-types) |  |  |
 
 
 

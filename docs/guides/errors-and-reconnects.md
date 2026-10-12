@@ -13,7 +13,9 @@ or refreshes tokens. The embedded app has its own connection management.
 
 ## 1. Command rejections (`onError`)
 
-Server errors carry `code`, `message`, and optionally `callId`. They arrive through `onError` (TS)
+Server errors carry `code`, `message`, `command` (the command they answer, such as `place_call` or
+`hold`), and optionally `callId`. With several commands in flight, match an error to its command by
+`command`, not by arrival order. They arrive through `onError` (TS)
 or `OnError` (Go), without advancing the state sequence. Show a call-specific error beside that
 call when possible; handle unknown codes by showing their message. A rejection does not by itself
 require reconnecting. Check the [error reference](../protocol/error-codes) for recovery, including
@@ -27,13 +29,13 @@ can return a missing-call error; media failures use the error callback. Unary da
 | Local error | SDK | Meaning |
 |---|---|---|
 | `disconnected` | TS | The subscription threw a transport/stream error. A clean end is not reported. |
-| `send_failed` | TS | A unary command could not be sent. Its outcome may be uncertain. |
+| `send_failed` | TS, Dart | A unary command could not be sent. Its outcome may be uncertain. `command` names the command. |
 | `unauthenticated` | TS | The server refused the token on the subscription, a command or a data fetch. Reported once; the client is then closed and `onUnauthenticated` is called. The same happens for the server's [`unauthenticated`](../protocol/error-codes) error. |
 | `not_an_agent` | TS | The token is valid but its user holds no agent role; `message` names the user. Handled like `unauthenticated`: reported once, the client closed, `onUnauthenticated` called. Signing in again as the same user does not help. |
 | `no_media` | TS | Answer attempted with `mediaFactory: null`. |
 | `mic_not_found`, `mic_permission_denied`, `mic_in_use` | TS | Microphone absent, denied, or occupied. |
 | `media_answer_failed` | Both | Media negotiation failed; carries the call ID. |
-| `media_create_failed`, `answer_send_failed` | Go | Media creation or sending its answer failed; carries the call ID. |
+| `media_create_failed`, `answer_send_failed` | Go | Media creation or sending its answer failed; carries the call ID. `answer_send_failed` carries `command` `answer`. |
 
 ## 2. Sequence gaps (`onGap`)
 

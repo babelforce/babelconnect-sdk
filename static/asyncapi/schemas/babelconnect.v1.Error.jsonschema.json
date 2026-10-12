@@ -17,6 +17,11 @@
       "default": "",
       "type": "string"
     },
+    "command": {
+      "default": "",
+      "description": "The Command arm this Error answers, by its field name in Command's oneof\n (`place_call`, `hold`, `answer`, `dtmf`, …), so a client with two commands\n in flight can tell which one failed. Empty when no command caused it.\n The SDKs fill it on their own `send_failed` too. Additive: an older client\n skips the unknown field.",
+      "type": "string"
+    },
     "message": {
       "default": "",
       "type": "string"

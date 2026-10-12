@@ -12,10 +12,25 @@ treat an unknown code **generically** (show the `message`, keep the session up),
 add one your client has never seen. How to receive them at all is in
 [Errors & reconnects → command rejections](../guides/errors-and-reconnects#1-command-rejections-onerror).
 
-An `Error` arrives **out-of-band** on the stream: a `code`, a human-readable `message`, and — for anything
-tied to a specific call — a `callId`. It is **not** a state change and does not advance `seq`. Nothing in the
-`AgentView` changed because of it, so the right response is almost always "surface the message and let the
-agent retry", never "tear down the session".
+An `Error` arrives **out-of-band** on the stream: a `code`, a human-readable `message`, the `command` it
+answers, and — for anything tied to a specific call — a `callId`. It is **not** a state change and does not
+advance `seq`. Nothing in the `AgentView` changed because of it, so the right response is almost always
+"surface the message and let the agent retry", never "tear down the session".
+
+**`command`** is the command the `Error` answers, by its field name in `Command` — `place_call`, `answer`,
+`hangup`, `hold`, `dtmf`, `transfer`, `start_recording`, `add_conference_member`, `set_presence`, … (the
+[gRPC reference](./grpc) lists every one). Every `Error` frame the server sends carries it, including the ones that
+arrive well after the next command ran — `no_agent_leg` ten seconds after a `place_call`, a cold
+transfer's `transfer_target_*` codes when the target fails to join, the `hangup` / `leave_conference` /
+`transfer` refusals sent after a bounded wait for held participants. The exception is `unknown_command`,
+which carries an empty `command`: the server could not read the command. **With two commands in flight,
+match an `Error` to its command by `command`**, not by the order the `Error`s arrive in: a code such as
+`no_call` is the same whichever command it answers, and several codes arrive out of order. The protocol
+has no per-command request id to echo, so the command name is the match: two in-flight commands of the
+same kind remain indistinguishable, and `callId` is the further key where they target different calls.
+The TypeScript and Dart SDKs set `command` on their own `send_failed` too, and the Go SDK on
+`answer_send_failed`. A server older than 0.46.1 never sets it — an empty `command` means "not said",
+never "no command".
 
 Two conventions run through the table:
 

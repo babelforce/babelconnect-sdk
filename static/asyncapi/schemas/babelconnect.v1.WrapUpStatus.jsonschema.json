@@ -2,13 +2,17 @@
   "$id": "babelconnect.v1.WrapUpStatus.jsonschema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "WrapUpStatus is the after-call-work countdown.",
+  "description": "`countdown_unknown` is set on an active wrap-up whose countdown the platform\n could not give: the agent is in wrap-up, `remaining_seconds` is 0 and means\n nothing, and a client renders the wrap-up without a countdown. Unset (the\n default, and all an older server sends) means `remaining_seconds` is the\n countdown.",
   "patternProperties": {
     "^(can_cancel)$": {
       "default": false,
       "type": "boolean"
     },
     "^(can_extend)$": {
+      "default": false,
+      "type": "boolean"
+    },
+    "^(countdown_unknown)$": {
       "default": false,
       "type": "boolean"
     },
@@ -44,6 +48,10 @@
       "default": false,
       "type": "boolean"
     },
+    "countdownUnknown": {
+      "default": false,
+      "type": "boolean"
+    },
     "lastCallType": {
       "default": "",
       "type": "string"
@@ -63,6 +71,6 @@
       "default": 0
     }
   },
-  "title": "Wrap Up Status",
+  "title": "WrapUpStatus is the after-call-work countdown.",
   "type": "object"
 }

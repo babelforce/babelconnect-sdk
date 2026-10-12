@@ -128,6 +128,15 @@ components:
               code:
                 default: ''
                 type: string
+              command:
+                default: ''
+                description: |-
+                  The Command arm this Error answers, by its field name in Command's oneof
+                   (`place_call`, `hold`, `answer`, `dtmf`, …), so a client with two commands
+                   in flight can tell which one failed. Empty when no command caused it.
+                   The SDKs fill it on their own `send_failed` too. Additive: an older client
+                   skips the unknown field.
+                type: string
               message:
                 default: ''
                 type: string
@@ -221,6 +230,19 @@ components:
                     type: array
                   ^(webrtc_offer)$:
                     default: ''
+                    type: string
+                  ^(webrtc_reoffer)$:
+                    default: ''
+                    description: |-
+                      webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is
+                       already answered. The server sets it when a session takes over an answered
+                       call from another one (a reloaded window reclaiming it from the call grace
+                       window, or a takeover hand-off), because the previous window's peer
+                       connection is gone. A client that holds no media for the call answers it
+                       with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer
+                       setting; a client that already holds a leg for the call ignores it. Cleared
+                       once answered, or after about 30s unanswered (the server then releases the
+                       leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer.
                     type: string
                 properties:
                   anonymous:
@@ -347,6 +369,19 @@ components:
                     type: string
                   webrtcOffer:
                     default: ''
+                    type: string
+                  webrtcReoffer:
+                    default: ''
+                    description: |-
+                      webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is
+                       already answered. The server sets it when a session takes over an answered
+                       call from another one (a reloaded window reclaiming it from the call grace
+                       window, or a takeover hand-off), because the previous window's peer
+                       connection is gone. A client that holds no media for the call answers it
+                       with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer
+                       setting; a client that already holds a leg for the call ignores it. Cleared
+                       once answered, or after about 30s unanswered (the server then releases the
+                       leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer.
                     type: string
                 title: Call State
                 type: object
@@ -598,12 +633,20 @@ components:
                 $id: babelconnect.v1.WrapUpStatus.jsonschema.json
                 $schema: https://json-schema.org/draft/2020-12/schema
                 additionalProperties: false
-                description: WrapUpStatus is the after-call-work countdown.
+                description: |-
+                  `countdown_unknown` is set on an active wrap-up whose countdown the platform
+                   could not give: the agent is in wrap-up, `remaining_seconds` is 0 and means
+                   nothing, and a client renders the wrap-up without a countdown. Unset (the
+                   default, and all an older server sends) means `remaining_seconds` is the
+                   countdown.
                 patternProperties:
                   ^(can_cancel)$:
                     default: false
                     type: boolean
                   ^(can_extend)$:
+                    default: false
+                    type: boolean
+                  ^(countdown_unknown)$:
                     default: false
                     type: boolean
                   ^(last_call_type)$:
@@ -627,6 +670,9 @@ components:
                   canExtend:
                     default: false
                     type: boolean
+                  countdownUnknown:
+                    default: false
+                    type: boolean
                   lastCallType:
                     default: ''
                     type: string
@@ -638,7 +684,7 @@ components:
                       - pattern: ^-?[0-9]+$
                         type: string
                     default: 0
-                title: Wrap Up Status
+                title: WrapUpStatus is the after-call-work countdown.
                 type: object
             properties:
               agent:
@@ -1358,6 +1404,19 @@ components:
                   ^(webrtc_offer)$:
                     default: ''
                     type: string
+                  ^(webrtc_reoffer)$:
+                    default: ''
+                    description: |-
+                      webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is
+                       already answered. The server sets it when a session takes over an answered
+                       call from another one (a reloaded window reclaiming it from the call grace
+                       window, or a takeover hand-off), because the previous window's peer
+                       connection is gone. A client that holds no media for the call answers it
+                       with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer
+                       setting; a client that already holds a leg for the call ignores it. Cleared
+                       once answered, or after about 30s unanswered (the server then releases the
+                       leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer.
+                    type: string
                 properties:
                   anonymous:
                     default: false
@@ -1483,6 +1542,19 @@ components:
                     type: string
                   webrtcOffer:
                     default: ''
+                    type: string
+                  webrtcReoffer:
+                    default: ''
+                    description: |-
+                      webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is
+                       already answered. The server sets it when a session takes over an answered
+                       call from another one (a reloaded window reclaiming it from the call grace
+                       window, or a takeover hand-off), because the previous window's peer
+                       connection is gone. A client that holds no media for the call answers it
+                       with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer
+                       setting; a client that already holds a leg for the call ignores it. Cleared
+                       once answered, or after about 30s unanswered (the server then releases the
+                       leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer.
                     type: string
                 title: Call State
                 type: object
@@ -1920,12 +1992,20 @@ components:
                 $id: babelconnect.v1.WrapUpStatus.jsonschema.json
                 $schema: https://json-schema.org/draft/2020-12/schema
                 additionalProperties: false
-                description: WrapUpStatus is the after-call-work countdown.
+                description: |-
+                  `countdown_unknown` is set on an active wrap-up whose countdown the platform
+                   could not give: the agent is in wrap-up, `remaining_seconds` is 0 and means
+                   nothing, and a client renders the wrap-up without a countdown. Unset (the
+                   default, and all an older server sends) means `remaining_seconds` is the
+                   countdown.
                 patternProperties:
                   ^(can_cancel)$:
                     default: false
                     type: boolean
                   ^(can_extend)$:
+                    default: false
+                    type: boolean
+                  ^(countdown_unknown)$:
                     default: false
                     type: boolean
                   ^(last_call_type)$:
@@ -1949,6 +2029,9 @@ components:
                   canExtend:
                     default: false
                     type: boolean
+                  countdownUnknown:
+                    default: false
+                    type: boolean
                   lastCallType:
                     default: ''
                     type: string
@@ -1960,7 +2043,7 @@ components:
                       - pattern: ^-?[0-9]+$
                         type: string
                     default: 0
-                title: Wrap Up Status
+                title: WrapUpStatus is the after-call-work countdown.
                 type: object
             title: Patch
             type: object
@@ -2066,6 +2149,19 @@ components:
                     ^(webrtc_offer)$:
                       default: ''
                       type: string
+                    ^(webrtc_reoffer)$:
+                      default: ''
+                      description: |-
+                        webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is
+                         already answered. The server sets it when a session takes over an answered
+                         call from another one (a reloaded window reclaiming it from the call grace
+                         window, or a takeover hand-off), because the previous window's peer
+                         connection is gone. A client that holds no media for the call answers it
+                         with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer
+                         setting; a client that already holds a leg for the call ignores it. Cleared
+                         once answered, or after about 30s unanswered (the server then releases the
+                         leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer.
+                      type: string
                   properties:
                     anonymous:
                       default: false
@@ -2192,6 +2288,19 @@ components:
                     webrtcOffer:
                       default: ''
                       type: string
+                    webrtcReoffer:
+                      default: ''
+                      description: |-
+                        webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is
+                         already answered. The server sets it when a session takes over an answered
+                         call from another one (a reloaded window reclaiming it from the call grace
+                         window, or a takeover hand-off), because the previous window's peer
+                         connection is gone. A client that holds no media for the call answers it
+                         with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer
+                         setting; a client that already holds a leg for the call ignores it. Cleared
+                         once answered, or after about 30s unanswered (the server then releases the
+                         leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer.
+                      type: string
                   title: Call State
                   type: object
                 type: array
@@ -2209,12 +2318,20 @@ components:
                 $id: babelconnect.v1.WrapUpStatus.jsonschema.json
                 $schema: https://json-schema.org/draft/2020-12/schema
                 additionalProperties: false
-                description: WrapUpStatus is the after-call-work countdown.
+                description: |-
+                  `countdown_unknown` is set on an active wrap-up whose countdown the platform
+                   could not give: the agent is in wrap-up, `remaining_seconds` is 0 and means
+                   nothing, and a client renders the wrap-up without a countdown. Unset (the
+                   default, and all an older server sends) means `remaining_seconds` is the
+                   countdown.
                 patternProperties:
                   ^(can_cancel)$:
                     default: false
                     type: boolean
                   ^(can_extend)$:
+                    default: false
+                    type: boolean
+                  ^(countdown_unknown)$:
                     default: false
                     type: boolean
                   ^(last_call_type)$:
@@ -2238,6 +2355,9 @@ components:
                   canExtend:
                     default: false
                     type: boolean
+                  countdownUnknown:
+                    default: false
+                    type: boolean
                   lastCallType:
                     default: ''
                     type: string
@@ -2249,7 +2369,7 @@ components:
                       - pattern: ^-?[0-9]+$
                         type: string
                     default: 0
-                title: Wrap Up Status
+                title: WrapUpStatus is the after-call-work countdown.
                 type: object
             properties:
               activeCalls:
@@ -2318,6 +2438,19 @@ components:
                     ^(webrtc_offer)$:
                       default: ''
                       type: string
+                    ^(webrtc_reoffer)$:
+                      default: ''
+                      description: |-
+                        webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is
+                         already answered. The server sets it when a session takes over an answered
+                         call from another one (a reloaded window reclaiming it from the call grace
+                         window, or a takeover hand-off), because the previous window's peer
+                         connection is gone. A client that holds no media for the call answers it
+                         with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer
+                         setting; a client that already holds a leg for the call ignores it. Cleared
+                         once answered, or after about 30s unanswered (the server then releases the
+                         leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer.
+                      type: string
                   properties:
                     anonymous:
                       default: false
@@ -2443,6 +2576,19 @@ components:
                       type: string
                     webrtcOffer:
                       default: ''
+                      type: string
+                    webrtcReoffer:
+                      default: ''
+                      description: |-
+                        webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is
+                         already answered. The server sets it when a session takes over an answered
+                         call from another one (a reloaded window reclaiming it from the call grace
+                         window, or a takeover hand-off), because the previous window's peer
+                         connection is gone. A client that holds no media for the call answers it
+                         with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer
+                         setting; a client that already holds a leg for the call ignores it. Cleared
+                         once answered, or after about 30s unanswered (the server then releases the
+                         leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer.
                       type: string
                   title: Call State
                   type: object
@@ -3509,12 +3655,20 @@ components:
                 $id: babelconnect.v1.WrapUpStatus.jsonschema.json
                 $schema: https://json-schema.org/draft/2020-12/schema
                 additionalProperties: false
-                description: WrapUpStatus is the after-call-work countdown.
+                description: |-
+                  `countdown_unknown` is set on an active wrap-up whose countdown the platform
+                   could not give: the agent is in wrap-up, `remaining_seconds` is 0 and means
+                   nothing, and a client renders the wrap-up without a countdown. Unset (the
+                   default, and all an older server sends) means `remaining_seconds` is the
+                   countdown.
                 patternProperties:
                   ^(can_cancel)$:
                     default: false
                     type: boolean
                   ^(can_extend)$:
+                    default: false
+                    type: boolean
+                  ^(countdown_unknown)$:
                     default: false
                     type: boolean
                   ^(last_call_type)$:
@@ -3538,6 +3692,9 @@ components:
                   canExtend:
                     default: false
                     type: boolean
+                  countdownUnknown:
+                    default: false
+                    type: boolean
                   lastCallType:
                     default: ''
                     type: string
@@ -3549,7 +3706,7 @@ components:
                       - pattern: ^-?[0-9]+$
                         type: string
                     default: 0
-                title: Wrap Up Status
+                title: WrapUpStatus is the after-call-work countdown.
                 type: object
             title: Agent View
             type: object
