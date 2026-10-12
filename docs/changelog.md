@@ -10,6 +10,28 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.46.1 — 2026-10-12
+
+- **A transferred call names who transferred it.** `CallState.invitedBy` names the colleague who
+  brought you onto the call (a blind transfer, a consult or a conference add) when exactly one
+  colleague can be named; otherwise it stays empty rather than guessing. `CallState.handedOver`
+  turns true once that colleague has left and you are alone with the customer.
+- **`CallState.customerNumber`** is the customer's number on an inbound or an outbound call, never
+  an agent's, and **`CallState.conversationId`** identifies the conversation, shared by its transfer
+  and conference legs.
+- **A history entry names the agent and the queue.** `CallRecord.agentName` is the last agent
+  connected on the call (after an answered transfer, the agent it ended with) and
+  `CallRecord.queueName` the queue; `queueName` stays empty where the phone system does not report it.
+- **Every error now says which command it answers (`command`), so with two actions in flight you
+  can tell which one failed.**
+- **`canCancel` and `canExtend` on a wrap-up are now what cancelling or extending it answers.** A
+  cancel the account's wrap-up settings forbid is refused with the new code
+  `wrap_up_cancel_not_enabled`, an extend they forbid with `wrap_up_extend_capped`. Cancel is
+  enforced only for accounts that have saved their wrap-up settings; save them (even unchanged) to
+  enforce.
+- **The docs say what the transfer-target list contains:** agents available at the moment you ask,
+  no live updates (ask again before transferring), and at most 100 agents and 100 applications.
+
 ## 0.46.0 — 2026-10-11
 
 - **Holding your own call in a conference no longer plays hold music to everyone else.** With two or
