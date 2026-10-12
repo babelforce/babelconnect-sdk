@@ -160,7 +160,13 @@ See the [conference recipe](../guides/recipes#a-conference-panel).
 A `wrapUp` patch opens after-call work with `active`, `remainingSeconds` and `lastCallType`.
 Render a local countdown; updates are not guaranteed every second. Reconcile to new server values,
 including extensions. A local zero is only a display value: wait for `active: false` to confirm
-wrap-up ended. Show Extend/Cancel only when `canExtend`/`canCancel` allow them.
+wrap-up ended. Show Extend/Cancel only when `canExtend`/`canCancel` allow them. The two flags are the
+account's wrap-up settings for this call's direction, and they are what the commands answer: a cancel
+while `canCancel` is false is refused with `wrap_up_cancel_not_enabled`, and an extend while `canExtend` is
+false with `wrap_up_extend_capped` and an empty `message`. The settings are read again with every
+wrap-up, so a changed setting applies from the next one. If they cannot be read at all, both flags
+are false and both commands are refused; an account whose wrap-up settings were never saved has every
+flag false.
 
 ## Consuming it
 
