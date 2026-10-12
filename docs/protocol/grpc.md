@@ -54,6 +54,7 @@ This is the canonical data-model reference (`AgentView`, `CallState`, `Command`,
     - [HoldConferenceMember](#babelconnect-v1-HoldConferenceMember)
     - [IceServer](#babelconnect-v1-IceServer)
     - [Identity](#babelconnect-v1-Identity)
+    - [InvitedBy](#babelconnect-v1-InvitedBy)
     - [JoinCampaign](#babelconnect-v1-JoinCampaign)
     - [Keepalive](#babelconnect-v1-Keepalive)
     - [KickConferenceMember](#babelconnect-v1-KickConferenceMember)
@@ -340,6 +341,10 @@ CallState is one call as the server sees it. Replace-by-id on upsert.
 | ice_servers | [IceServer](#babelconnect-v1-IceServer) | repeated | STUN/TURN servers the client applies; for off-host NAT traversal |
 | can_transfer_to_application | [bool](#scalar-value-types) |  | can_transfer_to_application is server-computed: true for inbound calls and taken callbacks (source == CALL_SOURCE_CALLBACK), false otherwise. Plain outbound calls must not be offered application (IVR module) transfer targets — forwarding them into a queue module strands the agent. Clients gate the &#34;App&#34; transfer-target segment on this flag instead of re-deriving the rule from direction/source themselves. |
 | webrtc_reoffer | [string](#scalar-value-types) |  | webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is already answered. The server sets it when a session takes over an answered call from another one (a reloaded window reclaiming it from the call grace window, or a takeover hand-off), because the previous window&#39;s peer connection is gone. A client that holds no media for the call answers it with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer setting; a client that already holds a leg for the call ignores it. Cleared once answered, or after about 30s unanswered (the server then releases the leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer. |
+| invited_by | [InvitedBy](#babelconnect-v1-InvitedBy) |  | invited_by is the agent who brought this agent onto the call: the colleague who transferred it (blind or after a consult) or added this agent to a conference. On the receiving side these are one and the same leg — a transfer started in babelConnect reaches the target as a conference invite (source CALL_SOURCE_CONFERENCE) — so the field is named for what is known, not for the intent. Read from the conference push, decided once on the first push that shows this agent&#39;s own member still ringing (`pending`) and no other agent member still joining (`pending`): set only when exactly ONE other agent member is `added` then, never overwritten. A push where another agent is still joining decides nothing, since that agent may be the inviter. After such a wait the agent is named only if it was the one agent seen joining and nobody joined beside an agent already `added`; anything else may be a fellow invitee and names nobody. Unset when that is not decidable (no conference push, a reload after the invite, this agent answering while another agent was still joining, two or more agents already in the call): absent rather than wrong. |
+| customer_number | [string](#scalar-value-types) |  | customer_number is the external party&#39;s number, whatever the direction: the customer leg&#39;s `from` on an inbound call, its `to` on an outbound one; else the number of the one live non-agent member of this call&#39;s conference. Never an agent&#39;s own number and never the SIP INVITE&#39;s From, so it stays the customer&#39;s across transfers, where `from`/`to` follow the leg. Empty when nothing names the customer. Set once and not cleared. A caller who withheld their number is NOT filtered out: the field carries whatever number the platform sent for the customer leg (on an inbound call the same value as `from`), and `anonymous` says it was withheld. A client that hides a withheld number must hide this field too. |
+| conversation_id | [string](#scalar-value-types) |  | conversation_id is the platform conversation this leg belongs to (`conversationId` on the platform&#39;s call; the same id the call reporting API carries). Transfer and conference legs carry their parent call&#39;s conversation id, so it is the stable key across leg swaps. Empty until a push names it. |
+| handed_over | [bool](#scalar-value-types) |  | handed_over is true once the agent in `invited_by` has left and this agent is alone with the customer: a completed transfer, warm or cold, as opposed to a colleague who added this agent and is still on the call. Latches true. The platform does not record why the inviter left, so an inviter whose line dropped reads the same — for the receiver that is the same outcome. |
 
 
 
@@ -814,6 +819,22 @@ host ICE candidates. Empty in the in-cluster/LAN case.
 | state | [AgentState](#babelconnect-v1-AgentState) |  | current presence |
 | account_name | [string](#scalar-value-types) |  | account / company display name, when known |
 | accounts | [Account](#babelconnect-v1-Account) | repeated | accounts this agent may switch to |
+
+
+
+
+
+
+
+### InvitedBy {#babelconnect-v1-InvitedBy}
+InvitedBy names the agent who brought this agent onto a call
+(CallState.invited_by).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| agent_id | [string](#scalar-value-types) |  | agent UUID, as ConferenceMember.agent_id carries it |
+| display | [string](#scalar-value-types) |  | the agent&#39;s name as the conference member list renders it |
 
 
 

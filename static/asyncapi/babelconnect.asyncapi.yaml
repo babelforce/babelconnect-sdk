@@ -182,12 +182,44 @@ components:
                        Clients gate the "App" transfer-target segment on this
                        flag instead of re-deriving the rule from direction/source themselves.
                     type: boolean
+                  ^(conversation_id)$:
+                    default: ''
+                    description: |-
+                      conversation_id is the platform conversation this leg belongs to
+                       (`conversationId` on the platform's call; the same id the call reporting
+                       API carries). Transfer and conference legs carry their parent call's
+                       conversation id, so it is the stable key across leg swaps. Empty until a
+                       push names it.
+                    type: string
+                  ^(customer_number)$:
+                    default: ''
+                    description: |-
+                      customer_number is the external party's number, whatever the direction:
+                       the customer leg's `from` on an inbound call, its `to` on an outbound one;
+                       else the number of the one live non-agent member of this call's
+                       conference. Never an agent's own number and never the SIP INVITE's From,
+                       so it stays the customer's across transfers, where `from`/`to` follow the
+                       leg. Empty when nothing names the customer. Set once and not cleared.
+                       A caller who withheld their number is NOT filtered out: the field carries
+                       whatever number the platform sent for the customer leg (on an inbound call
+                       the same value as `from`), and `anonymous` says it was withheld. A client
+                       that hides a withheld number must hide this field too.
+                    type: string
                   ^(established_at)$:
                     anyOf:
                       - type: integer
                       - pattern: ^-?[0-9]+$
                         type: string
                     default: 0
+                  ^(handed_over)$:
+                    default: false
+                    description: |-
+                      handed_over is true once the agent in `invited_by` has left and this agent
+                       is alone with the customer: a completed transfer, warm or cold, as opposed
+                       to a colleague who added this agent and is still on the call. Latches true.
+                       The platform does not record why the inviter left, so an inviter whose line
+                       dropped reads the same — for the receiver that is the same outcome.
+                    type: boolean
                   ^(ice_servers)$:
                     items:
                       $id: babelconnect.v1.IceServer.jsonschema.json
@@ -212,6 +244,40 @@ components:
                       title: Ice Server
                       type: object
                     type: array
+                  ^(invited_by)$:
+                    description: |-
+                      invited_by is the agent who brought this agent onto the call: the colleague
+                       who transferred it (blind or after a consult) or added this agent to a
+                       conference. On the receiving side these are one and the same leg — a
+                       transfer started in babelConnect reaches the target as a conference invite
+                       (source CALL_SOURCE_CONFERENCE) — so the field is named for what is known,
+                       not for the intent. Read from the conference push, decided once on the
+                       first push that shows this agent's own member still ringing (`pending`)
+                       and no other agent member still joining (`pending`): set only when exactly
+                       ONE other agent member is `added` then, never overwritten. A push where
+                       another agent is still joining decides nothing, since that agent may be the
+                       inviter. After such a wait the agent is named only if it was the one agent
+                       seen joining and nobody joined beside an agent already `added`; anything
+                       else may be a fellow invitee and names nobody. Unset when that is
+                       not decidable (no conference push, a reload after the invite, this agent
+                       answering while another agent was still joining, two or more agents
+                       already in the call): absent rather than wrong.
+                    $id: babelconnect.v1.InvitedBy.jsonschema.json
+                    $schema: https://json-schema.org/draft/2020-12/schema
+                    additionalProperties: false
+                    patternProperties:
+                      ^(agent_id)$:
+                        default: ''
+                        type: string
+                    properties:
+                      agentId:
+                        default: ''
+                        type: string
+                      display:
+                        default: ''
+                        type: string
+                    title: Invited By
+                    type: object
                   ^(on_hold)$:
                     default: false
                     type: boolean
@@ -258,6 +324,29 @@ components:
                        Clients gate the "App" transfer-target segment on this
                        flag instead of re-deriving the rule from direction/source themselves.
                     type: boolean
+                  conversationId:
+                    default: ''
+                    description: |-
+                      conversation_id is the platform conversation this leg belongs to
+                       (`conversationId` on the platform's call; the same id the call reporting
+                       API carries). Transfer and conference legs carry their parent call's
+                       conversation id, so it is the stable key across leg swaps. Empty until a
+                       push names it.
+                    type: string
+                  customerNumber:
+                    default: ''
+                    description: |-
+                      customer_number is the external party's number, whatever the direction:
+                       the customer leg's `from` on an inbound call, its `to` on an outbound one;
+                       else the number of the one live non-agent member of this call's
+                       conference. Never an agent's own number and never the SIP INVITE's From,
+                       so it stays the customer's across transfers, where `from`/`to` follow the
+                       leg. Empty when nothing names the customer. Set once and not cleared.
+                       A caller who withheld their number is NOT filtered out: the field carries
+                       whatever number the platform sent for the customer leg (on an inbound call
+                       the same value as `from`), and `anonymous` says it was withheld. A client
+                       that hides a withheld number must hide this field too.
+                    type: string
                   direction:
                     anyOf:
                       - pattern: ^CALL_DIRECTION_UNSPECIFIED$
@@ -280,6 +369,15 @@ components:
                   from:
                     default: ''
                     type: string
+                  handedOver:
+                    default: false
+                    description: |-
+                      handed_over is true once the agent in `invited_by` has left and this agent
+                       is alone with the customer: a completed transfer, warm or cold, as opposed
+                       to a colleague who added this agent and is still on the call. Latches true.
+                       The platform does not record why the inviter left, so an inviter whose line
+                       dropped reads the same — for the receiver that is the same outcome.
+                    type: boolean
                   iceServers:
                     items:
                       $id: babelconnect.v1.IceServer.jsonschema.json
@@ -307,6 +405,40 @@ components:
                   id:
                     default: ''
                     type: string
+                  invitedBy:
+                    description: |-
+                      invited_by is the agent who brought this agent onto the call: the colleague
+                       who transferred it (blind or after a consult) or added this agent to a
+                       conference. On the receiving side these are one and the same leg — a
+                       transfer started in babelConnect reaches the target as a conference invite
+                       (source CALL_SOURCE_CONFERENCE) — so the field is named for what is known,
+                       not for the intent. Read from the conference push, decided once on the
+                       first push that shows this agent's own member still ringing (`pending`)
+                       and no other agent member still joining (`pending`): set only when exactly
+                       ONE other agent member is `added` then, never overwritten. A push where
+                       another agent is still joining decides nothing, since that agent may be the
+                       inviter. After such a wait the agent is named only if it was the one agent
+                       seen joining and nobody joined beside an agent already `added`; anything
+                       else may be a fellow invitee and names nobody. Unset when that is
+                       not decidable (no conference push, a reload after the invite, this agent
+                       answering while another agent was still joining, two or more agents
+                       already in the call): absent rather than wrong.
+                    $id: babelconnect.v1.InvitedBy.jsonschema.json
+                    $schema: https://json-schema.org/draft/2020-12/schema
+                    additionalProperties: false
+                    patternProperties:
+                      ^(agent_id)$:
+                        default: ''
+                        type: string
+                    properties:
+                      agentId:
+                        default: ''
+                        type: string
+                      display:
+                        default: ''
+                        type: string
+                    title: Invited By
+                    type: object
                   muted:
                     default: false
                     type: boolean
@@ -1355,12 +1487,44 @@ components:
                        Clients gate the "App" transfer-target segment on this
                        flag instead of re-deriving the rule from direction/source themselves.
                     type: boolean
+                  ^(conversation_id)$:
+                    default: ''
+                    description: |-
+                      conversation_id is the platform conversation this leg belongs to
+                       (`conversationId` on the platform's call; the same id the call reporting
+                       API carries). Transfer and conference legs carry their parent call's
+                       conversation id, so it is the stable key across leg swaps. Empty until a
+                       push names it.
+                    type: string
+                  ^(customer_number)$:
+                    default: ''
+                    description: |-
+                      customer_number is the external party's number, whatever the direction:
+                       the customer leg's `from` on an inbound call, its `to` on an outbound one;
+                       else the number of the one live non-agent member of this call's
+                       conference. Never an agent's own number and never the SIP INVITE's From,
+                       so it stays the customer's across transfers, where `from`/`to` follow the
+                       leg. Empty when nothing names the customer. Set once and not cleared.
+                       A caller who withheld their number is NOT filtered out: the field carries
+                       whatever number the platform sent for the customer leg (on an inbound call
+                       the same value as `from`), and `anonymous` says it was withheld. A client
+                       that hides a withheld number must hide this field too.
+                    type: string
                   ^(established_at)$:
                     anyOf:
                       - type: integer
                       - pattern: ^-?[0-9]+$
                         type: string
                     default: 0
+                  ^(handed_over)$:
+                    default: false
+                    description: |-
+                      handed_over is true once the agent in `invited_by` has left and this agent
+                       is alone with the customer: a completed transfer, warm or cold, as opposed
+                       to a colleague who added this agent and is still on the call. Latches true.
+                       The platform does not record why the inviter left, so an inviter whose line
+                       dropped reads the same — for the receiver that is the same outcome.
+                    type: boolean
                   ^(ice_servers)$:
                     items:
                       $id: babelconnect.v1.IceServer.jsonschema.json
@@ -1385,6 +1549,40 @@ components:
                       title: Ice Server
                       type: object
                     type: array
+                  ^(invited_by)$:
+                    description: |-
+                      invited_by is the agent who brought this agent onto the call: the colleague
+                       who transferred it (blind or after a consult) or added this agent to a
+                       conference. On the receiving side these are one and the same leg — a
+                       transfer started in babelConnect reaches the target as a conference invite
+                       (source CALL_SOURCE_CONFERENCE) — so the field is named for what is known,
+                       not for the intent. Read from the conference push, decided once on the
+                       first push that shows this agent's own member still ringing (`pending`)
+                       and no other agent member still joining (`pending`): set only when exactly
+                       ONE other agent member is `added` then, never overwritten. A push where
+                       another agent is still joining decides nothing, since that agent may be the
+                       inviter. After such a wait the agent is named only if it was the one agent
+                       seen joining and nobody joined beside an agent already `added`; anything
+                       else may be a fellow invitee and names nobody. Unset when that is
+                       not decidable (no conference push, a reload after the invite, this agent
+                       answering while another agent was still joining, two or more agents
+                       already in the call): absent rather than wrong.
+                    $id: babelconnect.v1.InvitedBy.jsonschema.json
+                    $schema: https://json-schema.org/draft/2020-12/schema
+                    additionalProperties: false
+                    patternProperties:
+                      ^(agent_id)$:
+                        default: ''
+                        type: string
+                    properties:
+                      agentId:
+                        default: ''
+                        type: string
+                      display:
+                        default: ''
+                        type: string
+                    title: Invited By
+                    type: object
                   ^(on_hold)$:
                     default: false
                     type: boolean
@@ -1431,6 +1629,29 @@ components:
                        Clients gate the "App" transfer-target segment on this
                        flag instead of re-deriving the rule from direction/source themselves.
                     type: boolean
+                  conversationId:
+                    default: ''
+                    description: |-
+                      conversation_id is the platform conversation this leg belongs to
+                       (`conversationId` on the platform's call; the same id the call reporting
+                       API carries). Transfer and conference legs carry their parent call's
+                       conversation id, so it is the stable key across leg swaps. Empty until a
+                       push names it.
+                    type: string
+                  customerNumber:
+                    default: ''
+                    description: |-
+                      customer_number is the external party's number, whatever the direction:
+                       the customer leg's `from` on an inbound call, its `to` on an outbound one;
+                       else the number of the one live non-agent member of this call's
+                       conference. Never an agent's own number and never the SIP INVITE's From,
+                       so it stays the customer's across transfers, where `from`/`to` follow the
+                       leg. Empty when nothing names the customer. Set once and not cleared.
+                       A caller who withheld their number is NOT filtered out: the field carries
+                       whatever number the platform sent for the customer leg (on an inbound call
+                       the same value as `from`), and `anonymous` says it was withheld. A client
+                       that hides a withheld number must hide this field too.
+                    type: string
                   direction:
                     anyOf:
                       - pattern: ^CALL_DIRECTION_UNSPECIFIED$
@@ -1453,6 +1674,15 @@ components:
                   from:
                     default: ''
                     type: string
+                  handedOver:
+                    default: false
+                    description: |-
+                      handed_over is true once the agent in `invited_by` has left and this agent
+                       is alone with the customer: a completed transfer, warm or cold, as opposed
+                       to a colleague who added this agent and is still on the call. Latches true.
+                       The platform does not record why the inviter left, so an inviter whose line
+                       dropped reads the same — for the receiver that is the same outcome.
+                    type: boolean
                   iceServers:
                     items:
                       $id: babelconnect.v1.IceServer.jsonschema.json
@@ -1480,6 +1710,40 @@ components:
                   id:
                     default: ''
                     type: string
+                  invitedBy:
+                    description: |-
+                      invited_by is the agent who brought this agent onto the call: the colleague
+                       who transferred it (blind or after a consult) or added this agent to a
+                       conference. On the receiving side these are one and the same leg — a
+                       transfer started in babelConnect reaches the target as a conference invite
+                       (source CALL_SOURCE_CONFERENCE) — so the field is named for what is known,
+                       not for the intent. Read from the conference push, decided once on the
+                       first push that shows this agent's own member still ringing (`pending`)
+                       and no other agent member still joining (`pending`): set only when exactly
+                       ONE other agent member is `added` then, never overwritten. A push where
+                       another agent is still joining decides nothing, since that agent may be the
+                       inviter. After such a wait the agent is named only if it was the one agent
+                       seen joining and nobody joined beside an agent already `added`; anything
+                       else may be a fellow invitee and names nobody. Unset when that is
+                       not decidable (no conference push, a reload after the invite, this agent
+                       answering while another agent was still joining, two or more agents
+                       already in the call): absent rather than wrong.
+                    $id: babelconnect.v1.InvitedBy.jsonschema.json
+                    $schema: https://json-schema.org/draft/2020-12/schema
+                    additionalProperties: false
+                    patternProperties:
+                      ^(agent_id)$:
+                        default: ''
+                        type: string
+                    properties:
+                      agentId:
+                        default: ''
+                        type: string
+                      display:
+                        default: ''
+                        type: string
+                    title: Invited By
+                    type: object
                   muted:
                     default: false
                     type: boolean
@@ -2100,12 +2364,44 @@ components:
                          Clients gate the "App" transfer-target segment on this
                          flag instead of re-deriving the rule from direction/source themselves.
                       type: boolean
+                    ^(conversation_id)$:
+                      default: ''
+                      description: |-
+                        conversation_id is the platform conversation this leg belongs to
+                         (`conversationId` on the platform's call; the same id the call reporting
+                         API carries). Transfer and conference legs carry their parent call's
+                         conversation id, so it is the stable key across leg swaps. Empty until a
+                         push names it.
+                      type: string
+                    ^(customer_number)$:
+                      default: ''
+                      description: |-
+                        customer_number is the external party's number, whatever the direction:
+                         the customer leg's `from` on an inbound call, its `to` on an outbound one;
+                         else the number of the one live non-agent member of this call's
+                         conference. Never an agent's own number and never the SIP INVITE's From,
+                         so it stays the customer's across transfers, where `from`/`to` follow the
+                         leg. Empty when nothing names the customer. Set once and not cleared.
+                         A caller who withheld their number is NOT filtered out: the field carries
+                         whatever number the platform sent for the customer leg (on an inbound call
+                         the same value as `from`), and `anonymous` says it was withheld. A client
+                         that hides a withheld number must hide this field too.
+                      type: string
                     ^(established_at)$:
                       anyOf:
                         - type: integer
                         - pattern: ^-?[0-9]+$
                           type: string
                       default: 0
+                    ^(handed_over)$:
+                      default: false
+                      description: |-
+                        handed_over is true once the agent in `invited_by` has left and this agent
+                         is alone with the customer: a completed transfer, warm or cold, as opposed
+                         to a colleague who added this agent and is still on the call. Latches true.
+                         The platform does not record why the inviter left, so an inviter whose line
+                         dropped reads the same — for the receiver that is the same outcome.
+                      type: boolean
                     ^(ice_servers)$:
                       items:
                         $id: babelconnect.v1.IceServer.jsonschema.json
@@ -2130,6 +2426,40 @@ components:
                         title: Ice Server
                         type: object
                       type: array
+                    ^(invited_by)$:
+                      description: |-
+                        invited_by is the agent who brought this agent onto the call: the colleague
+                         who transferred it (blind or after a consult) or added this agent to a
+                         conference. On the receiving side these are one and the same leg — a
+                         transfer started in babelConnect reaches the target as a conference invite
+                         (source CALL_SOURCE_CONFERENCE) — so the field is named for what is known,
+                         not for the intent. Read from the conference push, decided once on the
+                         first push that shows this agent's own member still ringing (`pending`)
+                         and no other agent member still joining (`pending`): set only when exactly
+                         ONE other agent member is `added` then, never overwritten. A push where
+                         another agent is still joining decides nothing, since that agent may be the
+                         inviter. After such a wait the agent is named only if it was the one agent
+                         seen joining and nobody joined beside an agent already `added`; anything
+                         else may be a fellow invitee and names nobody. Unset when that is
+                         not decidable (no conference push, a reload after the invite, this agent
+                         answering while another agent was still joining, two or more agents
+                         already in the call): absent rather than wrong.
+                      $id: babelconnect.v1.InvitedBy.jsonschema.json
+                      $schema: https://json-schema.org/draft/2020-12/schema
+                      additionalProperties: false
+                      patternProperties:
+                        ^(agent_id)$:
+                          default: ''
+                          type: string
+                      properties:
+                        agentId:
+                          default: ''
+                          type: string
+                        display:
+                          default: ''
+                          type: string
+                      title: Invited By
+                      type: object
                     ^(on_hold)$:
                       default: false
                       type: boolean
@@ -2176,6 +2506,29 @@ components:
                          Clients gate the "App" transfer-target segment on this
                          flag instead of re-deriving the rule from direction/source themselves.
                       type: boolean
+                    conversationId:
+                      default: ''
+                      description: |-
+                        conversation_id is the platform conversation this leg belongs to
+                         (`conversationId` on the platform's call; the same id the call reporting
+                         API carries). Transfer and conference legs carry their parent call's
+                         conversation id, so it is the stable key across leg swaps. Empty until a
+                         push names it.
+                      type: string
+                    customerNumber:
+                      default: ''
+                      description: |-
+                        customer_number is the external party's number, whatever the direction:
+                         the customer leg's `from` on an inbound call, its `to` on an outbound one;
+                         else the number of the one live non-agent member of this call's
+                         conference. Never an agent's own number and never the SIP INVITE's From,
+                         so it stays the customer's across transfers, where `from`/`to` follow the
+                         leg. Empty when nothing names the customer. Set once and not cleared.
+                         A caller who withheld their number is NOT filtered out: the field carries
+                         whatever number the platform sent for the customer leg (on an inbound call
+                         the same value as `from`), and `anonymous` says it was withheld. A client
+                         that hides a withheld number must hide this field too.
+                      type: string
                     direction:
                       anyOf:
                         - pattern: ^CALL_DIRECTION_UNSPECIFIED$
@@ -2198,6 +2551,15 @@ components:
                     from:
                       default: ''
                       type: string
+                    handedOver:
+                      default: false
+                      description: |-
+                        handed_over is true once the agent in `invited_by` has left and this agent
+                         is alone with the customer: a completed transfer, warm or cold, as opposed
+                         to a colleague who added this agent and is still on the call. Latches true.
+                         The platform does not record why the inviter left, so an inviter whose line
+                         dropped reads the same — for the receiver that is the same outcome.
+                      type: boolean
                     iceServers:
                       items:
                         $id: babelconnect.v1.IceServer.jsonschema.json
@@ -2225,6 +2587,40 @@ components:
                     id:
                       default: ''
                       type: string
+                    invitedBy:
+                      description: |-
+                        invited_by is the agent who brought this agent onto the call: the colleague
+                         who transferred it (blind or after a consult) or added this agent to a
+                         conference. On the receiving side these are one and the same leg — a
+                         transfer started in babelConnect reaches the target as a conference invite
+                         (source CALL_SOURCE_CONFERENCE) — so the field is named for what is known,
+                         not for the intent. Read from the conference push, decided once on the
+                         first push that shows this agent's own member still ringing (`pending`)
+                         and no other agent member still joining (`pending`): set only when exactly
+                         ONE other agent member is `added` then, never overwritten. A push where
+                         another agent is still joining decides nothing, since that agent may be the
+                         inviter. After such a wait the agent is named only if it was the one agent
+                         seen joining and nobody joined beside an agent already `added`; anything
+                         else may be a fellow invitee and names nobody. Unset when that is
+                         not decidable (no conference push, a reload after the invite, this agent
+                         answering while another agent was still joining, two or more agents
+                         already in the call): absent rather than wrong.
+                      $id: babelconnect.v1.InvitedBy.jsonschema.json
+                      $schema: https://json-schema.org/draft/2020-12/schema
+                      additionalProperties: false
+                      patternProperties:
+                        ^(agent_id)$:
+                          default: ''
+                          type: string
+                      properties:
+                        agentId:
+                          default: ''
+                          type: string
+                        display:
+                          default: ''
+                          type: string
+                      title: Invited By
+                      type: object
                     muted:
                       default: false
                       type: boolean
@@ -2389,12 +2785,44 @@ components:
                          Clients gate the "App" transfer-target segment on this
                          flag instead of re-deriving the rule from direction/source themselves.
                       type: boolean
+                    ^(conversation_id)$:
+                      default: ''
+                      description: |-
+                        conversation_id is the platform conversation this leg belongs to
+                         (`conversationId` on the platform's call; the same id the call reporting
+                         API carries). Transfer and conference legs carry their parent call's
+                         conversation id, so it is the stable key across leg swaps. Empty until a
+                         push names it.
+                      type: string
+                    ^(customer_number)$:
+                      default: ''
+                      description: |-
+                        customer_number is the external party's number, whatever the direction:
+                         the customer leg's `from` on an inbound call, its `to` on an outbound one;
+                         else the number of the one live non-agent member of this call's
+                         conference. Never an agent's own number and never the SIP INVITE's From,
+                         so it stays the customer's across transfers, where `from`/`to` follow the
+                         leg. Empty when nothing names the customer. Set once and not cleared.
+                         A caller who withheld their number is NOT filtered out: the field carries
+                         whatever number the platform sent for the customer leg (on an inbound call
+                         the same value as `from`), and `anonymous` says it was withheld. A client
+                         that hides a withheld number must hide this field too.
+                      type: string
                     ^(established_at)$:
                       anyOf:
                         - type: integer
                         - pattern: ^-?[0-9]+$
                           type: string
                       default: 0
+                    ^(handed_over)$:
+                      default: false
+                      description: |-
+                        handed_over is true once the agent in `invited_by` has left and this agent
+                         is alone with the customer: a completed transfer, warm or cold, as opposed
+                         to a colleague who added this agent and is still on the call. Latches true.
+                         The platform does not record why the inviter left, so an inviter whose line
+                         dropped reads the same — for the receiver that is the same outcome.
+                      type: boolean
                     ^(ice_servers)$:
                       items:
                         $id: babelconnect.v1.IceServer.jsonschema.json
@@ -2419,6 +2847,40 @@ components:
                         title: Ice Server
                         type: object
                       type: array
+                    ^(invited_by)$:
+                      description: |-
+                        invited_by is the agent who brought this agent onto the call: the colleague
+                         who transferred it (blind or after a consult) or added this agent to a
+                         conference. On the receiving side these are one and the same leg — a
+                         transfer started in babelConnect reaches the target as a conference invite
+                         (source CALL_SOURCE_CONFERENCE) — so the field is named for what is known,
+                         not for the intent. Read from the conference push, decided once on the
+                         first push that shows this agent's own member still ringing (`pending`)
+                         and no other agent member still joining (`pending`): set only when exactly
+                         ONE other agent member is `added` then, never overwritten. A push where
+                         another agent is still joining decides nothing, since that agent may be the
+                         inviter. After such a wait the agent is named only if it was the one agent
+                         seen joining and nobody joined beside an agent already `added`; anything
+                         else may be a fellow invitee and names nobody. Unset when that is
+                         not decidable (no conference push, a reload after the invite, this agent
+                         answering while another agent was still joining, two or more agents
+                         already in the call): absent rather than wrong.
+                      $id: babelconnect.v1.InvitedBy.jsonschema.json
+                      $schema: https://json-schema.org/draft/2020-12/schema
+                      additionalProperties: false
+                      patternProperties:
+                        ^(agent_id)$:
+                          default: ''
+                          type: string
+                      properties:
+                        agentId:
+                          default: ''
+                          type: string
+                        display:
+                          default: ''
+                          type: string
+                      title: Invited By
+                      type: object
                     ^(on_hold)$:
                       default: false
                       type: boolean
@@ -2465,6 +2927,29 @@ components:
                          Clients gate the "App" transfer-target segment on this
                          flag instead of re-deriving the rule from direction/source themselves.
                       type: boolean
+                    conversationId:
+                      default: ''
+                      description: |-
+                        conversation_id is the platform conversation this leg belongs to
+                         (`conversationId` on the platform's call; the same id the call reporting
+                         API carries). Transfer and conference legs carry their parent call's
+                         conversation id, so it is the stable key across leg swaps. Empty until a
+                         push names it.
+                      type: string
+                    customerNumber:
+                      default: ''
+                      description: |-
+                        customer_number is the external party's number, whatever the direction:
+                         the customer leg's `from` on an inbound call, its `to` on an outbound one;
+                         else the number of the one live non-agent member of this call's
+                         conference. Never an agent's own number and never the SIP INVITE's From,
+                         so it stays the customer's across transfers, where `from`/`to` follow the
+                         leg. Empty when nothing names the customer. Set once and not cleared.
+                         A caller who withheld their number is NOT filtered out: the field carries
+                         whatever number the platform sent for the customer leg (on an inbound call
+                         the same value as `from`), and `anonymous` says it was withheld. A client
+                         that hides a withheld number must hide this field too.
+                      type: string
                     direction:
                       anyOf:
                         - pattern: ^CALL_DIRECTION_UNSPECIFIED$
@@ -2487,6 +2972,15 @@ components:
                     from:
                       default: ''
                       type: string
+                    handedOver:
+                      default: false
+                      description: |-
+                        handed_over is true once the agent in `invited_by` has left and this agent
+                         is alone with the customer: a completed transfer, warm or cold, as opposed
+                         to a colleague who added this agent and is still on the call. Latches true.
+                         The platform does not record why the inviter left, so an inviter whose line
+                         dropped reads the same — for the receiver that is the same outcome.
+                      type: boolean
                     iceServers:
                       items:
                         $id: babelconnect.v1.IceServer.jsonschema.json
@@ -2514,6 +3008,40 @@ components:
                     id:
                       default: ''
                       type: string
+                    invitedBy:
+                      description: |-
+                        invited_by is the agent who brought this agent onto the call: the colleague
+                         who transferred it (blind or after a consult) or added this agent to a
+                         conference. On the receiving side these are one and the same leg — a
+                         transfer started in babelConnect reaches the target as a conference invite
+                         (source CALL_SOURCE_CONFERENCE) — so the field is named for what is known,
+                         not for the intent. Read from the conference push, decided once on the
+                         first push that shows this agent's own member still ringing (`pending`)
+                         and no other agent member still joining (`pending`): set only when exactly
+                         ONE other agent member is `added` then, never overwritten. A push where
+                         another agent is still joining decides nothing, since that agent may be the
+                         inviter. After such a wait the agent is named only if it was the one agent
+                         seen joining and nobody joined beside an agent already `added`; anything
+                         else may be a fellow invitee and names nobody. Unset when that is
+                         not decidable (no conference push, a reload after the invite, this agent
+                         answering while another agent was still joining, two or more agents
+                         already in the call): absent rather than wrong.
+                      $id: babelconnect.v1.InvitedBy.jsonschema.json
+                      $schema: https://json-schema.org/draft/2020-12/schema
+                      additionalProperties: false
+                      patternProperties:
+                        ^(agent_id)$:
+                          default: ''
+                          type: string
+                      properties:
+                        agentId:
+                          default: ''
+                          type: string
+                        display:
+                          default: ''
+                          type: string
+                      title: Invited By
+                      type: object
                     muted:
                       default: false
                       type: boolean

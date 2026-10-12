@@ -597,6 +597,26 @@
             "type": "string",
             "title": "webrtc_reoffer",
             "description": "webrtc_reoffer is an SDP offer for a FRESH media leg on a call that is\n already answered. The server sets it when a session takes over an answered\n call from another one (a reloaded window reclaiming it from the call grace\n window, or a takeover hand-off), because the previous window's peer\n connection is gone. A client that holds no media for the call answers it\n with AnswerCall{call_id, sdp}, without ringing and whatever its auto-answer\n setting; a client that already holds a leg for the call ignores it. Cleared\n once answered, or after about 30s unanswered (the server then releases the\n leg, answer_failed after). Never on a RINGING call, which uses webrtc_offer. (proto string)"
+          },
+          "invitedBy": {
+            "title": "invited_by",
+            "description": "invited_by is the agent who brought this agent onto the call: the colleague\n who transferred it (blind or after a consult) or added this agent to a\n conference. On the receiving side these are one and the same leg — a\n transfer started in babelConnect reaches the target as a conference invite\n (source CALL_SOURCE_CONFERENCE) — so the field is named for what is known,\n not for the intent. Read from the conference push, decided once on the\n first push that shows this agent's own member still ringing (`pending`)\n and no other agent member still joining (`pending`): set only when exactly\n ONE other agent member is `added` then, never overwritten. A push where\n another agent is still joining decides nothing, since that agent may be the\n inviter. After such a wait the agent is named only if it was the one agent\n seen joining and nobody joined beside an agent already `added`; anything\n else may be a fellow invitee and names nobody. Unset when that is\n not decidable (no conference push, a reload after the invite, this agent\n answering while another agent was still joining, two or more agents\n already in the call): absent rather than wrong. (proto babelconnect.v1.InvitedBy)",
+            "$ref": "#/components/schemas/babelconnect.v1.InvitedBy"
+          },
+          "customerNumber": {
+            "type": "string",
+            "title": "customer_number",
+            "description": "customer_number is the external party's number, whatever the direction:\n the customer leg's `from` on an inbound call, its `to` on an outbound one;\n else the number of the one live non-agent member of this call's\n conference. Never an agent's own number and never the SIP INVITE's From,\n so it stays the customer's across transfers, where `from`/`to` follow the\n leg. Empty when nothing names the customer. Set once and not cleared.\n A caller who withheld their number is NOT filtered out: the field carries\n whatever number the platform sent for the customer leg (on an inbound call\n the same value as `from`), and `anonymous` says it was withheld. A client\n that hides a withheld number must hide this field too. (proto string)"
+          },
+          "conversationId": {
+            "type": "string",
+            "title": "conversation_id",
+            "description": "conversation_id is the platform conversation this leg belongs to\n (`conversationId` on the platform's call; the same id the call reporting\n API carries). Transfer and conference legs carry their parent call's\n conversation id, so it is the stable key across leg swaps. Empty until a\n push names it. (proto string)"
+          },
+          "handedOver": {
+            "type": "boolean",
+            "title": "handed_over",
+            "description": "handed_over is true once the agent in `invited_by` has left and this agent\n is alone with the customer: a completed transfer, warm or cold, as opposed\n to a colleague who added this agent and is still on the call. Latches true.\n The platform does not record why the inviter left, so an inviter whose line\n dropped reads the same — for the receiver that is the same outcome. (proto bool)"
           }
         },
         "title": "CallState",
@@ -1706,6 +1726,24 @@
         },
         "title": "Identity",
         "additionalProperties": false
+      },
+      "babelconnect.v1.InvitedBy": {
+        "type": "object",
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "title": "agent_id",
+            "description": "agent UUID, as ConferenceMember.agent_id carries it (proto string)"
+          },
+          "display": {
+            "type": "string",
+            "title": "display",
+            "description": "the agent's name as the conference member list renders it (proto string)"
+          }
+        },
+        "title": "InvitedBy",
+        "additionalProperties": false,
+        "description": "InvitedBy names the agent who brought this agent onto a call\n (CallState.invited_by)."
       },
       "babelconnect.v1.JoinCampaign": {
         "type": "object",

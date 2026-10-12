@@ -1,0 +1,24 @@
+{
+  "$id": "babelconnect.v1.InvitedBy.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "InvitedBy names the agent who brought this agent onto a call\n (CallState.invited_by).",
+  "patternProperties": {
+    "^(agent_id)$": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "properties": {
+    "agentId": {
+      "default": "",
+      "type": "string"
+    },
+    "display": {
+      "default": "",
+      "type": "string"
+    }
+  },
+  "title": "Invited By",
+  "type": "object"
+}
