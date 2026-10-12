@@ -4,6 +4,10 @@
   "additionalProperties": false,
   "description": "CallRecord is one past call for the history list (a flattened conversation).",
   "patternProperties": {
+    "^(agent_name)$": {
+      "default": "",
+      "type": "string"
+    },
     "^(duration_ms)$": {
       "anyOf": [
         {
@@ -22,12 +26,20 @@
       "default": false,
       "type": "boolean"
     },
+    "^(queue_name)$": {
+      "default": "",
+      "type": "string"
+    },
     "^(recording_url)$": {
       "default": "",
       "type": "string"
     }
   },
   "properties": {
+    "agentName": {
+      "default": "",
+      "type": "string"
+    },
     "contact": {
       "default": "",
       "type": "string"
@@ -77,6 +89,10 @@
       "type": "boolean"
     },
     "id": {
+      "default": "",
+      "type": "string"
+    },
+    "queueName": {
       "default": "",
       "type": "string"
     },

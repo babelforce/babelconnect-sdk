@@ -306,6 +306,8 @@ CallRecord is one past call for the history list (a flattened conversation).
 | duration_ms | [int32](#scalar-value-types) |  |  |
 | has_recording | [bool](#scalar-value-types) |  |  |
 | recording_url | [string](#scalar-value-types) |  | playback URL when a recording exists |
+| agent_name | [string](#scalar-value-types) |  | the LAST agent connected on the call: after a transfer, the agent it ended with, not the one who transferred it; empty when no agent took the call |
+| queue_name | [string](#scalar-value-types) |  | the queue the call came through; empty for a call that was not queued, or when the platform does not report it |
 
 
 

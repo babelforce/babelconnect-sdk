@@ -166,8 +166,17 @@ const rows = (await bc.getHistory()).sort((a, b) => Number(b.time) - Number(a.ti
   when: new Date(Number(c.time) * 1000),
   durationMs: c.durationMs,
   playback: c.hasRecording ? c.recordingUrl : undefined,
+  agent: c.agentName || undefined,
+  queue: c.queueName || undefined,
 }));
 ```
+
+`agentName` is the **last** agent the call was connected to. After a transfer, that is the agent the
+call ended with, not the agent who transferred it; an agent who was offered the call or transferred
+to and never answered does not count. A callback is its own entry, and its agent is not shown on the
+original call. `queueName` is the queue the call came through. Either one is empty when there is
+nothing to report: no agent took the call, the call was not queued, or the platform is older than
+these fields. An empty value is not an error.
 
 History is fetched, not stored in `AgentView`. TS helpers unwrap response lists. Order isn't
 assumed here; [paging](../concepts/intents#reference-data-unary--not-intents) explains page sizes

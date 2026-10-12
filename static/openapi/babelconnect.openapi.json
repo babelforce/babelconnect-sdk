@@ -460,6 +460,16 @@
             "type": "string",
             "title": "recording_url",
             "description": "playback URL when a recording exists (proto string)"
+          },
+          "agentName": {
+            "type": "string",
+            "title": "agent_name",
+            "description": "the LAST agent connected on the call: after a transfer, the agent it ended with, not the one who transferred it; empty when no agent took the call (proto string)"
+          },
+          "queueName": {
+            "type": "string",
+            "title": "queue_name",
+            "description": "the queue the call came through; empty for a call that was not queued, or when the platform does not report it (proto string)"
           }
         },
         "title": "CallRecord",
