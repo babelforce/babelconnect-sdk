@@ -71,7 +71,9 @@ keys the embed bridge sets via `session.set` (see [SMS `session`](#messaging-sms
 **agent** as `agentId`, or a **queue / voice application** as `applicationId`. In TypeScript, `to` is the
 second argument and `agentId` / `applicationId` are `opts` keys (`transfer(id, to, { agentId })`); in Go all
 three are positional params — `Transfer(id, to, agentID, applicationID, warm)`. `warm: true` is an attended
-(warm) transfer; `false` is blind (cold).
+(warm) transfer; `false` is blind (cold). To offer the agent a list to pick from, use
+[`getTransferTargets`](#transfer-targets); it lists only colleagues whose line status
+was Available when you asked.
 
 **Warm transfer is a two-step consult.** An attended (`warm: true`) transfer isn't a single call: first
 `addConferenceMember` to pull the target into a conference (the customer is parked on hold while you consult
@@ -168,12 +170,14 @@ without producing a patch. They're also the operations exposed over
 [REST/OpenAPI](pathname:///reference/rest/) — `GET /v1/agent/history`, `GET /v1/agent/sms/thread`, and
 `GET /v1/agent/phonebook` (plus `GET /v1/agent/state` for the snapshot and `POST /v1/agent/sms` to send a
 message), each with the same bearer token (see [Authentication](../guides/authentication)).
+`GET /v1/agent/transfer-targets` serves the transfer-target search the same way.
 
 | Operation | What it returns | TypeScript · Go |
 |---|---|---|
 | Get history | Recent call records (paged). | `getHistory(max=50, page=1)` · `GetHistory(ctx, max, page)` |
 | Get SMS thread | Messages in one conversation (paged). | `getSmsThread(id, max=50, page=1)` · `GetSmsThread(ctx, id, max, page)` |
 | Get phonebook | Contact entries (paged, searchable). | `getPhonebook(max=200, page=1, query='')` · `GetPhonebook(ctx, max, page, query)` |
+| Get transfer targets | Who and what a call can be handed to right now (searchable, not paged). See [below](#transfer-targets). | `getTransferTargets(query='')` · `GetTransferTargets(ctx, query)` |
 
 **Paging** is 1-based offset paging: pass `max` (page size — default 50, or 200 for the phonebook) and `page`
 (default 1). The responses
@@ -208,6 +212,41 @@ when known), `time` (unix seconds), `durationMs` (call length in milliseconds), 
 (dial-from contacts + recent numbers). Each `PhonebookEntry` is just a `label` + `number`, where `label` is
 the contact name — or the literal `"recent"` for a recently-dialed number, so you can separate the two in the
 UI. Use `getPhonebook` for a paged, searchable refresh.
+
+### Transfer targets: what the list contains {#transfer-targets}
+
+`getTransferTargets(query)` returns `TransferTarget` entries for a transfer or add-member picker. Each entry has
+a `kind`:
+
+- **Agents** (`AGENT`): other agents of the same account, never the agent who asks. An agent is listed only
+  if they are enabled with an active login, can be reached (an external number or the browser phone), and
+  their **line status is Available at the moment of the request**. Any other line status leaves them out,
+  for example in a call, ringing, in wrap-up, busy or unreachable. Whether an agent is in the list is the
+  only availability information you get: `TransferTarget` has no presence or status field.
+- **Voice applications** (`APPLICATION`): applications the account has enabled and marked as transfer
+  targets. `category` names the module. Hide them when the call's `canTransferToApplication` is false.
+- **A number** (`NUMBER`): one entry built from the query itself, when the query looks like a phone number
+  (digits and spaces, optionally a leading `+`). It is dropped when an agent's number equals the query. Use
+  its `number` to transfer, not its `id`.
+
+`query` matches parts of an agent's name, email or number, and an application's name. An empty query
+returns the default list.
+
+What the list does **not** do:
+
+- **It ignores the presence the agent chose.** Only line status is checked. An agent who selected `break`
+  while their line is Available can still be listed.
+- **It does not update.** It is the state at the moment you asked. No patch or event follows when a listed
+  colleague takes a call or goes on a break, or when another colleague becomes Available. Fetch it again
+  when the picker opens, and again right before you send the transfer.
+- **It is capped and unordered.** One request returns at most 100 agents and at most 100 applications,
+  with no option to raise the limit and no paging. The order is not specified and can change between
+  requests. When more match, which ones come back is arbitrary, so narrow the `query` rather than relying
+  on an empty one. Sort in your UI if order matters.
+
+A target can still become unavailable between your last fetch and the transfer. The transfer then fails
+with [`transfer_target_unavailable`](../protocol/error-codes#transfer--conference) and the caller stays
+with the agent.
 
 ## See also
 

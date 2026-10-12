@@ -185,6 +185,38 @@ The first step parks the customer; completion unholds them and drops the agent's
 Gate warm transfer on `allowConference`, blind transfer on `allowTransfer`.
 `bc.transfer(call.id, target)` is a blind transfer without a consult.
 
+## A transfer-target picker
+
+```ts
+import { TransferTargetKind, type TransferTarget } from "@babelforce/babelconnect-sdk";
+
+async function search(query: string) {
+  const targets = await bc.getTransferTargets(query);
+  return targets.filter((t) =>
+    t.kind !== TransferTargetKind.APPLICATION || call.canTransferToApplication);
+}
+
+// `query` is the text the agent searched with when they picked `t`.
+async function transferTo(t: TransferTarget, query: string) {
+  if (t.kind === TransferTargetKind.AGENT) {
+    // The list was read when it was shown; ask again before handing over.
+    const still = (await bc.getTransferTargets(query)).some((x) => x.id === t.id);
+    if (!still) return showNotAvailable(t);
+    bc.transfer(call.id, "", { agentId: t.id });
+  } else if (t.kind === TransferTargetKind.APPLICATION) {
+    bc.transfer(call.id, "", { applicationId: t.id });
+  } else {
+    bc.transfer(call.id, t.number);
+  }
+}
+```
+
+Only agents whose line status is Available when you ask are listed; the agent's chosen presence is not
+checked, and the list never updates by itself. It returns at most 100 agents and 100 applications in no
+set order. Search as the agent types rather than showing the empty-query list.
+[Transfer targets](../concepts/intents#transfer-targets) has the details. A colleague can still become
+unavailable after the re-check; handle `transfer_target_unavailable` in `onError`.
+
 ## A contacts list (dial from the phonebook)
 
 `agent.phonebook` is a registration snapshot. Refresh/search with
