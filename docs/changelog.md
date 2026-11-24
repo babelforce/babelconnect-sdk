@@ -10,6 +10,15 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.46.2 — 2026-11-24
+
+- **After a call ends, the agent's state is the one the phone system reports.** An agent going into
+  wrap-up no longer shows as available for a moment first, and a call offered right after a hangup
+  shows as ringing.
+- **A window that comes back after a lost connection gets its audio within seconds, not after about
+  a minute.** The call moves to the new window and its audio is offered again. A duplicated tab
+  whose original window still answers is not affected.
+
 ## 0.46.1 — 2026-10-12
 
 - **A transferred call names who transferred it.** `CallState.invitedBy` names the colleague who
