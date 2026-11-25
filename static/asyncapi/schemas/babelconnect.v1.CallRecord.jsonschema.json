@@ -8,6 +8,14 @@
       "default": "",
       "type": "string"
     },
+    "^(conversation_id)$": {
+      "default": "",
+      "type": "string"
+    },
+    "^(customer_number)$": {
+      "default": "",
+      "type": "string"
+    },
     "^(duration_ms)$": {
       "anyOf": [
         {
@@ -41,6 +49,14 @@
       "type": "string"
     },
     "contact": {
+      "default": "",
+      "type": "string"
+    },
+    "conversationId": {
+      "default": "",
+      "type": "string"
+    },
+    "customerNumber": {
       "default": "",
       "type": "string"
     },

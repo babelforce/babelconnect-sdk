@@ -10,6 +10,20 @@ Notable changes to the babelConnect SDKs, the embedding contract and the agent a
 Every release is listed; one with nothing you can observe says so. The version shown in the
 navbar is the release these pages describe.
 
+## 0.46.3 — 2026-11-25
+
+- **An ended call no longer comes back for a moment.** A late end report from the phone system for
+  a call that had already ended brought it back briefly: a `callUpsert` (completed or failed) after
+  its `callRemove`, then a second `callRemove`. A call that has ended now stays ended. A new call
+  offered under the same id still rings.
+- **The call history lists the customer's call, not your own leg of it.** `getHistory` listed a
+  queued inbound call as an outbound call to an internal extension. A `CallRecord` now takes its
+  direction, `from`, `to` and duration from the customer's leg of the call.
+  `CallRecord.customerNumber` is the customer's number (the caller of an inbound call, the callee of
+  an outbound one; empty when the phone system does not report it), and
+  `CallRecord.conversationId` is the conversation the call belongs to, the same value as
+  `CallState.conversationId`.
+
 ## 0.46.2 — 2026-11-24
 
 - **After a call ends, the agent's state is the one the phone system reports.** An agent going into
